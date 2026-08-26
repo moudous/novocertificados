@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\PessoaController;
+use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
@@ -20,12 +22,16 @@ Route::get('/auth/gi', function (Request $request) {
     abort_unless($response->successful(), 401, 'Não foi possível autenticar pelo GI.');
 
     $context = (array) $response->json('data');
+    $synchronizer = app(GiPessoaSynchronizer::class);
+    $synchronizer->syncSessionUser($context);
+
     if (! empty($context['atualizar'])) {
         $directory = Http::withToken($context['access_token'])->acceptJson()->timeout(10)
             ->get(rtrim(config('gi.gi_url'), '/').'/api/integracoes/v1/usuarios');
-        if ($directory->successful()) {
-            $context['atualizacao_usuarios'] = ['realizada' => true, 'total' => (int) $directory->json('total', 0)];
-        }
+        abort_unless($directory->successful(), 502, 'Não foi possível atualizar os usuários pelo GI.');
+
+        $total = $synchronizer->syncDirectory((array) $directory->json('data', []));
+        $context['atualizacao_usuarios'] = ['realizada' => true, 'total' => $total];
     }
     $request->session()->regenerate();
     $request->session()->put('gi_context', $context);
@@ -50,6 +56,12 @@ Route::get('/', function (Request $request) {
     return response()
         ->view('session', ['context' => $visibleContext])
         ->header('Cache-Control', 'no-store');
+});
+
+Route::prefix('pessoas')->name('pessoas.')->group(function (): void {
+    Route::get('/', [PessoaController::class, 'index'])->name('index');
+    Route::post('/importar', [PessoaController::class, 'import'])->name('import');
+    Route::get('/{pessoa}', [PessoaController::class, 'show'])->whereNumber('pessoa')->name('show');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {
