@@ -70,10 +70,12 @@ document.addEventListener('DOMContentLoaded', () => {
         feedback.classList.add('d-none');
 
         try {
-            const response = await fetch(@json(route('pessoas.import')), {
+            const response = await fetch(@json(route('pessoas.import', [], false)), {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': @json(csrf_token()),
                 },
             });

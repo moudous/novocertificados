@@ -6,7 +6,6 @@ use App\Models\Pessoa;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 
 class PessoaController extends Controller
@@ -34,12 +33,7 @@ class PessoaController extends Controller
         $accessToken = (string) $request->session()->get('gi_context.access_token', '');
         abort_if($accessToken === '', 401, 'Token de acesso do GI não encontrado. Abra novamente pelo menu do GI.');
 
-        $response = Http::withToken($accessToken)->acceptJson()->timeout(30)
-            ->get(rtrim(config('gi.gi_url'), '/').'/api/integracoes/v1/usuarios');
-
-        abort_unless($response->successful(), 502, 'Não foi possível importar as pessoas do GI.');
-
-        $total = $synchronizer->syncDirectory((array) $response->json('data', []));
+        $total = $synchronizer->syncFromGi($accessToken);
 
         return response()->json([
             'message' => "$total pessoa(s) importada(s) com sucesso.",

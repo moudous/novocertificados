@@ -26,11 +26,7 @@ Route::get('/auth/gi', function (Request $request) {
     $synchronizer->syncSessionUser($context);
 
     if (! empty($context['atualizar'])) {
-        $directory = Http::withToken($context['access_token'])->acceptJson()->timeout(10)
-            ->get(rtrim(config('gi.gi_url'), '/').'/api/integracoes/v1/usuarios');
-        abort_unless($directory->successful(), 502, 'Não foi possível atualizar os usuários pelo GI.');
-
-        $total = $synchronizer->syncDirectory((array) $directory->json('data', []));
+        $total = $synchronizer->syncFromGi((string) $context['access_token']);
         $context['atualizacao_usuarios'] = ['realizada' => true, 'total' => $total];
     }
     $request->session()->regenerate();
