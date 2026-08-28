@@ -65,8 +65,13 @@ class TemplateController extends Controller
     public function create(): View { return view('templates.form', ['template' => new Template()]); }
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->normalizePage($this->validated($request)); unset($data['remover_fundo']);
+        $data = $this->normalizePage($this->validated($request));
         if ($request->hasFile('fundo')) $data['fundo'] = $this->storeBackground($request);
+        if ($request->boolean('fundo_colorido_ativo')) {
+            if (blank($data['cor_fundo'] ?? null)) return back()->withErrors(['cor_fundo' => 'Selecione a cor do fundo.'])->withInput();
+            $data['fundo_colorido'] = $this->createColoredBackground($data['cor_fundo'], $data['largura'], $data['altura']);
+        }
+        unset($data['remover_fundo'], $data['remover_fundo_colorido']);
         $template = Template::query()->create($data);
         return redirect()->route('templates.show', $template)->with('status', 'Template cadastrado com sucesso.');
     }
@@ -133,7 +138,8 @@ class TemplateController extends Controller
             ];
         })->filter()->values();
         $width = max((int) $template->largura, 1); $height = max((int) $template->altura, 1);
-        $background = $this->fileDataUri($template->backgroundExists() ? public_path('certificado/imagem_fundo/'.$template->fundo) : null);
+        $activeBackground = $template->activeBackgroundFilename();
+        $background = $this->fileDataUri($activeBackground ? public_path('certificado/imagem_fundo/'.$activeBackground) : null);
         $fonts = FonteLayout::query()->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'data' => $this->fileDataUri($font->path()), 'format' => strtolower(pathinfo($font->arquivo, PATHINFO_EXTENSION))])->filter(fn (array $font): bool => filled($font['data']));
         $paper = [0, 0, $width * 2.834645669, $height * 2.834645669];
 
@@ -153,19 +159,26 @@ class TemplateController extends Controller
     }
     public function update(Request $request, Template $template): RedirectResponse
     {
-        $data = $this->normalizePage($this->validated($request)); $old = $template->fundo;
+        $data = $this->normalizePage($this->validated($request)); $old = $template->fundo; $oldColored = $template->fundo_colorido;
         if ($request->hasFile('fundo')) { $data['fundo'] = $this->storeBackground($request); $this->removeBackground($old); }
         elseif ($request->boolean('remover_fundo')) { $this->removeBackground($old); $data['fundo'] = null; }
-        unset($data['remover_fundo']); $template->update($data);
+        if ($request->boolean('remover_fundo_colorido')) { $this->removeBackground($oldColored); $data['fundo_colorido'] = null; $data['cor_fundo'] = null; }
+        if ($request->boolean('fundo_colorido_ativo') && filled($data['cor_fundo'] ?? null)) {
+            if ($template->coloredBackgroundExists() && ! $request->boolean('remover_fundo_colorido')) return back()->withErrors(['cor_fundo' => 'Remova primeiro o fundo colorido atual para gerar uma imagem com outra cor.'])->withInput();
+            $data['fundo_colorido'] = $this->createColoredBackground($data['cor_fundo'], $data['largura'], $data['altura']);
+        } elseif ($request->boolean('fundo_colorido_ativo') && ! $template->coloredBackgroundExists() && ! $request->boolean('remover_fundo_colorido')) {
+            return back()->withErrors(['cor_fundo' => 'Selecione a cor do fundo.'])->withInput();
+        }
+        unset($data['remover_fundo'], $data['remover_fundo_colorido']); $template->update($data);
         return redirect()->route('templates.show', $template)->with('status', 'Template atualizado com sucesso.');
     }
     public function toggleStatus(Template $template): RedirectResponse { $template->update(['ativo' => ! $template->ativo]); return redirect()->route('templates.index')->with('status', 'Status atualizado com sucesso.'); }
     public function destroy(Template $template): RedirectResponse { $template->delete(); return redirect()->route('templates.index')->with('status', 'Template excluído com sucesso.'); }
-    public function forceDestroy(int $template): RedirectResponse { $model = Template::withTrashed()->findOrFail($template); $this->removeBackground($model->fundo); $model->forceDelete(); return redirect()->route('templates.index')->with('status', 'Template excluído definitivamente.'); }
+    public function forceDestroy(int $template): RedirectResponse { $model = Template::withTrashed()->findOrFail($template); $this->removeBackground($model->fundo); $this->removeBackground($model->fundo_colorido); $model->forceDelete(); return redirect()->route('templates.index')->with('status', 'Template excluído definitivamente.'); }
 
     private function validated(Request $request): array
     {
-        return $request->validate(['nome' => ['nullable','string','max:100'], 'fundo' => ['nullable','image','mimes:png,jpg,jpeg','max:10240'], 'remover_fundo' => ['nullable','boolean'], 'ativo' => ['required','boolean'], 'certificado_a1' => ['nullable','integer',Rule::exists('certificados_a1','id')->whereNull('apagado_em')], 'largura' => ['nullable','integer','min:0'], 'altura' => ['nullable','integer','min:0'], 'pagina' => ['nullable',Rule::in(['A4','Carta','Oficio','Personalizado'])], 'layout_pagina' => ['nullable',Rule::in(['Retrato','Paisagem'])]]);
+        return $request->validate(['nome' => ['nullable','string','max:100'], 'fundo' => ['nullable','image','mimes:png,jpg,jpeg','max:10240'], 'remover_fundo' => ['nullable','boolean'], 'remover_fundo_colorido' => ['nullable','boolean'], 'fundo_colorido_ativo' => ['nullable','boolean'], 'cor_fundo' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'ativo' => ['required','boolean'], 'certificado_a1' => ['nullable','integer',Rule::exists('certificados_a1','id')->whereNull('apagado_em')], 'largura' => ['nullable','integer','min:1'], 'altura' => ['nullable','integer','min:1'], 'pagina' => ['nullable',Rule::in(['A4','Carta','Oficio','Personalizado'])], 'layout_pagina' => ['nullable',Rule::in(['Retrato','Paisagem'])]]);
     }
     private function normalizePage(array $data): array
     {
@@ -189,6 +202,14 @@ class TemplateController extends Controller
         return $data;
     }
     private function storeBackground(Request $request): string { $file=$request->file('fundo'); $name=hash('sha1',Str::uuid()->toString()).'.'.strtolower($file->getClientOriginalExtension()); $dir=public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($dir); $file->move($dir,$name); return $name; }
+    private function createColoredBackground(string $color, int $widthMm, int $heightMm): string
+    {
+        $width = max((int) round($widthMm / 25.4 * 96), 1); $height = max((int) round($heightMm / 25.4 * 96), 1);
+        $image = imagecreatetruecolor($width, $height); [$red, $green, $blue] = sscanf($color, '#%02x%02x%02x');
+        imagefill($image, 0, 0, imagecolorallocate($image, $red, $green, $blue));
+        $name = hash('sha1', Str::uuid()->toString()).'.png'; $directory = public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($directory);
+        imagepng($image, $directory.'/'.$name); imagedestroy($image); return $name;
+    }
     private function removeBackground(?string $name): void { if (filled($name) && basename($name)===$name) File::delete(public_path('certificado/imagem_fundo/'.$name)); }
     private function fileDataUri(?string $path): ?string
     {

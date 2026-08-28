@@ -16,12 +16,12 @@ class Template extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome', 'fundo', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
+    protected $fillable = ['nome', 'fundo', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
 
     protected function casts(): array
     {
         return [
-            'id' => 'integer', 'ativo' => 'boolean', 'certificado_a1' => 'integer',
+            'id' => 'integer', 'ativo' => 'boolean', 'fundo_colorido_ativo' => 'boolean', 'certificado_a1' => 'integer',
             'largura' => 'integer', 'altura' => 'integer', 'crido_em' => 'datetime',
             'alterado_em' => 'datetime', 'apagado_em' => 'datetime', 'elementos_layout' => 'array',
         ];
@@ -34,12 +34,24 @@ class Template extends Model
 
     public function backgroundExists(): bool
     {
-        return filled($this->fundo) && basename((string) $this->fundo) === $this->fundo
-            && is_file(public_path('certificado/imagem_fundo/'.$this->fundo));
+        return $this->activeBackgroundFilename() !== null;
     }
 
     public function backgroundUrl(): ?string
     {
-        return $this->backgroundExists() ? asset('certificado/imagem_fundo/'.$this->fundo) : null;
+        $filename = $this->activeBackgroundFilename();
+        return $filename ? asset('certificado/imagem_fundo/'.$filename) : null;
+    }
+
+    public function uploadedBackgroundExists(): bool { return $this->validBackgroundFile($this->fundo); }
+    public function coloredBackgroundExists(): bool { return $this->validBackgroundFile($this->fundo_colorido); }
+    public function activeBackgroundFilename(): ?string
+    {
+        if ($this->fundo_colorido_ativo && $this->coloredBackgroundExists()) return $this->fundo_colorido;
+        return $this->uploadedBackgroundExists() ? $this->fundo : null;
+    }
+    private function validBackgroundFile(?string $filename): bool
+    {
+        return filled($filename) && basename((string) $filename) === $filename && is_file(public_path('certificado/imagem_fundo/'.$filename));
     }
 }
