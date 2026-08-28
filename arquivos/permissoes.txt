@@ -93,4 +93,3 @@ novos_certificados.excluir
 novos_certificados.excluir_definitivamente
 
 
-em ações do datatable de [http://localhost:8004/templates](http://localhost:8004/templates) acrescente um botão  para ser o construtor  de layouts, coloque somente o icone com o title. O construtor deve ter um canva  onde o plano de fundo do template deve ser carregada. a tela será divida em 2 partes , loga abaixo dos nome do tempolate e o nome da pagina. Vai ter o canva com tipo 80% da largura da pagina e ao lado esquerdo os 20 que com barra de rolagem propria onde é possivel  adicionar variaveis que poderão ser posicionadas no canva. como posição dos elementos seja variavel texto ou variavel imagem. podem ser adicionadas diversas variaveis.

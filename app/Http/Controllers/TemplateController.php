@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CertificadoA1;
 use App\Models\Template;
 use App\Models\Variavel;
+use App\Models\FonteLayout;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -84,7 +85,8 @@ class TemplateController extends Controller
                 'color' => $variable->cor ?: '#111827', 'align' => $variable->alinhamento ?: 'esquerda',
             ])->values();
 
-        return view('templates.builder', compact('template', 'variables'));
+        $fonts = FonteLayout::query()->orderBy('nome')->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'url' => $font->url()])->values();
+        return view('templates.builder', compact('template', 'variables', 'fonts'));
     }
 
     public function saveBuilder(Request $request, Template $template): RedirectResponse
@@ -101,6 +103,8 @@ class TemplateController extends Controller
             'elementos.*.width' => ['required', 'numeric', 'min:1'], 'elementos.*.height' => ['required', 'numeric', 'min:1'],
             'elementos.*.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'elementos.*.align' => ['nullable', Rule::in(['esquerda', 'direita', 'centralizado', 'justificado'])],
+            'elementos.*.font_family' => ['nullable', 'string', 'max:100'], 'elementos.*.font_size' => ['nullable', 'numeric', 'min:1', 'max:300'],
+            'elementos.*.bold' => ['nullable', 'boolean'], 'elementos.*.italic' => ['nullable', 'boolean'], 'elementos.*.underline' => ['nullable', 'boolean'],
         ]);
         $template->update(['elementos_layout' => array_values($validated['elementos'])]);
         return redirect()->route('templates.builder', $template)->with('status', 'Layout salvo com sucesso.');
@@ -108,6 +112,7 @@ class TemplateController extends Controller
 
     public function previewPdf(Request $request, Template $template): Response
     {
+        File::ensureDirectoryExists(storage_path('fonts'), 0775, true);
         $request->validate(['layout_json' => ['required', 'json']]);
         $elements = collect(json_decode((string) $request->input('layout_json'), true) ?: [])->take(200);
         $variables = Variavel::query()->whereIn('id', $elements->pluck('variable_id')->filter()->unique())->get()->keyBy('id');
@@ -122,14 +127,29 @@ class TemplateController extends Controller
                 'width' => max((float) ($element['width'] ?? 1), 1), 'height' => max((float) ($element['height'] ?? 1), 1),
                 'color' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($element['color'] ?? '')) ? $element['color'] : '#111827',
                 'align' => in_array(($element['align'] ?? ''), ['esquerda', 'direita', 'centralizado', 'justificado'], true) ? $element['align'] : 'esquerda',
+                'font_family' => Str::limit(preg_replace('/[^\pL\pN _-]/u', '', (string) ($element['font_family'] ?? 'Arial')) ?: 'Arial', 100, ''),
+                'font_size' => min(max((float) ($element['font_size'] ?? 12), 1), 300),
+                'bold' => filter_var($element['bold'] ?? false, FILTER_VALIDATE_BOOLEAN), 'italic' => filter_var($element['italic'] ?? false, FILTER_VALIDATE_BOOLEAN), 'underline' => filter_var($element['underline'] ?? false, FILTER_VALIDATE_BOOLEAN),
             ];
         })->filter()->values();
         $width = max((int) $template->largura, 1); $height = max((int) $template->altura, 1);
         $background = $this->fileDataUri($template->backgroundExists() ? public_path('certificado/imagem_fundo/'.$template->fundo) : null);
+        $fonts = FonteLayout::query()->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'data' => $this->fileDataUri($font->path()), 'format' => strtolower(pathinfo($font->arquivo, PATHINFO_EXTENSION))])->filter(fn (array $font): bool => filled($font['data']));
         $paper = [0, 0, $width * 2.834645669, $height * 2.834645669];
 
-        return Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background'))
+        return Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background', 'fonts'))
             ->setPaper($paper)->stream('preview-template-'.$template->id.'.pdf', ['Attachment' => false]);
+    }
+
+    public function uploadFont(Request $request, Template $template): JsonResponse
+    {
+        $validated = $request->validate(['fonte' => ['required', 'file', 'mimes:ttf,otf,woff,woff2', 'max:10240']]);
+        $file = $validated['fonte']; $extension = strtolower($file->getClientOriginalExtension());
+        $original = $file->getClientOriginalName(); $name = Str::limit(preg_replace('/[^\pL\pN _-]/u', '', pathinfo($original, PATHINFO_FILENAME)) ?: 'Fonte personalizada', 100, '');
+        $filename = hash('sha1', Str::uuid()->toString()).'.'.$extension; $directory = public_path('certificado/fontes');
+        File::ensureDirectoryExists($directory); $file->move($directory, $filename);
+        $font = FonteLayout::query()->create(['nome' => $name ?: 'Fonte personalizada', 'arquivo' => $filename, 'nome_original' => $original]);
+        return response()->json(['font' => ['name' => $font->nome, 'url' => $font->url()]], 201);
     }
     public function update(Request $request, Template $template): RedirectResponse
     {
