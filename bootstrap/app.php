@@ -7,6 +7,9 @@ use App\Http\Middleware\AllowGiEmbedding;
 use App\Http\Middleware\EnsureGiPermission;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withProviders([
+        Barryvdh\DomPDF\ServiceProvider::class,
+    ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         health: '/health',

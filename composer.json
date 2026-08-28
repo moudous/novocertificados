@@ -3,7 +3,8 @@
     "type": "project",
     "require": {
         "php": "^8.3",
-        "laravel/framework": "^13.0"
+        "laravel/framework": "^13.0",
+        "barryvdh/laravel-dompdf": "^3.1"
     },
     "autoload": {
         "psr-4": {

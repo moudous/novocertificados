@@ -16,14 +16,14 @@ class Template extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome', 'fundo', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina'];
+    protected $fillable = ['nome', 'fundo', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
 
     protected function casts(): array
     {
         return [
             'id' => 'integer', 'ativo' => 'boolean', 'certificado_a1' => 'integer',
             'largura' => 'integer', 'altura' => 'integer', 'crido_em' => 'datetime',
-            'alterado_em' => 'datetime', 'apagado_em' => 'datetime',
+            'alterado_em' => 'datetime', 'apagado_em' => 'datetime', 'elementos_layout' => 'array',
         ];
     }
 

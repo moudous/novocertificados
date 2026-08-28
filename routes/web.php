@@ -193,6 +193,9 @@ Route::prefix('templates')->name('templates.')->group(function (): void {
     Route::get('/certificados-a1', [TemplateController::class, 'certificadosA1'])->name('certificados-a1');
     Route::get('/criar', [TemplateController::class, 'create'])->middleware('gi.permission:template.criar')->name('create');
     Route::post('/', [TemplateController::class, 'store'])->middleware('gi.permission:template.criar')->name('store');
+    Route::get('/{template}/construtor', [TemplateController::class, 'builder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder');
+    Route::put('/{template}/construtor', [TemplateController::class, 'saveBuilder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.save');
+    Route::post('/{template}/construtor/preview-pdf', [TemplateController::class, 'previewPdf'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.preview');
     Route::get('/{template}', [TemplateController::class, 'show'])->whereNumber('template')->middleware('gi.permission:template.visualizar')->name('show');
     Route::get('/{template}/editar', [TemplateController::class, 'edit'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('edit');
     Route::put('/{template}', [TemplateController::class, 'update'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('update');

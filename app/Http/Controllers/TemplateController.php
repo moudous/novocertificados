@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\CertificadoA1;
 use App\Models\Template;
+use App\Models\Variavel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +14,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class TemplateController extends Controller
 {
@@ -68,6 +71,66 @@ class TemplateController extends Controller
     }
     public function show(Template $template): View { $template->load('certificadoA1'); return view('templates.show', compact('template')); }
     public function edit(Template $template): View { $template->load('certificadoA1'); return view('templates.form', compact('template')); }
+    public function builder(Template $template): View
+    {
+        $variables = Variavel::query()->where('ativo', true)->orderBy('tipo')->orderBy('id')->get()
+            ->map(fn (Variavel $variable): array => [
+                'id' => $variable->id, 'type' => $variable->tipo,
+                'label' => $variable->tipo === 'texto' ? Str::limit($variable->texto ?: 'Texto sem conteúdo', 45) : ($variable->imagem ?: 'Imagem'),
+                'text' => $variable->texto, 'image' => $variable->imageUrl(),
+                'width' => max((int) ($variable->largura ?: ($variable->tipo === 'imagem' ? 40 : 70)), 1),
+                'height' => max((int) ($variable->altura ?: ($variable->tipo === 'imagem' ? 30 : 12)), 1),
+                'x' => max((int) ($variable->pos_x ?: 0), 0), 'y' => max((int) ($variable->pox_y ?: 0), 0),
+                'color' => $variable->cor ?: '#111827', 'align' => $variable->alinhamento ?: 'esquerda',
+            ])->values();
+
+        return view('templates.builder', compact('template', 'variables'));
+    }
+
+    public function saveBuilder(Request $request, Template $template): RedirectResponse
+    {
+        $request->validate(['layout_json' => ['required', 'json']]);
+        $request->merge(['elementos' => json_decode((string) $request->input('layout_json'), true)]);
+        $validated = $request->validate([
+            'elementos' => ['present', 'array', 'max:200'],
+            'elementos.*.uid' => ['required', 'string', 'max:80'],
+            'elementos.*.variable_id' => ['required', 'integer', Rule::exists('variaveis', 'id')->whereNull('apagado_em')],
+            'elementos.*.type' => ['required', Rule::in(['texto', 'imagem'])],
+            'elementos.*.text' => ['nullable', 'string', 'max:5000'],
+            'elementos.*.x' => ['required', 'numeric', 'min:0'], 'elementos.*.y' => ['required', 'numeric', 'min:0'],
+            'elementos.*.width' => ['required', 'numeric', 'min:1'], 'elementos.*.height' => ['required', 'numeric', 'min:1'],
+            'elementos.*.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'elementos.*.align' => ['nullable', Rule::in(['esquerda', 'direita', 'centralizado', 'justificado'])],
+        ]);
+        $template->update(['elementos_layout' => array_values($validated['elementos'])]);
+        return redirect()->route('templates.builder', $template)->with('status', 'Layout salvo com sucesso.');
+    }
+
+    public function previewPdf(Request $request, Template $template): Response
+    {
+        $request->validate(['layout_json' => ['required', 'json']]);
+        $elements = collect(json_decode((string) $request->input('layout_json'), true) ?: [])->take(200);
+        $variables = Variavel::query()->whereIn('id', $elements->pluck('variable_id')->filter()->unique())->get()->keyBy('id');
+        $elements = $elements->map(function (array $element) use ($variables): ?array {
+            $variable = $variables->get((int) ($element['variable_id'] ?? 0));
+            if (! $variable || ! in_array($variable->tipo, ['texto', 'imagem'], true)) return null;
+            return [
+                'type' => $variable->tipo,
+                'text' => Str::limit((string) ($element['text'] ?? $variable->texto ?? ''), 5000, ''),
+                'image' => $variable->tipo === 'imagem' ? $this->fileDataUri($variable->imageExists() ? public_path('certificado/imagem_fundo/'.$variable->imagem) : null) : null,
+                'x' => max((float) ($element['x'] ?? 0), 0), 'y' => max((float) ($element['y'] ?? 0), 0),
+                'width' => max((float) ($element['width'] ?? 1), 1), 'height' => max((float) ($element['height'] ?? 1), 1),
+                'color' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($element['color'] ?? '')) ? $element['color'] : '#111827',
+                'align' => in_array(($element['align'] ?? ''), ['esquerda', 'direita', 'centralizado', 'justificado'], true) ? $element['align'] : 'esquerda',
+            ];
+        })->filter()->values();
+        $width = max((int) $template->largura, 1); $height = max((int) $template->altura, 1);
+        $background = $this->fileDataUri($template->backgroundExists() ? public_path('certificado/imagem_fundo/'.$template->fundo) : null);
+        $paper = [0, 0, $width * 2.834645669, $height * 2.834645669];
+
+        return Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background'))
+            ->setPaper($paper)->stream('preview-template-'.$template->id.'.pdf', ['Attachment' => false]);
+    }
     public function update(Request $request, Template $template): RedirectResponse
     {
         $data = $this->normalizePage($this->validated($request)); $old = $template->fundo;
@@ -107,4 +170,10 @@ class TemplateController extends Controller
     }
     private function storeBackground(Request $request): string { $file=$request->file('fundo'); $name=hash('sha1',Str::uuid()->toString()).'.'.strtolower($file->getClientOriginalExtension()); $dir=public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($dir); $file->move($dir,$name); return $name; }
     private function removeBackground(?string $name): void { if (filled($name) && basename($name)===$name) File::delete(public_path('certificado/imagem_fundo/'.$name)); }
+    private function fileDataUri(?string $path): ?string
+    {
+        if (! $path || ! is_file($path)) return null;
+        $mime = File::mimeType($path) ?: 'image/png';
+        return 'data:'.$mime.';base64,'.base64_encode((string) File::get($path));
+    }
 }
