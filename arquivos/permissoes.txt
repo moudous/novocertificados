@@ -71,4 +71,23 @@ assinaturas.editar
 assinaturas.excluir
 assinaturas.excluir_definitivamente
 
+novos_certificados.listar
+novos_certificados.participantes
+novos_certificados.inserir_participantes
+novos_certificados.excluir_participantes
+novos_certificados.visualizar
+novos_certificados.criar
+novos_certificados.editar
+novos_certificados.excluir
+novos_certificados.excluir_definitivamente
 
+
+novos_certificados.listar
+novos_certificados.participantes
+novos_certificados.inserir_participantes
+novos_certificados.excluir_participantes
+novos_certificados.visualizar
+novos_certificados.criar
+novos_certificados.editar
+novos_certificados.excluir
+novos_certificados.excluir_definitivamente

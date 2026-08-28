@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ListaParticipante extends Model
+{
+    protected $table = 'lista_participantes';
+    public const CREATED_AT = 'criado_em';
+    public const UPDATED_AT = 'alterado_em';
+    protected $fillable = ['participante_id', 'novo_certificado_id'];
+    protected function casts(): array { return ['id'=>'integer','participante_id'=>'integer','novo_certificado_id'=>'integer','criado_em'=>'datetime','alterado_em'=>'datetime']; }
+    public function participante(): BelongsTo { return $this->belongsTo(Participante::class, 'participante_id')->withTrashed(); }
+    public function novoCertificado(): BelongsTo { return $this->belongsTo(NovoCertificado::class, 'novo_certificado_id')->withTrashed(); }
+}
