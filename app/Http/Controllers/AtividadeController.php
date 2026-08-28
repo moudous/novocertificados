@@ -155,6 +155,13 @@ class AtividadeController extends Controller
         return redirect()->route('atividades.index')->with('status', 'Atividade excluída com sucesso.');
     }
 
+    public function toggleStatus(Atividade $atividade): RedirectResponse
+    {
+        $atividade->update(['ativo' => ! $atividade->ativo]);
+
+        return redirect()->route('atividades.index')->with('status', 'Status da atividade atualizado com sucesso.');
+    }
+
     public function restore(int $atividade): RedirectResponse
     {
         Atividade::withTrashed()->findOrFail($atividade)->restore();

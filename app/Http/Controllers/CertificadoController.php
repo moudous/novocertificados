@@ -150,6 +150,13 @@ class CertificadoController extends Controller
         return redirect()->route('certificados.index')->with('status', 'Certificado excluído com sucesso.');
     }
 
+    public function toggleStatus(Certificado $certificado): RedirectResponse
+    {
+        $certificado->update(['ativo' => ! $certificado->ativo]);
+
+        return redirect()->route('certificados.index')->with('status', 'Status do certificado atualizado com sucesso.');
+    }
+
     public function restore(int $certificado): RedirectResponse
     {
         Certificado::withTrashed()->findOrFail($certificado)->restore();

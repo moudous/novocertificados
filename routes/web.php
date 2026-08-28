@@ -104,6 +104,7 @@ Route::prefix('atividades')->name('atividades.')->group(function (): void {
     Route::get('/{atividade}', [AtividadeController::class, 'show'])->whereNumber('atividade')->middleware('gi.permission:atividades.visualizar')->name('show');
     Route::get('/{atividade}/editar', [AtividadeController::class, 'edit'])->whereNumber('atividade')->middleware('gi.permission:atividades.editar')->name('edit');
     Route::put('/{atividade}', [AtividadeController::class, 'update'])->whereNumber('atividade')->middleware('gi.permission:atividades.editar')->name('update');
+    Route::patch('/{atividade}/status', [AtividadeController::class, 'toggleStatus'])->whereNumber('atividade')->middleware('gi.permission:atividades.editar')->name('status');
     Route::delete('/{atividade}', [AtividadeController::class, 'destroy'])->whereNumber('atividade')->middleware('gi.permission:atividades.excluir')->name('destroy');
     Route::patch('/{atividade}/restaurar', [AtividadeController::class, 'restore'])->whereNumber('atividade')->middleware('gi.permission:atividades.restaurar')->name('restore');
     Route::delete('/{atividade}/definitivo', [AtividadeController::class, 'forceDestroy'])->whereNumber('atividade')->middleware('gi.permission:atividades.excluir_definitivamente')->name('force-destroy');
@@ -119,6 +120,7 @@ Route::prefix('certificados')->name('certificados.')->group(function (): void {
     Route::get('/{certificado}', [CertificadoController::class, 'show'])->whereNumber('certificado')->middleware('gi.permission:certificados.visualizar')->name('show');
     Route::get('/{certificado}/editar', [CertificadoController::class, 'edit'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('edit');
     Route::put('/{certificado}', [CertificadoController::class, 'update'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('update');
+    Route::patch('/{certificado}/status', [CertificadoController::class, 'toggleStatus'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('status');
     Route::delete('/{certificado}', [CertificadoController::class, 'destroy'])->whereNumber('certificado')->middleware('gi.permission:certificados.excluir')->name('destroy');
     Route::patch('/{certificado}/restaurar', [CertificadoController::class, 'restore'])->whereNumber('certificado')->middleware('gi.permission:certificados.restaurar')->name('restore');
     Route::delete('/{certificado}/definitivo', [CertificadoController::class, 'forceDestroy'])->whereNumber('certificado')->middleware('gi.permission:certificados.excluir_definitivamente')->name('force-destroy');
