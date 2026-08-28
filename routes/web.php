@@ -3,6 +3,7 @@
 use App\Http\Controllers\PessoaController;
 use App\Http\Controllers\ParticipanteController;
 use App\Http\Controllers\EventoController;
+use App\Http\Controllers\AtividadeController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -89,6 +90,20 @@ Route::prefix('eventos')->name('eventos.')->group(function (): void {
     Route::patch('/{evento}/status', [EventoController::class, 'toggleStatus'])->whereNumber('evento')->middleware('gi.permission:eventos.editar')->name('status');
     Route::patch('/{evento}/restaurar', [EventoController::class, 'restore'])->whereNumber('evento')->middleware('gi.permission:eventos.restaurar')->name('restore');
     Route::delete('/{evento}/definitivo', [EventoController::class, 'forceDestroy'])->whereNumber('evento')->middleware('gi.permission:eventos.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('atividades')->name('atividades.')->group(function (): void {
+    Route::get('/', [AtividadeController::class, 'index'])->middleware('gi.permission:atividades.listar')->name('index');
+    Route::get('/dados', [AtividadeController::class, 'data'])->middleware('gi.permission:atividades.listar')->name('data');
+    Route::get('/eventos', [AtividadeController::class, 'eventos'])->name('eventos');
+    Route::get('/criar', [AtividadeController::class, 'create'])->middleware('gi.permission:atividades.criar')->name('create');
+    Route::post('/', [AtividadeController::class, 'store'])->middleware('gi.permission:atividades.criar')->name('store');
+    Route::get('/{atividade}', [AtividadeController::class, 'show'])->whereNumber('atividade')->middleware('gi.permission:atividades.visualizar')->name('show');
+    Route::get('/{atividade}/editar', [AtividadeController::class, 'edit'])->whereNumber('atividade')->middleware('gi.permission:atividades.editar')->name('edit');
+    Route::put('/{atividade}', [AtividadeController::class, 'update'])->whereNumber('atividade')->middleware('gi.permission:atividades.editar')->name('update');
+    Route::delete('/{atividade}', [AtividadeController::class, 'destroy'])->whereNumber('atividade')->middleware('gi.permission:atividades.excluir')->name('destroy');
+    Route::patch('/{atividade}/restaurar', [AtividadeController::class, 'restore'])->whereNumber('atividade')->middleware('gi.permission:atividades.restaurar')->name('restore');
+    Route::delete('/{atividade}/definitivo', [AtividadeController::class, 'forceDestroy'])->whereNumber('atividade')->middleware('gi.permission:atividades.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {

@@ -1,0 +1,12 @@
+@extends('layouts.app')
+@section('title','Visualizar atividade')
+@section('content')
+@if(session('status'))<div class="alert alert-success alert-dismissible fade show">{{ session('status') }}<button class="btn-close" data-bs-dismiss="alert"></button></div>@endif
+<div class="mb-4"><h1 class="page-title">Visualizar atividade</h1><p class="page-description mb-0">Dados cadastrais da atividade.</p></div>
+<div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Dados da atividade</h2></div><div class="card-body p-4"><div class="row g-3">
+@foreach([['ID',$atividade->id],['Nome',$atividade->nome],['Evento',$atividade->evento?->nome],['Períodos',$atividade->periodos],['Status',$atividade->ativo?'Ativa':'Inativa'],['Criada em',$atividade->criado_em?->format('d/m/Y H:i')],['Atualizada em',$atividade->atualizado_em?->format('d/m/Y H:i')]] as [$label,$value])<div class="col-12 col-md-6"><div class="form-label fw-semibold">{{ $label }}</div><div class="form-control bg-body-tertiary h-auto text-break">{{ filled($value)?$value:'—' }}</div></div>@endforeach
+<div class="col-12"><div class="form-label fw-semibold">Descrição</div><div class="form-control bg-body-tertiary h-auto" style="white-space:pre-wrap">{{ $atividade->descricao_old ?: '—' }}</div></div>
+@if($atividade->imagemFundo)<div class="col-12"><div class="form-label fw-semibold">Imagem de fundo</div>@if(strtolower(pathinfo($atividade->imagemFundo,PATHINFO_EXTENSION))==='pdf')<iframe src="{{ asset('certificado/imagem_fundo/'.basename($atividade->imagemFundo)) }}" class="w-100 border rounded" style="height:28rem" title="Imagem de fundo em PDF"></iframe>@else<img src="{{ asset('certificado/imagem_fundo/'.basename($atividade->imagemFundo)) }}" class="img-fluid border rounded" style="max-height:28rem" alt="Imagem de fundo">@endif</div>@endif
+<div class="col-12"><div class="form-label fw-semibold">Template</div><pre class="form-control bg-body-tertiary h-auto" style="max-height:30rem;overflow:auto">{{ $atividade->template ?: '—' }}</pre></div>
+</div><div class="d-flex justify-content-end gap-2 mt-4">@if(in_array('atividades.editar',(array)session('gi_context.permissoes',[]),true))<a href="{{ route('atividades.edit',$atividade) }}" class="btn btn-primary"><i class="bi bi-pencil-fill me-1"></i>Editar</a>@endif<a href="{{ route('atividades.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a></div></div></div>
+@endsection
