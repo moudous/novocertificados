@@ -16,7 +16,7 @@ class Template extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome', 'fundo', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
+    protected $fillable = ['nome', 'fundo', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
 
     protected function casts(): array
     {
@@ -45,9 +45,11 @@ class Template extends Model
 
     public function uploadedBackgroundExists(): bool { return $this->validBackgroundFile($this->fundo); }
     public function coloredBackgroundExists(): bool { return $this->validBackgroundFile($this->fundo_colorido); }
+    public function gradientBackgroundExists(): bool { return $this->validBackgroundFile($this->fundo_degrade); }
     public function activeBackgroundFilename(): ?string
     {
-        if ($this->fundo_colorido_ativo && $this->coloredBackgroundExists()) return $this->fundo_colorido;
+        if ($this->tipo_fundo === 'degrade' && $this->gradientBackgroundExists()) return $this->fundo_degrade;
+        if (($this->tipo_fundo === 'colorido' || $this->fundo_colorido_ativo) && $this->coloredBackgroundExists()) return $this->fundo_colorido;
         return $this->uploadedBackgroundExists() ? $this->fundo : null;
     }
     private function validBackgroundFile(?string $filename): bool

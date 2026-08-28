@@ -67,11 +67,16 @@ class TemplateController extends Controller
     {
         $data = $this->normalizePage($this->validated($request));
         if ($request->hasFile('fundo')) $data['fundo'] = $this->storeBackground($request);
-        if ($request->boolean('fundo_colorido_ativo')) {
+        $data['fundo_colorido_ativo'] = ($data['tipo_fundo'] ?? 'imagem') === 'colorido';
+        if (($data['tipo_fundo'] ?? 'imagem') === 'colorido') {
             if (blank($data['cor_fundo'] ?? null)) return back()->withErrors(['cor_fundo' => 'Selecione a cor do fundo.'])->withInput();
             $data['fundo_colorido'] = $this->createColoredBackground($data['cor_fundo'], $data['largura'], $data['altura']);
         }
-        unset($data['remover_fundo'], $data['remover_fundo_colorido']);
+        if (($data['tipo_fundo'] ?? 'imagem') === 'degrade') {
+            if (blank($data['cor_degrade_inicio'] ?? null) || blank($data['cor_degrade_fim'] ?? null)) return back()->withErrors(['cor_degrade_inicio' => 'Selecione as duas cores do degradê.'])->withInput();
+            $data['fundo_degrade'] = $this->createGradientBackground($data['cor_degrade_inicio'], $data['cor_degrade_fim'], $data['largura'], $data['altura']);
+        }
+        unset($data['remover_fundo'], $data['remover_fundo_colorido'], $data['remover_fundo_degrade']);
         $template = Template::query()->create($data);
         return redirect()->route('templates.show', $template)->with('status', 'Template cadastrado com sucesso.');
     }
@@ -159,26 +164,41 @@ class TemplateController extends Controller
     }
     public function update(Request $request, Template $template): RedirectResponse
     {
-        $data = $this->normalizePage($this->validated($request)); $old = $template->fundo; $oldColored = $template->fundo_colorido;
+        $data = $this->normalizePage($this->validated($request)); $old = $template->fundo; $oldColored = $template->fundo_colorido; $oldGradient = $template->fundo_degrade;
+        $type = $data['tipo_fundo'] ?? 'imagem'; $data['fundo_colorido_ativo'] = $type === 'colorido';
         if ($request->hasFile('fundo')) { $data['fundo'] = $this->storeBackground($request); $this->removeBackground($old); }
         elseif ($request->boolean('remover_fundo')) { $this->removeBackground($old); $data['fundo'] = null; }
         if ($request->boolean('remover_fundo_colorido')) { $this->removeBackground($oldColored); $data['fundo_colorido'] = null; $data['cor_fundo'] = null; }
-        if ($request->boolean('fundo_colorido_ativo') && filled($data['cor_fundo'] ?? null)) {
+        if ($type === 'colorido' && filled($data['cor_fundo'] ?? null)) {
             if ($template->coloredBackgroundExists() && ! $request->boolean('remover_fundo_colorido')) return back()->withErrors(['cor_fundo' => 'Remova primeiro o fundo colorido atual para gerar uma imagem com outra cor.'])->withInput();
             $data['fundo_colorido'] = $this->createColoredBackground($data['cor_fundo'], $data['largura'], $data['altura']);
-        } elseif ($request->boolean('fundo_colorido_ativo') && ! $template->coloredBackgroundExists() && ! $request->boolean('remover_fundo_colorido')) {
+        } elseif ($type === 'colorido' && ! $template->coloredBackgroundExists() && ! $request->boolean('remover_fundo_colorido')) {
             return back()->withErrors(['cor_fundo' => 'Selecione a cor do fundo.'])->withInput();
         }
-        unset($data['remover_fundo'], $data['remover_fundo_colorido']); $template->update($data);
+        if ($request->boolean('remover_fundo_degrade')) { $this->removeBackground($oldGradient); $data['fundo_degrade'] = null; $data['cor_degrade_inicio'] = null; $data['cor_degrade_fim'] = null; }
+        if ($type === 'degrade' && filled($data['cor_degrade_inicio'] ?? null) && filled($data['cor_degrade_fim'] ?? null)) {
+            if ($template->gradientBackgroundExists() && ! $request->boolean('remover_fundo_degrade')) return back()->withErrors(['cor_degrade_inicio' => 'Remova primeiro o fundo degradê atual para gerar outro.'])->withInput();
+            $data['fundo_degrade'] = $this->createGradientBackground($data['cor_degrade_inicio'], $data['cor_degrade_fim'], $data['largura'], $data['altura']);
+        } elseif ($type === 'degrade' && ! $template->gradientBackgroundExists() && ! $request->boolean('remover_fundo_degrade')) {
+            return back()->withErrors(['cor_degrade_inicio' => 'Selecione as duas cores do degradê.'])->withInput();
+        }
+        unset($data['remover_fundo'], $data['remover_fundo_colorido'], $data['remover_fundo_degrade']); $template->update($data);
         return redirect()->route('templates.show', $template)->with('status', 'Template atualizado com sucesso.');
     }
     public function toggleStatus(Template $template): RedirectResponse { $template->update(['ativo' => ! $template->ativo]); return redirect()->route('templates.index')->with('status', 'Status atualizado com sucesso.'); }
     public function destroy(Template $template): RedirectResponse { $template->delete(); return redirect()->route('templates.index')->with('status', 'Template excluído com sucesso.'); }
-    public function forceDestroy(int $template): RedirectResponse { $model = Template::withTrashed()->findOrFail($template); $this->removeBackground($model->fundo); $this->removeBackground($model->fundo_colorido); $model->forceDelete(); return redirect()->route('templates.index')->with('status', 'Template excluído definitivamente.'); }
+    public function forceDestroy(int $template): RedirectResponse { $model = Template::withTrashed()->findOrFail($template); $this->removeBackground($model->fundo); $this->removeBackground($model->fundo_colorido); $this->removeBackground($model->fundo_degrade); $model->forceDelete(); return redirect()->route('templates.index')->with('status', 'Template excluído definitivamente.'); }
 
     private function validated(Request $request): array
     {
-        return $request->validate(['nome' => ['nullable','string','max:100'], 'fundo' => ['nullable','image','mimes:png,jpg,jpeg','max:10240'], 'remover_fundo' => ['nullable','boolean'], 'remover_fundo_colorido' => ['nullable','boolean'], 'fundo_colorido_ativo' => ['nullable','boolean'], 'cor_fundo' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'ativo' => ['required','boolean'], 'certificado_a1' => ['nullable','integer',Rule::exists('certificados_a1','id')->whereNull('apagado_em')], 'largura' => ['nullable','integer','min:1'], 'altura' => ['nullable','integer','min:1'], 'pagina' => ['nullable',Rule::in(['A4','Carta','Oficio','Personalizado'])], 'layout_pagina' => ['nullable',Rule::in(['Retrato','Paisagem'])]]);
+        return $request->validate([
+            'nome' => ['nullable','string','max:100'], 'fundo' => ['nullable','image','mimes:png,jpg,jpeg','max:10240'],
+            'remover_fundo' => ['nullable','boolean'], 'remover_fundo_colorido' => ['nullable','boolean'], 'remover_fundo_degrade' => ['nullable','boolean'],
+            'fundo_colorido_ativo' => ['nullable','boolean'], 'tipo_fundo' => ['required',Rule::in(['imagem','colorido','degrade'])],
+            'cor_fundo' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_inicio' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_fim' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'],
+            'ativo' => ['required','boolean'], 'certificado_a1' => ['nullable','integer',Rule::exists('certificados_a1','id')->whereNull('apagado_em')],
+            'largura' => ['nullable','integer','min:1'], 'altura' => ['nullable','integer','min:1'], 'pagina' => ['nullable',Rule::in(['A4','Carta','Oficio','Personalizado'])], 'layout_pagina' => ['nullable',Rule::in(['Retrato','Paisagem'])],
+        ]);
     }
     private function normalizePage(array $data): array
     {
@@ -207,6 +227,18 @@ class TemplateController extends Controller
         $width = max((int) round($widthMm / 25.4 * 96), 1); $height = max((int) round($heightMm / 25.4 * 96), 1);
         $image = imagecreatetruecolor($width, $height); [$red, $green, $blue] = sscanf($color, '#%02x%02x%02x');
         imagefill($image, 0, 0, imagecolorallocate($image, $red, $green, $blue));
+        $name = hash('sha1', Str::uuid()->toString()).'.png'; $directory = public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($directory);
+        imagepng($image, $directory.'/'.$name); imagedestroy($image); return $name;
+    }
+    private function createGradientBackground(string $startColor, string $endColor, int $widthMm, int $heightMm): string
+    {
+        $width = max((int) round($widthMm / 25.4 * 96), 1); $height = max((int) round($heightMm / 25.4 * 96), 1);
+        $image = imagecreatetruecolor($width, $height); $start = sscanf($startColor, '#%02x%02x%02x'); $end = sscanf($endColor, '#%02x%02x%02x');
+        for ($y = 0; $y < $height; $y++) {
+            $ratio = $height > 1 ? $y / ($height - 1) : 0;
+            $color = imagecolorallocate($image, (int) round($start[0] + ($end[0] - $start[0]) * $ratio), (int) round($start[1] + ($end[1] - $start[1]) * $ratio), (int) round($start[2] + ($end[2] - $start[2]) * $ratio));
+            imageline($image, 0, $y, $width - 1, $y, $color);
+        }
         $name = hash('sha1', Str::uuid()->toString()).'.png'; $directory = public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($directory);
         imagepng($image, $directory.'/'.$name); imagedestroy($image); return $name;
     }
