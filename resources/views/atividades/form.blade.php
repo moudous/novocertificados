@@ -5,6 +5,7 @@
 <style>.background-preview{max-width:100%;max-height:22rem;border:1px solid #dee2e6;border-radius:.5rem}.CodeMirror{height:18rem;border:1px solid #dee2e6;border-radius:.375rem;font-size:.9rem}</style>
 @endpush
 @section('content')
+@php($backgroundExists = $atividade->backgroundExists())
 <div class="mb-4"><h1 class="page-title">{{ $atividade->exists ? 'Editar atividade' : 'Nova atividade' }}</h1><p class="page-description mb-0">Preencha os dados e configure o certificado.</p></div>
 <form id="atividadeForm" method="POST" enctype="multipart/form-data" action="{{ $atividade->exists ? route('atividades.update', $atividade) : route('atividades.store') }}">@csrf @if($atividade->exists) @method('PUT') @endif
 <div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Dados da atividade</h2></div><div class="card-body p-4">
@@ -16,9 +17,10 @@
     <div class="col-12 col-md-4"><label for="periodos" class="form-label">Períodos</label><input id="periodos" name="periodos" class="form-control" maxlength="100" value="{{ old('periodos',$atividade->periodos) }}"></div>
     <div class="col-12 col-md-8"><label for="descricao_old" class="form-label">Descrição</label><textarea id="descricao_old" name="descricao_old" class="form-control" rows="3">{{ old('descricao_old',$atividade->descricao_old) }}</textarea></div>
     <div class="col-12"><label for="imagemFundo" class="form-label">Imagem de fundo</label><input id="imagemFundo" name="imagemFundo" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"><div class="form-text">PDF, PNG, JPG ou JPEG, até 10 MB.</div><input type="hidden" id="remover_imagem" name="remover_imagem" value="0">
+        @if($atividade->imagemFundo && !$backgroundExists)<div class="alert alert-warning mt-3 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>O arquivo <strong>{{ $atividade->imagemFundo }}</strong> está registrado no banco, mas não foi encontrado em <code>certificado/imagem_fundo</code>. Você pode apagá-lo ou enviar outro arquivo.</div>@endif
         <div id="previewArea" class="mt-3 {{ $atividade->imagemFundo ? '' : 'd-none' }}">
-            <img id="imagePreview" class="background-preview {{ $atividade->imagemFundo && strtolower(pathinfo($atividade->imagemFundo, PATHINFO_EXTENSION)) !== 'pdf' ? '' : 'd-none' }}" @if($atividade->imagemFundo) src="{{ asset('certificado/imagem_fundo/'.basename($atividade->imagemFundo)) }}" @endif alt="Pré-visualização">
-            <iframe id="pdfPreview" class="background-preview w-100 {{ $atividade->imagemFundo && strtolower(pathinfo($atividade->imagemFundo, PATHINFO_EXTENSION)) === 'pdf' ? '' : 'd-none' }}" style="height:22rem" @if($atividade->imagemFundo && strtolower(pathinfo($atividade->imagemFundo, PATHINFO_EXTENSION)) === 'pdf') src="{{ asset('certificado/imagem_fundo/'.basename($atividade->imagemFundo)) }}" @endif title="Pré-visualização do PDF"></iframe>
+            <img id="imagePreview" class="background-preview {{ $backgroundExists && strtolower(pathinfo($atividade->imagemFundo, PATHINFO_EXTENSION)) !== 'pdf' ? '' : 'd-none' }}" @if($backgroundExists) src="{{ $atividade->backgroundUrl() }}" @endif alt="Pré-visualização">
+            <iframe id="pdfPreview" class="background-preview w-100 {{ $backgroundExists && strtolower(pathinfo($atividade->imagemFundo, PATHINFO_EXTENSION)) === 'pdf' ? '' : 'd-none' }}" style="height:22rem" @if($backgroundExists && strtolower(pathinfo($atividade->imagemFundo, PATHINFO_EXTENSION)) === 'pdf') src="{{ $atividade->backgroundUrl() }}" @endif title="Pré-visualização do PDF"></iframe>
             <div><button id="removeImage" type="button" class="btn btn-sm btn-outline-danger mt-2"><i class="bi bi-x-lg me-1"></i>Apagar imagem</button></div>
         </div>
     </div>

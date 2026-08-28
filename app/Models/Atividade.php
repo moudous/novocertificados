@@ -34,4 +34,18 @@ class Atividade extends Model
     {
         return $this->belongsTo(Evento::class, 'eventoId');
     }
+
+    public function backgroundExists(): bool
+    {
+        return filled($this->imagemFundo)
+            && basename((string) $this->imagemFundo) === $this->imagemFundo
+            && is_file(public_path('certificado/imagem_fundo/'.$this->imagemFundo));
+    }
+
+    public function backgroundUrl(): ?string
+    {
+        return $this->backgroundExists()
+            ? asset('certificado/imagem_fundo/'.$this->imagemFundo)
+            : null;
+    }
 }
