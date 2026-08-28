@@ -1,0 +1,12 @@
+@extends('layouts.app')
+@section('title','Rubricas dos participantes')
+@push('styles')<link href="https://cdn.datatables.net/2.3.2/css/dataTables.bootstrap5.min.css" rel="stylesheet">@endpush
+@section('content')
+<div class="mb-4 d-flex flex-wrap justify-content-between align-items-start gap-3"><div><h1 class="page-title">Rubricas dos participantes</h1><p class="page-description mb-0">Gerencie as rubricas vinculadas aos participantes.</p></div>@if(in_array('rubricas_participantes.criar',$permissions,true))<a href="{{ route('rubricas_participantes.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Nova rubrica</a>@endif</div>
+@if(session('status'))<div class="alert alert-success alert-dismissible fade show">{{ session('status') }}<button class="btn-close" data-bs-dismiss="alert"></button></div>@endif
+<div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Rubricas cadastradas</h2></div><div class="card-body p-0"><div class="table-responsive"><table id="rubricasTable" class="table table-hover align-middle w-100 mb-0"><thead><tr><th>ID</th><th>Participante</th><th data-dt-order="disable">Rubrica</th><th>Status</th><th>Criada em</th><th>Alterada em</th><th class="text-center" data-dt-order="disable">Ações</th></tr></thead></table></div></div></div>
+@endsection
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script><script src="https://cdn.datatables.net/2.3.2/js/dataTables.min.js"></script><script src="https://cdn.datatables.net/2.3.2/js/dataTables.bootstrap5.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{new DataTable('#rubricasTable',{processing:true,serverSide:true,ajax:@json(route('rubricas_participantes.data',[],false)),pageLength:10,lengthMenu:[10,25,50,100],pagingType:'full_numbers',order:[[0,'desc']],columns:[{data:'id'},{data:'participante'},{data:'rubrica',orderable:false,searchable:false},{data:'ativo'},{data:'criado_em'},{data:'alterado_em'},{data:'acoes',orderable:false,searchable:false,className:'text-center'}],language:{processing:'Carregando...',emptyTable:'Nenhuma rubrica cadastrada.',info:'Exibindo _START_ a _END_ de _TOTAL_ rubricas',infoEmpty:'Nenhuma rubrica encontrada',lengthMenu:'Exibir _MENU_ registros',search:'Pesquisar:',zeroRecords:'Nenhuma rubrica encontrada.',paginate:{first:'Primeira',last:'Última',next:'Próxima',previous:'Anterior'}}})});</script>
+@endpush
