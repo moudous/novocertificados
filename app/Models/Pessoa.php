@@ -12,7 +12,7 @@ class Pessoa extends Model
 
     protected $keyType = 'int';
 
-    protected $fillable = ['id', 'usuario', 'nome', 'email', 'perfil', 'perfil_id', 'ativo'];
+    protected $fillable = ['id', 'usuario', 'nome', 'email', 'perfil', 'perfil_id', 'ativo', 'ultimo_acesso'];
 
     protected function casts(): array
     {
@@ -20,6 +20,7 @@ class Pessoa extends Model
             'id' => 'integer',
             'perfil_id' => 'integer',
             'ativo' => 'boolean',
+            'ultimo_acesso' => 'datetime',
         ];
     }
 }

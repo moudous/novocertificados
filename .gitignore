@@ -1,3 +1,4 @@
 /.env
+.env
 /vendor/
 /storage/framework/sessions/*

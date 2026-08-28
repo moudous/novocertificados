@@ -13,6 +13,7 @@
                     ['Usuário', $pessoa->usuario], ['E-mail', $pessoa->email],
                     ['Perfil', $pessoa->perfil], ['ID do perfil', $pessoa->perfil_id],
                     ['Status', $pessoa->ativo ? 'Ativa' : 'Inativa'],
+                    ['Último acesso ao sistema', $pessoa->ultimo_acesso?->format('d/m/Y H:i') ?? 'Nunca acessou'],
                     ['Data de cadastro', $pessoa->created_at?->format('d/m/Y H:i')],
                     ['Última sincronização', $pessoa->updated_at?->format('d/m/Y H:i')],
                 ];

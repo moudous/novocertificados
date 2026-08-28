@@ -23,12 +23,12 @@ Route::get('/auth/gi', function (Request $request) {
 
     $context = (array) $response->json('data');
     $synchronizer = app(GiPessoaSynchronizer::class);
+    $total = $synchronizer->syncFromGi((string) $context['access_token']);
+    // O diretório usa o primeiro perfil associado ao usuário. Para quem está
+    // entrando agora, prevalece o perfil efetivamente selecionado no GI.
     $synchronizer->syncSessionUser($context);
+    $context['atualizacao_usuarios'] = ['realizada' => true, 'total' => $total];
 
-    if (! empty($context['atualizar'])) {
-        $total = $synchronizer->syncFromGi((string) $context['access_token']);
-        $context['atualizacao_usuarios'] = ['realizada' => true, 'total' => $total];
-    }
     $request->session()->regenerate();
     $request->session()->put('gi_context', $context);
 

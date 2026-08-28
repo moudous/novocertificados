@@ -23,7 +23,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table id="pessoasTable" class="table table-hover align-middle w-100 mb-0">
-                    <thead><tr><th>ID GI</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>ID perfil</th><th>Status</th><th>Última sincronização</th><th class="text-center" data-dt-order="disable">Ações</th></tr></thead>
+                    <thead><tr><th>ID GI</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>ID perfil</th><th>Status</th><th>Último acesso</th><th>Última sincronização</th><th class="text-center" data-dt-order="disable">Ações</th></tr></thead>
                     <tbody>
                     @foreach($pessoas as $pessoa)
                         <tr>
@@ -33,6 +33,7 @@
                             <td>{{ $pessoa->perfil ?? '—' }}</td>
                             <td>{{ $pessoa->perfil_id ?? '—' }}</td>
                             <td><span class="badge {{ $pessoa->ativo ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $pessoa->ativo ? 'Ativa' : 'Inativa' }}</span></td>
+                            <td class="text-nowrap" data-order="{{ $pessoa->ultimo_acesso?->timestamp ?? 0 }}">{{ $pessoa->ultimo_acesso?->format('d/m/Y H:i') ?? 'Nunca acessou' }}</td>
                             <td class="text-nowrap" data-order="{{ $pessoa->updated_at?->timestamp ?? 0 }}">{{ $pessoa->updated_at?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td class="text-center"><a href="{{ route('pessoas.show', $pessoa) }}" class="btn btn-sm btn-outline-dark listagem-acao" title="Visualizar pessoa" aria-label="Visualizar {{ $pessoa->nome }}"><i class="bi bi-eye-fill"></i></a></td>
                         </tr>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Pessoa;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use UnexpectedValueException;
@@ -32,7 +33,9 @@ class GiPessoaSynchronizer
         $rows = collect($users)
             ->filter(fn ($user): bool => is_array($user))
             ->map(function (array $user) use ($now): array {
-                $data = $this->normalize($user, (array) ($user['perfil'] ?? []));
+                $profile = (array) ($user['perfil'] ?? ($user['perfis'][0] ?? []));
+                $data = $this->normalize($user, $profile);
+                $data['ultimo_acesso'] ??= null;
 
                 return [...$data, 'created_at' => $now, 'updated_at' => $now];
             })
@@ -46,7 +49,7 @@ class GiPessoaSynchronizer
         DB::transaction(fn () => Pessoa::query()->upsert(
             $rows,
             ['id'],
-            ['usuario', 'nome', 'email', 'perfil', 'perfil_id', 'ativo', 'updated_at'],
+            ['usuario', 'nome', 'email', 'perfil', 'perfil_id', 'ativo', 'ultimo_acesso', 'updated_at'],
         ));
 
         return count($rows);
@@ -62,7 +65,7 @@ class GiPessoaSynchronizer
             throw new UnexpectedValueException('O GI retornou uma pessoa sem ID, nome ou e-mail válido.');
         }
 
-        return [
+        $data = [
             'id' => $id,
             'usuario' => filled($user['usuario'] ?? null) ? (string) $user['usuario'] : null,
             'nome' => $name,
@@ -71,5 +74,17 @@ class GiPessoaSynchronizer
             'perfil_id' => isset($profile['id']) ? (int) $profile['id'] : null,
             'ativo' => array_key_exists('ativo', $user) ? (bool) $user['ativo'] : true,
         ];
+
+        // O contexto de login pode não possuir este campo. Nesse caso, preserva
+        // o valor já obtido anteriormente pelo diretório de usuários do GI.
+        if (array_key_exists('ultimo_acesso', $user)) {
+            $data['ultimo_acesso'] = filled($user['ultimo_acesso'])
+                ? CarbonImmutable::parse((string) $user['ultimo_acesso'])
+                    ->setTimezone((string) config('app.timezone'))
+                    ->format('Y-m-d H:i:s')
+                : null;
+        }
+
+        return $data;
     }
 }
