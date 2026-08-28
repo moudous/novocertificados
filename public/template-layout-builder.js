@@ -67,7 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
     fields.fontFamily.addEventListener('change', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.font_family = fields.fontFamily.value; render(); } });
     fields.fontSize.addEventListener('input', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.font_size = clamp(fields.fontSize.value, 1, 300); render(); } });
     ['bold','italic','underline'].forEach(key => fields[key].addEventListener('change', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item[key] = fields[key].checked; render(); } }));
-    document.getElementById('removeElement').addEventListener('click', () => { elements = elements.filter(item => item.uid !== selected); selected = null; properties.classList.add('d-none'); render(); });
+    const removeSelectedElement = () => { if (!selected) return; elements = elements.filter(item => item.uid !== selected); selected = null; properties.classList.add('d-none'); render(); };
+    document.getElementById('removeElement').addEventListener('click', removeSelectedElement);
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Delete' || !selected) return;
+        const target = event.target;
+        if (target instanceof HTMLElement && (target.matches('input, textarea, select') || target.isContentEditable)) return;
+        event.preventDefault(); removeSelectedElement();
+    });
     canvas.addEventListener('pointerdown', event => { if (event.target === canvas) select(null); });
     const serializeElements = () => JSON.stringify(elements.map(({uid, variable_id, type, text, x, y, width, height, color, align, font_family, font_size, bold, italic, underline}) => ({uid, variable_id, type, text, x: rounded(x), y: rounded(y), width: rounded(width), height: rounded(height), color, align, font_family, font_size, bold, italic, underline})));
     document.getElementById('builderForm').addEventListener('submit', () => { document.getElementById('layoutJson').value = serializeElements(); });
