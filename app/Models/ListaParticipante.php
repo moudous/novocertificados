@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ListaParticipante extends Model
 {
     protected $table = 'lista_participantes';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
     public const CREATED_AT = 'criado_em';
     public const UPDATED_AT = 'alterado_em';
     protected $fillable = ['participante_id', 'novo_certificado_id'];
