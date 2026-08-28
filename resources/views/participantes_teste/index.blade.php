@@ -1,0 +1,12 @@
+@extends('layouts.app')
+@section('title','Participantes de teste')
+@push('styles')<link href="https://cdn.datatables.net/2.3.2/css/dataTables.bootstrap5.min.css" rel="stylesheet">@endpush
+@section('content')
+<div class="mb-4 d-flex flex-wrap justify-content-between align-items-start gap-3"><div><h1 class="page-title">Participantes de teste</h1><p class="page-description mb-0">Gerencie os participantes selecionados para testes.</p></div>@if(in_array('participantes_teste.criar',$permissions,true))<a href="{{ route('participantes_teste.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Novo participante de teste</a>@endif</div>
+@if(session('status'))<div class="alert alert-success alert-dismissible fade show">{{ session('status') }}<button class="btn-close" data-bs-dismiss="alert"></button></div>@endif
+<div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Participantes cadastrados</h2></div><div class="card-body p-0"><div class="table-responsive"><table id="participantesTesteTable" class="table table-hover align-middle w-100 mb-0"><thead><tr><th>ID</th><th>Participante</th><th data-dt-order="disable">E-mail</th><th data-dt-order="disable">Estado</th><th>Criado em</th><th>Alterado em</th><th class="text-center" data-dt-order="disable">Ações</th></tr></thead></table></div></div></div>
+@endsection
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script><script src="https://cdn.datatables.net/2.3.2/js/dataTables.min.js"></script><script src="https://cdn.datatables.net/2.3.2/js/dataTables.bootstrap5.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{new DataTable('#participantesTesteTable',{processing:true,serverSide:true,ajax:@json(route('participantes_teste.data',[],false)),pageLength:10,lengthMenu:[10,25,50,100],pagingType:'full_numbers',order:[[0,'desc']],columns:[{data:'id'},{data:'participante'},{data:'email',orderable:false},{data:'estado',orderable:false,searchable:false},{data:'criado_em'},{data:'alterado_em'},{data:'acoes',orderable:false,searchable:false,className:'text-center'}],language:{processing:'Carregando...',emptyTable:'Nenhum participante de teste cadastrado.',info:'Exibindo _START_ a _END_ de _TOTAL_ participantes',infoEmpty:'Nenhum participante encontrado',lengthMenu:'Exibir _MENU_ registros',search:'Pesquisar:',zeroRecords:'Nenhum participante encontrado.',paginate:{first:'Primeira',last:'Última',next:'Próxima',previous:'Anterior'}}})});</script>
+@endpush

@@ -49,3 +49,11 @@ rubricas_participantes.criar
 rubricas_participantes.editar
 rubricas_participantes.excluir
 rubricas_participantes.excluir_definitivamente
+
+participantes_teste.listar
+participantes_teste.visualizar
+participantes_teste.criar
+participantes_teste.editar
+participantes_teste.excluir
+participantes_teste.excluir_definitivamente
+
