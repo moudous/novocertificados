@@ -16,7 +16,7 @@ class Template extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome', 'fundo', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
+    protected $fillable = ['nome', 'fundo', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'direcao_degrade', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
 
     protected function casts(): array
     {

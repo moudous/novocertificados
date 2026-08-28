@@ -74,7 +74,7 @@ class TemplateController extends Controller
         }
         if (($data['tipo_fundo'] ?? 'imagem') === 'degrade') {
             if (blank($data['cor_degrade_inicio'] ?? null) || blank($data['cor_degrade_fim'] ?? null)) return back()->withErrors(['cor_degrade_inicio' => 'Selecione as duas cores do degradê.'])->withInput();
-            $data['fundo_degrade'] = $this->createGradientBackground($data['cor_degrade_inicio'], $data['cor_degrade_fim'], $data['largura'], $data['altura']);
+            $data['fundo_degrade'] = $this->createGradientBackground($data['cor_degrade_inicio'], $data['cor_degrade_fim'], $data['direcao_degrade'] ?? 'cima_baixo', $data['largura'], $data['altura']);
         }
         unset($data['remover_fundo'], $data['remover_fundo_colorido'], $data['remover_fundo_degrade']);
         $template = Template::query()->create($data);
@@ -178,7 +178,7 @@ class TemplateController extends Controller
         if ($request->boolean('remover_fundo_degrade')) { $this->removeBackground($oldGradient); $data['fundo_degrade'] = null; $data['cor_degrade_inicio'] = null; $data['cor_degrade_fim'] = null; }
         if ($type === 'degrade' && filled($data['cor_degrade_inicio'] ?? null) && filled($data['cor_degrade_fim'] ?? null)) {
             if ($template->gradientBackgroundExists() && ! $request->boolean('remover_fundo_degrade')) return back()->withErrors(['cor_degrade_inicio' => 'Remova primeiro o fundo degradê atual para gerar outro.'])->withInput();
-            $data['fundo_degrade'] = $this->createGradientBackground($data['cor_degrade_inicio'], $data['cor_degrade_fim'], $data['largura'], $data['altura']);
+            $data['fundo_degrade'] = $this->createGradientBackground($data['cor_degrade_inicio'], $data['cor_degrade_fim'], $data['direcao_degrade'] ?? 'cima_baixo', $data['largura'], $data['altura']);
         } elseif ($type === 'degrade' && ! $template->gradientBackgroundExists() && ! $request->boolean('remover_fundo_degrade')) {
             return back()->withErrors(['cor_degrade_inicio' => 'Selecione as duas cores do degradê.'])->withInput();
         }
@@ -195,7 +195,7 @@ class TemplateController extends Controller
             'nome' => ['nullable','string','max:100'], 'fundo' => ['nullable','image','mimes:png,jpg,jpeg','max:10240'],
             'remover_fundo' => ['nullable','boolean'], 'remover_fundo_colorido' => ['nullable','boolean'], 'remover_fundo_degrade' => ['nullable','boolean'],
             'fundo_colorido_ativo' => ['nullable','boolean'], 'tipo_fundo' => ['required',Rule::in(['imagem','colorido','degrade'])],
-            'cor_fundo' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_inicio' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_fim' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'],
+            'cor_fundo' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_inicio' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_fim' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'direcao_degrade' => ['nullable',Rule::in(['cima_baixo','baixo_cima','esquerda_direita','direita_esquerda','superior_esquerdo_inferior_direito','inferior_direito_superior_esquerdo','superior_direito_inferior_esquerdo','inferior_esquerdo_superior_direito'])],
             'ativo' => ['required','boolean'], 'certificado_a1' => ['nullable','integer',Rule::exists('certificados_a1','id')->whereNull('apagado_em')],
             'largura' => ['nullable','integer','min:1'], 'altura' => ['nullable','integer','min:1'], 'pagina' => ['nullable',Rule::in(['A4','Carta','Oficio','Personalizado'])], 'layout_pagina' => ['nullable',Rule::in(['Retrato','Paisagem'])],
         ]);
@@ -230,14 +230,16 @@ class TemplateController extends Controller
         $name = hash('sha1', Str::uuid()->toString()).'.png'; $directory = public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($directory);
         imagepng($image, $directory.'/'.$name); imagedestroy($image); return $name;
     }
-    private function createGradientBackground(string $startColor, string $endColor, int $widthMm, int $heightMm): string
+    private function createGradientBackground(string $startColor, string $endColor, string $direction, int $widthMm, int $heightMm): string
     {
         $width = max((int) round($widthMm / 25.4 * 96), 1); $height = max((int) round($heightMm / 25.4 * 96), 1);
         $image = imagecreatetruecolor($width, $height); $start = sscanf($startColor, '#%02x%02x%02x'); $end = sscanf($endColor, '#%02x%02x%02x');
-        for ($y = 0; $y < $height; $y++) {
-            $ratio = $height > 1 ? $y / ($height - 1) : 0;
-            $color = imagecolorallocate($image, (int) round($start[0] + ($end[0] - $start[0]) * $ratio), (int) round($start[1] + ($end[1] - $start[1]) * $ratio), (int) round($start[2] + ($end[2] - $start[2]) * $ratio));
-            imageline($image, 0, $y, $width - 1, $y, $color);
+        $colors = []; for ($step = 0; $step <= 512; $step++) { $ratio = $step / 512; $colors[$step] = imagecolorallocate($image, (int) round($start[0] + ($end[0] - $start[0]) * $ratio), (int) round($start[1] + ($end[1] - $start[1]) * $ratio), (int) round($start[2] + ($end[2] - $start[2]) * $ratio)); }
+        for ($y = 0; $y < $height; $y++) for ($x = 0; $x < $width; $x++) {
+            $nx = $width > 1 ? $x / ($width - 1) : 0; $ny = $height > 1 ? $y / ($height - 1) : 0;
+            $diagonal = max(($width * $width) + ($height * $height), 1);
+            $ratio = match ($direction) { 'baixo_cima' => 1-$ny, 'esquerda_direita' => $nx, 'direita_esquerda' => 1-$nx, 'superior_esquerdo_inferior_direito' => (($nx*$width*$width)+($ny*$height*$height))/$diagonal, 'inferior_direito_superior_esquerdo' => 1-((($nx*$width*$width)+($ny*$height*$height))/$diagonal), 'superior_direito_inferior_esquerdo' => (((1-$nx)*$width*$width)+($ny*$height*$height))/$diagonal, 'inferior_esquerdo_superior_direito' => (($nx*$width*$width)+((1-$ny)*$height*$height))/$diagonal, default => $ny };
+            imagesetpixel($image, $x, $y, $colors[(int) round($ratio * 512)]);
         }
         $name = hash('sha1', Str::uuid()->toString()).'.png'; $directory = public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($directory);
         imagepng($image, $directory.'/'.$name); imagedestroy($image); return $name;
