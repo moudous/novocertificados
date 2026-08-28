@@ -40,6 +40,30 @@ class CertificadoController extends Controller
             });
         }
 
+        $id = trim((string) $request->input('filters.id', ''));
+        $name = trim((string) $request->input('filters.nome', ''));
+        $participantId = trim((string) $request->input('filters.participanteId', ''));
+        $activityId = trim((string) $request->input('filters.atividadeId', ''));
+        $type = trim((string) $request->input('filters.tipo', ''));
+        $workload = trim((string) $request->input('filters.cargaHoraria', ''));
+        $status = trim((string) $request->input('filters.status', ''));
+        $createdAt = trim((string) $request->input('filters.criado_em', ''));
+
+        $query
+            ->when($id !== '' && ctype_digit($id), fn (Builder $query): Builder => $query->where('id', (int) $id))
+            ->when($name !== '', fn (Builder $query): Builder => $query->where('nome', 'like', "%{$name}%"))
+            ->when($participantId !== '' && ctype_digit($participantId), fn (Builder $query): Builder => $query->where('participanteId', (int) $participantId))
+            ->when($activityId !== '' && ctype_digit($activityId), fn (Builder $query): Builder => $query->where('atividadeId', (int) $activityId))
+            ->when($type !== '', fn (Builder $query): Builder => $query->where('tipo', 'like', "%{$type}%"))
+            ->when($workload !== '' && ctype_digit($workload), fn (Builder $query): Builder => $query->where('cargaHoraria', (int) $workload))
+            ->when($status === 'ativo', fn (Builder $query): Builder => $query->whereNull('apagado_em')->where('ativo', true))
+            ->when($status === 'inativo', fn (Builder $query): Builder => $query->whereNull('apagado_em')->where('ativo', false))
+            ->when($status === 'excluido', fn (Builder $query): Builder => $query->whereNotNull('apagado_em'))
+            ->when(
+                preg_match('/^\d{4}-\d{2}-\d{2}$/', $createdAt) === 1,
+                fn (Builder $query): Builder => $query->whereDate('criado_em', $createdAt)
+            );
+
         $recordsFiltered = (clone $query)->count();
         $column = self::COLUMNS[(int) $request->input('order.0.column', 0)] ?? 'id';
         $direction = $request->input('order.0.dir') === 'asc' ? 'asc' : 'desc';
@@ -193,6 +217,11 @@ class CertificadoController extends Controller
     private function authorizeSelector(Request $request): void
     {
         $permissions = (array) $request->session()->get('gi_context.permissoes', []);
-        abort_unless(in_array('certificados.criar', $permissions, true) || in_array('certificados.editar', $permissions, true), 403);
+        abort_unless(
+            in_array('certificados.listar', $permissions, true)
+            || in_array('certificados.criar', $permissions, true)
+            || in_array('certificados.editar', $permissions, true),
+            403
+        );
     }
 }
