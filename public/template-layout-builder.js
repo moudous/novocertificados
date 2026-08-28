@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const node = document.createElement('div'); node.className = `layout-element ${item.type === 'imagem' ? 'image' : 'text'}${selected === item.uid ? ' selected' : ''}`; node.dataset.uid = item.uid;
             applyBox(node, item);
             if (item.type === 'imagem') node.innerHTML = item.image ? `<img src="${item.image}" alt="Variável de imagem"><span class="resize-handle"></span>` : '<span class="small text-danger">Imagem indisponível</span><span class="resize-handle"></span>';
-            else { node.classList.add('layout-element-text'); node.textContent = item.text || 'Texto'; node.style.color = item.color; node.style.textAlign = alignments[item.align] || 'left'; node.style.fontFamily = item.font_family; node.style.fontSize = `${item.font_size}pt`; node.style.fontWeight = item.bold ? 'bold' : 'normal'; node.style.fontStyle = item.italic ? 'italic' : 'normal'; node.style.textDecoration = item.underline ? 'underline' : 'none'; }
+            else { node.classList.add('layout-element-text'); node.textContent = item.text || 'Texto'; node.style.color = item.color; node.style.textAlign = alignments[item.align] || 'left'; node.style.fontFamily = item.font_family; node.style.fontSize = `${item.font_size}pt`; node.style.fontWeight = item.bold ? 'bold' : 'normal'; node.style.fontStyle = item.italic ? 'italic' : 'normal'; node.style.textDecoration = item.underline ? 'underline' : 'none'; const handle = document.createElement('span'); handle.className = 'resize-handle'; node.appendChild(handle); }
             node.addEventListener('pointerdown', event => startPointer(event, item, node)); canvas.appendChild(node);
         });
     }
