@@ -76,7 +76,7 @@ class TemplateController extends Controller
     {
         $variables = Variavel::query()->where('ativo', true)->orderBy('tipo')->orderBy('id')->get()
             ->map(fn (Variavel $variable): array => [
-                'id' => $variable->id, 'type' => $variable->tipo,
+                'id' => $variable->id, 'name' => $variable->nome ?: 'Variável #'.$variable->id, 'type' => $variable->tipo,
                 'label' => $variable->tipo === 'texto' ? Str::limit($variable->texto ?: 'Texto sem conteúdo', 45) : ($variable->imagem ?: 'Imagem'),
                 'text' => $variable->texto, 'image' => $variable->imageUrl(),
                 'width' => max((int) ($variable->largura ?: ($variable->tipo === 'imagem' ? 40 : 70)), 1),

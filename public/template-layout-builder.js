@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     config.variables.forEach(variable => {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'variable-button';
         const icon = variable.type === 'imagem' && variable.image ? `<img class="variable-thumb" src="${variable.image}" alt="">` : `<span class="context-icon"><i class="bi ${variable.type === 'imagem' ? 'bi-image' : 'bi-fonts'}"></i></span>`;
-        button.innerHTML = `${icon}<span class="text-truncate"><strong class="d-block small">${variable.type === 'imagem' ? 'Imagem' : 'Texto'} #${variable.id}</strong><span class="small text-muted">${escapeHtml(variable.label)}</span></span>`;
+        button.innerHTML = `${icon}<span class="text-truncate"><strong class="d-block small">${escapeHtml(variable.name)}</strong><span class="small text-muted">${variable.type === 'imagem' ? 'Imagem' : 'Texto'} · ${escapeHtml(variable.label)}</span></span>`;
         button.addEventListener('click', () => { const item = normalize({...variable, variable_id: variable.id, uid: ''}); elements.push(item); render(); select(item.uid); }); list.appendChild(button);
     });
     if (!config.variables.length) list.innerHTML = '<div class="alert alert-light small">Nenhuma variável ativa disponível.</div>';

@@ -14,7 +14,7 @@ use Illuminate\View\View;
 
 class VariavelController extends Controller
 {
-    private const COLUMNS = ['id', 'tipo', 'texto', 'ativo', 'criado_em', 'alterado_em'];
+    private const COLUMNS = ['id', 'nome', 'tipo', 'texto', 'ativo', 'criado_em', 'alterado_em'];
 
     public function index(Request $request): View
     {
@@ -31,7 +31,8 @@ class VariavelController extends Controller
 
         if ($search !== '') {
             $query->where(function (Builder $query) use ($search): void {
-                $query->where('tipo', 'like', "%{$search}%")
+                $query->where('nome', 'like', "%{$search}%")
+                    ->orWhere('tipo', 'like', "%{$search}%")
                     ->orWhere('texto', 'like', "%{$search}%")
                     ->orWhere('imagem', 'like', "%{$search}%")
                     ->orWhere('id', 'like', "%{$search}%");
@@ -48,6 +49,7 @@ class VariavelController extends Controller
         $data = $query->orderBy($column, $direction)->skip($start)->take($length)->get()
             ->map(fn (Variavel $variavel): array => [
                 'id' => $variavel->id,
+                'nome' => e($variavel->nome ?: '—'),
                 'tipo' => e(ucfirst((string) $variavel->tipo) ?: '—'),
                 'conteudo' => $variavel->tipo === 'imagem'
                     ? ($variavel->imageExists()
@@ -163,6 +165,7 @@ class VariavelController extends Controller
     private function validated(Request $request): array
     {
         return $request->validate([
+            'nome' => ['required', 'string', 'max:20'],
             'tipo' => ['required', Rule::in(['imagem', 'texto'])],
             'imagem' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:10240'],
             'remover_imagem' => ['nullable', 'boolean'],

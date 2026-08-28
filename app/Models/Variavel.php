@@ -16,7 +16,7 @@ class Variavel extends Model
     public const DELETED_AT = 'apagado_em';
 
     protected $fillable = [
-        'tipo', 'imagem', 'texto', 'ativo', 'pos_x', 'pox_y', 'altura', 'largura',
+        'nome', 'tipo', 'imagem', 'texto', 'ativo', 'pos_x', 'pox_y', 'altura', 'largura',
         'alinhamento', 'cor', 'centro_x', 'centro_y',
     ];
 
