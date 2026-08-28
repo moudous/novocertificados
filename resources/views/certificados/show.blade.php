@@ -1,0 +1,10 @@
+@extends('layouts.app')
+@section('title','Visualizar certificado')
+@section('content')
+@if(session('status'))<div class="alert alert-success alert-dismissible fade show">{{ session('status') }}<button class="btn-close" data-bs-dismiss="alert"></button></div>@endif
+<div class="mb-4"><h1 class="page-title">Visualizar certificado</h1><p class="page-description mb-0">Dados cadastrais do certificado.</p></div>
+<div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Dados do certificado</h2></div><div class="card-body p-4"><div class="row g-3">
+@foreach([['ID',$certificado->id],['Participante',$certificado->participante?->nome],['Atividade',$certificado->atividade?->nome],['Nome',$certificado->nome],['Título',$certificado->titulo],['Título 2',$certificado->titulo2],['Título 3',$certificado->titulo3],['Título 4',$certificado->titulo4],['Carga horária',$certificado->cargaHoraria],['Tipo',$certificado->tipo],['Arquivo',$certificado->arquivo],['Arquivo anterior',$certificado->arquivo_old],['Status',$certificado->ativo?'Ativo':'Inativo'],['Criado em',$certificado->criado_em?->format('d/m/Y H:i')],['Atualizado em',$certificado->atualizado_em?->format('d/m/Y H:i')]] as [$label,$value])<div class="col-12 col-md-6"><div class="form-label fw-semibold">{{ $label }}</div><div class="form-control bg-body-tertiary h-auto text-break">{{ filled($value)?$value:'—' }}</div></div>@endforeach
+<div class="col-12"><div class="form-label fw-semibold">Outros participantes</div><div class="form-control bg-body-tertiary h-auto" style="white-space:pre-wrap">{{ $certificado->outrosParticipantes ?: '—' }}</div></div>
+</div><div class="d-flex justify-content-end gap-2 mt-4">@if(in_array('certificados.editar',(array)session('gi_context.permissoes',[]),true))<a href="{{ route('certificados.edit',$certificado) }}" class="btn btn-primary"><i class="bi bi-pencil-fill me-1"></i>Editar</a>@endif<a href="{{ route('certificados.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a></div></div></div>
+@endsection

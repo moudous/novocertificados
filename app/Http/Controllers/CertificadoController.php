@@ -1,0 +1,191 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Atividade;
+use App\Models\Certificado;
+use App\Models\Participante;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+
+class CertificadoController extends Controller
+{
+    private const COLUMNS = ['id', 'nome', 'participanteId', 'atividadeId', 'tipo', 'cargaHoraria', 'ativo', 'criado_em', 'atualizado_em'];
+
+    public function index(Request $request): View
+    {
+        return view('certificados.index', [
+            'permissions' => (array) $request->session()->get('gi_context.permissoes', []),
+        ]);
+    }
+
+    public function data(Request $request): JsonResponse
+    {
+        $query = Certificado::withTrashed()->with(['participante', 'atividade']);
+        $recordsTotal = (clone $query)->count();
+        $search = trim((string) $request->input('search.value', ''));
+
+        if ($search !== '') {
+            $query->where(function (Builder $query) use ($search): void {
+                $query->where('nome', 'like', "%{$search}%")
+                    ->orWhere('titulo', 'like', "%{$search}%")
+                    ->orWhere('tipo', 'like', "%{$search}%")
+                    ->orWhere('id', 'like', "%{$search}%")
+                    ->orWhereHas('participante', fn (Builder $participant): Builder => $participant->where('nome', 'like', "%{$search}%"))
+                    ->orWhereHas('atividade', fn (Builder $activity): Builder => $activity->where('nome', 'like', "%{$search}%"));
+            });
+        }
+
+        $recordsFiltered = (clone $query)->count();
+        $column = self::COLUMNS[(int) $request->input('order.0.column', 0)] ?? 'id';
+        $direction = $request->input('order.0.dir') === 'asc' ? 'asc' : 'desc';
+        $length = min(max((int) $request->input('length', 10), 1), 100);
+        $start = max((int) $request->input('start', 0), 0);
+        $permissions = (array) $request->session()->get('gi_context.permissoes', []);
+
+        $data = $query->orderBy($column, $direction)->skip($start)->take($length)->get()
+            ->map(fn (Certificado $certificado): array => [
+                'id' => $certificado->id,
+                'nome' => e($certificado->nome ?: '—'),
+                'participante' => e($certificado->participante?->nome ?: '—'),
+                'atividade' => e($certificado->atividade?->nome ?: '—'),
+                'tipo' => e($certificado->tipo ?: '—'),
+                'cargaHoraria' => $certificado->cargaHoraria ?? '—',
+                'ativo' => $certificado->trashed()
+                    ? '<span class="badge text-bg-danger">Excluído</span>'
+                    : ($certificado->ativo
+                        ? '<span class="badge text-bg-success">Ativo</span>'
+                        : '<span class="badge text-bg-secondary">Inativo</span>'),
+                'criado_em' => $certificado->criado_em?->format('d/m/Y H:i') ?? '—',
+                'atualizado_em' => $certificado->atualizado_em?->format('d/m/Y H:i') ?? '—',
+                'acoes' => view('certificados.partials.actions', [
+                    'certificado' => $certificado,
+                    'permissions' => $permissions,
+                ])->render(),
+            ]);
+
+        return response()->json([
+            'draw' => (int) $request->input('draw'),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ]);
+    }
+
+    public function participantes(Request $request): JsonResponse
+    {
+        $this->authorizeSelector($request);
+        $search = trim((string) $request->input('q', ''));
+        $page = max((int) $request->input('page', 1), 1);
+        $items = Participante::query()
+            ->when($search !== '', fn (Builder $query): Builder => $query
+                ->where(fn (Builder $filter): Builder => $filter->where('nome', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
+            ->orderBy('nome')->paginate(20, ['id', 'nome', 'email'], 'page', $page);
+
+        return response()->json([
+            'results' => collect($items->items())->map(fn (Participante $item): array => [
+                'id' => $item->id,
+                'text' => $item->nome.($item->email ? ' · '.$item->email : ''),
+            ])->values(),
+            'pagination' => ['more' => $items->hasMorePages()],
+        ]);
+    }
+
+    public function atividades(Request $request): JsonResponse
+    {
+        $this->authorizeSelector($request);
+        $search = trim((string) $request->input('q', ''));
+        $page = max((int) $request->input('page', 1), 1);
+        $items = Atividade::query()
+            ->when($search !== '', fn (Builder $query): Builder => $query->where('nome', 'like', "%{$search}%"))
+            ->orderBy('nome')->paginate(20, ['id', 'nome'], 'page', $page);
+
+        return response()->json([
+            'results' => collect($items->items())->map(fn (Atividade $item): array => ['id' => $item->id, 'text' => $item->nome ?: "Atividade #{$item->id}"])->values(),
+            'pagination' => ['more' => $items->hasMorePages()],
+        ]);
+    }
+
+    public function create(): View
+    {
+        return view('certificados.form', ['certificado' => new Certificado()]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $certificado = Certificado::query()->create($this->validated($request));
+
+        return redirect()->route('certificados.show', $certificado)->with('status', 'Certificado cadastrado com sucesso.');
+    }
+
+    public function show(Certificado $certificado): View
+    {
+        $certificado->load(['participante', 'atividade']);
+
+        return view('certificados.show', compact('certificado'));
+    }
+
+    public function edit(Certificado $certificado): View
+    {
+        $certificado->load(['participante', 'atividade']);
+
+        return view('certificados.form', compact('certificado'));
+    }
+
+    public function update(Request $request, Certificado $certificado): RedirectResponse
+    {
+        $certificado->update($this->validated($request));
+
+        return redirect()->route('certificados.show', $certificado)->with('status', 'Certificado atualizado com sucesso.');
+    }
+
+    public function destroy(Certificado $certificado): RedirectResponse
+    {
+        $certificado->delete();
+
+        return redirect()->route('certificados.index')->with('status', 'Certificado excluído com sucesso.');
+    }
+
+    public function restore(int $certificado): RedirectResponse
+    {
+        Certificado::withTrashed()->findOrFail($certificado)->restore();
+
+        return redirect()->route('certificados.index')->with('status', 'Certificado restaurado com sucesso.');
+    }
+
+    public function forceDestroy(int $certificado): RedirectResponse
+    {
+        Certificado::withTrashed()->findOrFail($certificado)->forceDelete();
+
+        return redirect()->route('certificados.index')->with('status', 'Certificado excluído definitivamente.');
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'participanteId' => ['nullable', 'integer', Rule::exists('participantes', 'id')->whereNull('excluido_em')],
+            'atividadeId' => ['nullable', 'integer', Rule::exists('atividades', 'id')->whereNull('apagado_em')],
+            'nome' => ['nullable', 'string', 'max:600'],
+            'arquivo' => ['nullable', 'string', 'max:50'],
+            'titulo' => ['nullable', 'string', 'max:256'],
+            'titulo2' => ['nullable', 'string', 'max:256'],
+            'titulo3' => ['nullable', 'string', 'max:256'],
+            'titulo4' => ['nullable', 'string', 'max:100'],
+            'cargaHoraria' => ['nullable', 'integer', 'min:0'],
+            'outrosParticipantes' => ['nullable', 'string', 'max:700'],
+            'tipo' => ['nullable', 'string', 'max:50'],
+            'ativo' => ['required', 'boolean'],
+            'arquivo_old' => ['nullable', 'string', 'max:50'],
+        ]);
+    }
+
+    private function authorizeSelector(Request $request): void
+    {
+        $permissions = (array) $request->session()->get('gi_context.permissoes', []);
+        abort_unless(in_array('certificados.criar', $permissions, true) || in_array('certificados.editar', $permissions, true), 403);
+    }
+}

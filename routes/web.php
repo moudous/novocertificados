@@ -4,6 +4,7 @@ use App\Http\Controllers\PessoaController;
 use App\Http\Controllers\ParticipanteController;
 use App\Http\Controllers\EventoController;
 use App\Http\Controllers\AtividadeController;
+use App\Http\Controllers\CertificadoController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -104,6 +105,21 @@ Route::prefix('atividades')->name('atividades.')->group(function (): void {
     Route::delete('/{atividade}', [AtividadeController::class, 'destroy'])->whereNumber('atividade')->middleware('gi.permission:atividades.excluir')->name('destroy');
     Route::patch('/{atividade}/restaurar', [AtividadeController::class, 'restore'])->whereNumber('atividade')->middleware('gi.permission:atividades.restaurar')->name('restore');
     Route::delete('/{atividade}/definitivo', [AtividadeController::class, 'forceDestroy'])->whereNumber('atividade')->middleware('gi.permission:atividades.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('certificados')->name('certificados.')->group(function (): void {
+    Route::get('/', [CertificadoController::class, 'index'])->middleware('gi.permission:certificados.listar')->name('index');
+    Route::get('/dados', [CertificadoController::class, 'data'])->middleware('gi.permission:certificados.listar')->name('data');
+    Route::get('/participantes', [CertificadoController::class, 'participantes'])->name('participantes');
+    Route::get('/atividades', [CertificadoController::class, 'atividades'])->name('atividades');
+    Route::get('/criar', [CertificadoController::class, 'create'])->middleware('gi.permission:certificados.criar')->name('create');
+    Route::post('/', [CertificadoController::class, 'store'])->middleware('gi.permission:certificados.criar')->name('store');
+    Route::get('/{certificado}', [CertificadoController::class, 'show'])->whereNumber('certificado')->middleware('gi.permission:certificados.visualizar')->name('show');
+    Route::get('/{certificado}/editar', [CertificadoController::class, 'edit'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('edit');
+    Route::put('/{certificado}', [CertificadoController::class, 'update'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('update');
+    Route::delete('/{certificado}', [CertificadoController::class, 'destroy'])->whereNumber('certificado')->middleware('gi.permission:certificados.excluir')->name('destroy');
+    Route::patch('/{certificado}/restaurar', [CertificadoController::class, 'restore'])->whereNumber('certificado')->middleware('gi.permission:certificados.restaurar')->name('restore');
+    Route::delete('/{certificado}/definitivo', [CertificadoController::class, 'forceDestroy'])->whereNumber('certificado')->middleware('gi.permission:certificados.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {
