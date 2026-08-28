@@ -9,6 +9,7 @@ use App\Http\Controllers\CertificadoA1Controller;
 use App\Http\Controllers\VariavelController;
 use App\Http\Controllers\RubricaParticipanteController;
 use App\Http\Controllers\ParticipanteTesteController;
+use App\Http\Controllers\TemplateController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -182,6 +183,20 @@ Route::prefix('participantes_teste')->name('participantes_teste.')->group(functi
     Route::put('/{registro}', [ParticipanteTesteController::class, 'update'])->whereNumber('registro')->middleware('gi.permission:participantes_teste.editar')->name('update');
     Route::delete('/{registro}', [ParticipanteTesteController::class, 'destroy'])->whereNumber('registro')->middleware('gi.permission:participantes_teste.excluir')->name('destroy');
     Route::delete('/{registro}/definitivo', [ParticipanteTesteController::class, 'forceDestroy'])->whereNumber('registro')->middleware('gi.permission:participantes_teste.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('templates')->name('templates.')->group(function (): void {
+    Route::get('/', [TemplateController::class, 'index'])->middleware('gi.permission:template.listar')->name('index');
+    Route::get('/dados', [TemplateController::class, 'data'])->middleware('gi.permission:template.listar')->name('data');
+    Route::get('/certificados-a1', [TemplateController::class, 'certificadosA1'])->name('certificados-a1');
+    Route::get('/criar', [TemplateController::class, 'create'])->middleware('gi.permission:template.criar')->name('create');
+    Route::post('/', [TemplateController::class, 'store'])->middleware('gi.permission:template.criar')->name('store');
+    Route::get('/{template}', [TemplateController::class, 'show'])->whereNumber('template')->middleware('gi.permission:template.visualizar')->name('show');
+    Route::get('/{template}/editar', [TemplateController::class, 'edit'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('edit');
+    Route::put('/{template}', [TemplateController::class, 'update'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('update');
+    Route::patch('/{template}/status', [TemplateController::class, 'toggleStatus'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('status');
+    Route::delete('/{template}', [TemplateController::class, 'destroy'])->whereNumber('template')->middleware('gi.permission:template.excluir')->name('destroy');
+    Route::delete('/{template}/definitivo', [TemplateController::class, 'forceDestroy'])->whereNumber('template')->middleware('gi.permission:template.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {
