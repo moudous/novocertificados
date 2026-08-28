@@ -188,7 +188,7 @@ class AtividadeController extends Controller
             'ativo' => ['required', 'boolean'],
             'imagemFundo' => ['nullable', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:10240'],
             'remover_imagem' => ['nullable', 'boolean'],
-            'template' => ['nullable', 'string'],
+            'template_php' => ['nullable', 'string'],
         ]);
     }
 

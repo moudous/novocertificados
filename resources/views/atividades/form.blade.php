@@ -24,7 +24,7 @@
             <div><button id="removeImage" type="button" class="btn btn-sm btn-outline-danger mt-2"><i class="bi bi-x-lg me-1"></i>Apagar imagem</button></div>
         </div>
     </div>
-    <div class="col-12"><label for="template" class="form-label">Template</label><textarea id="template" name="template" rows="12" class="form-control font-monospace">{{ old('template',$atividade->template) }}</textarea></div>
+    <div class="col-12"><label for="template_php" class="form-label">Template</label><textarea id="template_php" name="template_php" rows="12" class="form-control font-monospace">{{ old('template_php',$atividade->template_php) }}</textarea></div>
 </div>
 <div class="d-flex justify-content-end gap-2 mt-4"><a href="{{ route('atividades.index') }}" class="btn btn-outline-secondary">Cancelar</a><button class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button></div>
 </div></div></form>
@@ -34,7 +34,7 @@
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
  $('#eventoId').select2({theme:'bootstrap-5',width:'100%',placeholder:'Pesquise um evento',allowClear:true,ajax:{url:@json(route('atividades.eventos', [], false)),dataType:'json',delay:250,data:p=>({q:p.term||'',page:p.page||1}),processResults:r=>r}});
- const editor=CodeMirror.fromTextArea(document.getElementById('template'),{mode:'htmlmixed',lineNumbers:true,lineWrapping:true});
+ const editor=CodeMirror.fromTextArea(document.getElementById('template_php'),{mode:'htmlmixed',lineNumbers:true,lineWrapping:true});
  const input=document.getElementById('imagemFundo'),area=document.getElementById('previewArea'),img=document.getElementById('imagePreview'),pdf=document.getElementById('pdfPreview'),remove=document.getElementById('removeImage'),flag=document.getElementById('remover_imagem'); let objectUrl=null;
  const clearPreview=()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;input.value='';img.removeAttribute('src');pdf.removeAttribute('src');img.classList.add('d-none');pdf.classList.add('d-none');area.classList.add('d-none');};
  input.addEventListener('change',()=>{const file=input.files[0];if(!file){clearPreview();return}if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=URL.createObjectURL(file);area.classList.remove('d-none');flag.value='0';if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){pdf.src=objectUrl;pdf.classList.remove('d-none');img.classList.add('d-none')}else{img.src=objectUrl;img.classList.remove('d-none');pdf.classList.add('d-none')}});
