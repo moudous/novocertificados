@@ -14,18 +14,18 @@ return new class extends Migration
                 $table->string('nome', 50)->nullable();
                 $table->dateTime('criado_em')->nullable()->useCurrent();
                 $table->dateTime('alterado_em')->nullable()->useCurrent();
-                $table->dateTime('apgado_em')->nullable()->index();
+                $table->dateTime('apagado_em')->nullable()->index();
             });
 
             return;
         }
 
         $indexExists = collect(Schema::getIndexes('certificados_a1'))
-            ->contains(fn (array $index): bool => $index['columns'] === ['apgado_em']);
+            ->contains(fn (array $index): bool => $index['columns'] === ['apagado_em']);
 
         if (! $indexExists) {
             Schema::table('certificados_a1', function (Blueprint $table): void {
-                $table->index('apgado_em');
+                $table->index('apagado_em');
             });
         }
     }

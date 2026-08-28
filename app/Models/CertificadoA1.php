@@ -13,7 +13,7 @@ class CertificadoA1 extends Model
 
     public const CREATED_AT = 'criado_em';
     public const UPDATED_AT = 'alterado_em';
-    public const DELETED_AT = 'apgado_em';
+    public const DELETED_AT = 'apagado_em';
 
     protected $fillable = ['nome'];
 
@@ -23,7 +23,7 @@ class CertificadoA1 extends Model
             'id' => 'integer',
             'criado_em' => 'datetime',
             'alterado_em' => 'datetime',
-            'apgado_em' => 'datetime',
+            'apagado_em' => 'datetime',
         ];
     }
 }

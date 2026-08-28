@@ -57,3 +57,9 @@ participantes_teste.editar
 participantes_teste.excluir
 participantes_teste.excluir_definitivamente
 
+template.listar
+template.visualizar
+template.criar
+template.editar
+template.excluir
+template.excluir_definitivamente
