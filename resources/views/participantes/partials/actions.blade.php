@@ -10,6 +10,7 @@
     @else
         @if(in_array('participantes.visualizar', $permissions, true))<a href="{{ route('participantes.show', $params) }}" class="btn btn-sm btn-outline-dark listagem-acao" title="Visualizar"><i class="bi bi-eye-fill"></i></a>@endif
         @if(in_array('participantes.editar', $permissions, true))<a href="{{ route('participantes.edit', $params) }}" class="btn btn-sm btn-outline-primary listagem-acao" title="Editar"><i class="bi bi-pencil-fill"></i></a>@endif
+        @if(in_array('participantes.editar', $permissions, true))<form method="POST" action="{{ route('participantes.status', $params) }}">@csrf @method('PATCH')<button class="btn btn-sm {{ $participante->ativo ? 'btn-outline-warning' : 'btn-outline-success' }} listagem-acao" title="{{ $participante->ativo ? 'Desativar' : 'Ativar' }}"><i class="bi {{ $participante->ativo ? 'bi-toggle-on' : 'bi-toggle-off' }}"></i></button></form>@endif
         @if(in_array('participantes.excluir', $permissions, true))
             <form method="POST" action="{{ route('participantes.destroy', $params) }}" onsubmit="return confirm('Excluir este participante?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger listagem-acao" title="Excluir"><i class="bi bi-trash-fill"></i></button></form>
         @endif

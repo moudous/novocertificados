@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PessoaController;
 use App\Http\Controllers\ParticipanteController;
+use App\Http\Controllers\EventoController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -70,9 +71,24 @@ Route::prefix('participantes')->name('participantes.')->group(function (): void 
     Route::get('/{id}/{nome}', [ParticipanteController::class, 'show'])->whereNumber('id')->middleware('gi.permission:participantes.visualizar')->name('show');
     Route::get('/{id}/{nome}/editar', [ParticipanteController::class, 'edit'])->whereNumber('id')->middleware('gi.permission:participantes.editar')->name('edit');
     Route::put('/{id}/{nome}', [ParticipanteController::class, 'update'])->whereNumber('id')->middleware('gi.permission:participantes.editar')->name('update');
+    Route::patch('/{id}/{nome}/status', [ParticipanteController::class, 'toggleStatus'])->whereNumber('id')->middleware('gi.permission:participantes.editar')->name('status');
     Route::delete('/{id}/{nome}', [ParticipanteController::class, 'destroy'])->whereNumber('id')->middleware('gi.permission:participantes.excluir')->name('destroy');
     Route::patch('/{id}/{nome}/restaurar', [ParticipanteController::class, 'restore'])->whereNumber('id')->middleware('gi.permission:participantes.restaurar')->name('restore');
     Route::delete('/{id}/{nome}/definitivo', [ParticipanteController::class, 'forceDestroy'])->whereNumber('id')->middleware('gi.permission:participantes.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('eventos')->name('eventos.')->group(function (): void {
+    Route::get('/', [EventoController::class, 'index'])->middleware('gi.permission:eventos.listar')->name('index');
+    Route::get('/dados', [EventoController::class, 'data'])->middleware('gi.permission:eventos.listar')->name('data');
+    Route::get('/criar', [EventoController::class, 'create'])->middleware('gi.permission:eventos.criar')->name('create');
+    Route::post('/', [EventoController::class, 'store'])->middleware('gi.permission:eventos.criar')->name('store');
+    Route::get('/{evento}', [EventoController::class, 'show'])->whereNumber('evento')->middleware('gi.permission:eventos.visualizar')->name('show');
+    Route::get('/{evento}/editar', [EventoController::class, 'edit'])->whereNumber('evento')->middleware('gi.permission:eventos.editar')->name('edit');
+    Route::put('/{evento}', [EventoController::class, 'update'])->whereNumber('evento')->middleware('gi.permission:eventos.editar')->name('update');
+    Route::delete('/{evento}', [EventoController::class, 'destroy'])->whereNumber('evento')->middleware('gi.permission:eventos.excluir')->name('destroy');
+    Route::patch('/{evento}/status', [EventoController::class, 'toggleStatus'])->whereNumber('evento')->middleware('gi.permission:eventos.editar')->name('status');
+    Route::patch('/{evento}/restaurar', [EventoController::class, 'restore'])->whereNumber('evento')->middleware('gi.permission:eventos.restaurar')->name('restore');
+    Route::delete('/{evento}/definitivo', [EventoController::class, 'forceDestroy'])->whereNumber('evento')->middleware('gi.permission:eventos.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {

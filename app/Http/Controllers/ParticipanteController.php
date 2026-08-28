@@ -109,6 +109,15 @@ class ParticipanteController extends Controller
         return redirect()->route('participantes.index')->with('status', 'Participante excluído com sucesso.');
     }
 
+    public function toggleStatus(int $id, string $nome): RedirectResponse
+    {
+        $participante = $this->find($id, $nome);
+        $participante->update(['ativo' => ! $participante->ativo]);
+
+        return redirect()->route('participantes.index')
+            ->with('status', 'Status do participante atualizado com sucesso.');
+    }
+
     public function restore(int $id, string $nome): RedirectResponse
     {
         $this->find($id, $nome, true)->restore();
