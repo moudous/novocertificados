@@ -68,6 +68,8 @@ Route::prefix('pessoas')->name('pessoas.')->group(function (): void {
 Route::prefix('participantes')->name('participantes.')->group(function (): void {
     Route::get('/', [ParticipanteController::class, 'index'])->middleware('gi.permission:participantes.listar')->name('index');
     Route::get('/dados', [ParticipanteController::class, 'data'])->middleware('gi.permission:participantes.listar')->name('data');
+    Route::post('/selecao', [ParticipanteController::class, 'selection'])->middleware('gi.permission:participantes.listar')->name('selection');
+    Route::delete('/selecao', [ParticipanteController::class, 'clearSelection'])->middleware('gi.permission:participantes.listar')->name('selection.clear');
     Route::get('/criar', [ParticipanteController::class, 'create'])->middleware('gi.permission:participantes.criar')->name('create');
     Route::post('/', [ParticipanteController::class, 'store'])->middleware('gi.permission:participantes.criar')->name('store');
     Route::get('/{id}/{nome}', [ParticipanteController::class, 'show'])->whereNumber('id')->middleware('gi.permission:participantes.visualizar')->name('show');

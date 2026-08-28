@@ -11,7 +11,7 @@ use Illuminate\View\View;
 
 class ParticipanteController extends Controller
 {
-    private const COLUMNS = ['id', 'nome', 'email', 'cpf', 'sexo', 'grupo', 'ativo', 'criado_em', 'atualizado_em'];
+    private const COLUMNS = [null, 'id', 'nome', 'email', 'cpf', 'sexo', 'grupo', 'ativo', 'criado_em', 'atualizado_em'];
 
     public function index(Request $request): View
     {
@@ -42,9 +42,16 @@ class ParticipanteController extends Controller
         $length = min(max((int) $request->input('length', 10), 1), 100);
         $start = max((int) $request->input('start', 0), 0);
         $permissions = (array) $request->session()->get('gi_context.permissoes', []);
+        $selectedParticipants = array_map('intval', (array) $request->session()->get('selecao_participantes', []));
 
         $data = $query->orderBy($column, $direction)->skip($start)->take($length)->get()
             ->map(fn (Participante $participante): array => [
+                'selecionado' => sprintf(
+                    '<input type="checkbox" class="form-check-input participante-selecao" value="%d" aria-label="Selecionar %s"%s>',
+                    $participante->id,
+                    e($participante->nome),
+                    in_array($participante->id, $selectedParticipants, true) ? ' checked' : '',
+                ),
                 'id' => $participante->id,
                 'nome' => e($participante->nome),
                 'email' => e($participante->email ?: '—'),
@@ -68,6 +75,41 @@ class ParticipanteController extends Controller
             'recordsFiltered' => $recordsFiltered,
             'data' => $data,
         ]);
+    }
+
+    public function selection(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'id' => ['required', 'integer', 'exists:participantes,id'],
+            'selecionado' => ['required', 'boolean'],
+        ]);
+
+        $selected = collect((array) $request->session()->get('selecao_participantes', []))
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        if ((bool) $data['selecionado']) {
+            $selected->push((int) $data['id']);
+        } else {
+            $selected = $selected->reject(fn (int $id): bool => $id === (int) $data['id']);
+        }
+
+        $selected = $selected->unique()->values();
+        $request->session()->put('selecao_participantes', $selected->all());
+
+        return response()->json([
+            'id' => (int) $data['id'],
+            'selecionado' => (bool) $data['selecionado'],
+            'total' => $selected->count(),
+        ]);
+    }
+
+    public function clearSelection(Request $request): JsonResponse
+    {
+        $request->session()->forget('selecao_participantes');
+
+        return response()->json(['message' => 'Seleção de participantes limpa.', 'total' => 0]);
     }
 
     public function create(): View
