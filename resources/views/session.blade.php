@@ -3,7 +3,27 @@
 
 @section('content')
 <div class="page-container">
-    <header class="mb-4 d-flex flex-wrap justify-content-between align-items-start gap-3"><div><h1 class="page-title">Certificados</h1><p class="page-description mb-0">Sessão criada com segurança pelo GI.</p></div><div class="d-flex flex-wrap gap-2">@if(in_array('certificados.listar', (array)data_get($context, 'permissoes', []), true))<a href="{{ route('certificados.index') }}" class="btn btn-primary"><i class="bi bi-award-fill me-2"></i>Certificados</a>@endif@if(in_array('atividades.listar', (array)data_get($context, 'permissoes', []), true))<a href="{{ route('atividades.index') }}" class="btn btn-outline-primary"><i class="bi bi-list-task me-2"></i>Atividades</a>@endif@if(in_array('eventos.listar', (array)data_get($context, 'permissoes', []), true))<a href="{{ route('eventos.index') }}" class="btn btn-outline-primary"><i class="bi bi-calendar-event-fill me-2"></i>Eventos</a>@endif@if(in_array('participantes.listar', (array)data_get($context, 'permissoes', []), true))<a href="{{ route('participantes.index') }}" class="btn btn-outline-primary"><i class="bi bi-person-vcard-fill me-2"></i>Participantes</a>@endif<a href="{{ route('pessoas.index') }}" class="btn btn-outline-primary"><i class="bi bi-people-fill me-2"></i>Pessoas</a></div></header>
+    <header class="mb-4 d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+            <h1 class="page-title">Certificados</h1>
+            <p class="page-description mb-0">Sessão criada com segurança pelo GI.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @if(in_array('certificados.listar', (array) data_get($context, 'permissoes', []), true))
+                <a href="{{ route('certificados.index') }}" class="btn btn-primary"><i class="bi bi-award-fill me-2"></i>Certificados</a>
+            @endif
+            @if(in_array('atividades.listar', (array) data_get($context, 'permissoes', []), true))
+                <a href="{{ route('atividades.index') }}" class="btn btn-outline-primary"><i class="bi bi-list-task me-2"></i>Atividades</a>
+            @endif
+            @if(in_array('eventos.listar', (array) data_get($context, 'permissoes', []), true))
+                <a href="{{ route('eventos.index') }}" class="btn btn-outline-primary"><i class="bi bi-calendar-event-fill me-2"></i>Eventos</a>
+            @endif
+            @if(in_array('participantes.listar', (array) data_get($context, 'permissoes', []), true))
+                <a href="{{ route('participantes.index') }}" class="btn btn-outline-primary"><i class="bi bi-person-vcard-fill me-2"></i>Participantes</a>
+            @endif
+            <a href="{{ route('pessoas.index') }}" class="btn btn-outline-primary"><i class="bi bi-people-fill me-2"></i>Pessoas</a>
+        </div>
+    </header>
 
     @if(session('manutencao'))
         <div class="alert alert-success d-flex align-items-start gap-3 shadow-sm" role="alert"><i class="bi bi-check-circle-fill fs-5"></i><div><strong class="d-block">Manutenção concluída</strong>{{ session('manutencao') }}</div></div>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Participante extends Model
@@ -46,5 +47,10 @@ class Participante extends Model
     public function scopeWhereIdentity(Builder $query, int $id, string $nome): Builder
     {
         return $query->where('id', $id)->where('nome', $nome);
+    }
+
+    public function certificados(): HasMany
+    {
+        return $this->hasMany(Certificado::class, 'participanteId', 'id')->withTrashed();
     }
 }

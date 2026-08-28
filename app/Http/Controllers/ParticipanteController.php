@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ParticipanteController extends Controller
 {
-    private const COLUMNS = [null, 'id', 'nome', 'email', 'cpf', 'sexo', 'grupo', 'ativo', 'criado_em', 'atualizado_em'];
+    private const COLUMNS = [null, 'id', 'nome', 'email', 'cpf', 'certificados_count', 'sexo', 'grupo', 'ativo', 'criado_em', 'atualizado_em'];
 
     public function index(Request $request): View
     {
@@ -22,7 +24,7 @@ class ParticipanteController extends Controller
 
     public function data(Request $request): JsonResponse
     {
-        $query = Participante::query()->withTrashed();
+        $query = Participante::query()->withTrashed()->withCount('certificados');
         $recordsTotal = (clone $query)->count();
         $search = trim((string) $request->input('search.value', ''));
 
@@ -56,6 +58,7 @@ class ParticipanteController extends Controller
                 'nome' => e($participante->nome),
                 'email' => e($participante->email ?: '—'),
                 'cpf' => e($participante->cpf ?: '—'),
+                'certificados' => $participante->certificados_count,
                 'sexo' => e($participante->sexo ?: '—'),
                 'grupo' => e($participante->grupo ?: '—'),
                 'ativo' => $participante->ativo
@@ -110,6 +113,111 @@ class ParticipanteController extends Controller
         $request->session()->forget('selecao_participantes');
 
         return response()->json(['message' => 'Seleção de participantes limpa.', 'total' => 0]);
+    }
+
+    public function mergeData(Request $request): JsonResponse
+    {
+        $selectedIds = $this->selectedIds($request);
+        $participants = Participante::query()
+            ->whereIn('id', $selectedIds)
+            ->orderBy('nome')
+            ->get(['id', 'nome', 'email', 'cpf']);
+
+        $validIds = $participants->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $request->session()->put('selecao_participantes', $validIds);
+
+        $certificateCounts = DB::table('certificados')
+            ->whereIn('participanteId', $validIds)
+            ->selectRaw('participanteId, count(*) as total')
+            ->groupBy('participanteId')
+            ->pluck('total', 'participanteId');
+
+        return response()->json([
+            'participantes' => $participants->map(fn (Participante $participant): array => [
+                'id' => $participant->id,
+                'nome' => $participant->nome,
+                'email' => $participant->email,
+                'cpf' => $participant->cpf,
+                'certificados' => (int) ($certificateCounts[$participant->id] ?? 0),
+            ]),
+            'total_certificados' => (int) $certificateCounts->sum(),
+        ]);
+    }
+
+    public function merge(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'destino_tipo' => ['required', 'in:existente,novo'],
+            'destino_id' => ['nullable', 'integer'],
+            'novo.nome' => ['nullable', 'required_if:destino_tipo,novo', 'string', 'max:100'],
+            'novo.email' => ['nullable', 'email', 'max:150'],
+            'novo.cpf' => ['nullable', 'digits:11'],
+        ]);
+        $selectedIds = $this->selectedIds($request);
+
+        if ($selectedIds === []) {
+            throw ValidationException::withMessages(['selecao' => 'Selecione ao menos um participante.']);
+        }
+
+        $result = DB::transaction(function () use ($data, $selectedIds): array {
+            $participants = DB::table('participantes')
+                ->whereIn('id', $selectedIds)
+                ->whereNull('excluido_em')
+                ->lockForUpdate()
+                ->get(['id', 'nome']);
+
+            if ($participants->count() !== count($selectedIds)) {
+                throw ValidationException::withMessages(['selecao' => 'A seleção mudou. Reabra a unificação e tente novamente.']);
+            }
+
+            if ($data['destino_tipo'] === 'existente') {
+                $targetId = (int) ($data['destino_id'] ?? 0);
+                $target = $participants->firstWhere('id', $targetId);
+                if (! $target) {
+                    throw ValidationException::withMessages(['destino_id' => 'Escolha um participante da seleção.']);
+                }
+                $targetName = (string) $target->nome;
+            } else {
+                $targetName = trim((string) data_get($data, 'novo.nome'));
+                $now = now();
+                $targetId = (int) DB::table('participantes')->insertGetId([
+                    'nome' => $targetName,
+                    'email' => data_get($data, 'novo.email'),
+                    'cpf' => data_get($data, 'novo.cpf'),
+                    'ativo' => 1,
+                    'email_ficticio' => 0,
+                    'criado_em' => $now,
+                    'atualizado_em' => $now,
+                ]);
+            }
+
+            $certificatesUpdated = DB::table('certificados')
+                ->whereIn('participanteId', $selectedIds)
+                ->update([
+                    'participanteId' => $targetId,
+                    'nome' => $targetName,
+                    'atualizado_em' => now(),
+                ]);
+
+            $removed = DB::table('participantes')
+                ->whereIn('id', $selectedIds)
+                ->where('id', '<>', $targetId)
+                ->delete();
+
+            return [
+                'participante_id' => $targetId,
+                'participante_nome' => $targetName,
+                'certificados_atualizados' => $certificatesUpdated,
+                'participantes_removidos' => $removed,
+            ];
+        });
+
+        $request->session()->forget('selecao_participantes');
+
+        return response()->json([
+            'message' => 'Participantes unificados com sucesso.',
+            ...$result,
+        ]);
     }
 
     public function create(): View
@@ -196,5 +304,15 @@ class ParticipanteController extends Controller
     private function routeParameters(Participante $participante): array
     {
         return ['id' => $participante->id, 'nome' => $participante->nome];
+    }
+
+    private function selectedIds(Request $request): array
+    {
+        return collect((array) $request->session()->get('selecao_participantes', []))
+            ->map(fn ($id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
     }
 }
