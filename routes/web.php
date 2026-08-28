@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PessoaController;
+use App\Http\Controllers\ParticipanteController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -56,8 +57,22 @@ Route::get('/', function (Request $request) {
 
 Route::prefix('pessoas')->name('pessoas.')->group(function (): void {
     Route::get('/', [PessoaController::class, 'index'])->name('index');
+    Route::get('/dados', [PessoaController::class, 'data'])->name('data');
     Route::post('/importar', [PessoaController::class, 'import'])->name('import');
     Route::get('/{pessoa}', [PessoaController::class, 'show'])->whereNumber('pessoa')->name('show');
+});
+
+Route::prefix('participantes')->name('participantes.')->group(function (): void {
+    Route::get('/', [ParticipanteController::class, 'index'])->middleware('gi.permission:participantes.listar')->name('index');
+    Route::get('/dados', [ParticipanteController::class, 'data'])->middleware('gi.permission:participantes.listar')->name('data');
+    Route::get('/criar', [ParticipanteController::class, 'create'])->middleware('gi.permission:participantes.criar')->name('create');
+    Route::post('/', [ParticipanteController::class, 'store'])->middleware('gi.permission:participantes.criar')->name('store');
+    Route::get('/{id}/{nome}', [ParticipanteController::class, 'show'])->whereNumber('id')->middleware('gi.permission:participantes.visualizar')->name('show');
+    Route::get('/{id}/{nome}/editar', [ParticipanteController::class, 'edit'])->whereNumber('id')->middleware('gi.permission:participantes.editar')->name('edit');
+    Route::put('/{id}/{nome}', [ParticipanteController::class, 'update'])->whereNumber('id')->middleware('gi.permission:participantes.editar')->name('update');
+    Route::delete('/{id}/{nome}', [ParticipanteController::class, 'destroy'])->whereNumber('id')->middleware('gi.permission:participantes.excluir')->name('destroy');
+    Route::patch('/{id}/{nome}/restaurar', [ParticipanteController::class, 'restore'])->whereNumber('id')->middleware('gi.permission:participantes.restaurar')->name('restore');
+    Route::delete('/{id}/{nome}/definitivo', [ParticipanteController::class, 'forceDestroy'])->whereNumber('id')->middleware('gi.permission:participantes.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {

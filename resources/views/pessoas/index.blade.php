@@ -24,21 +24,6 @@
             <div class="table-responsive">
                 <table id="pessoasTable" class="table table-hover align-middle w-100 mb-0">
                     <thead><tr><th>ID GI</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>ID perfil</th><th>Status</th><th>Último acesso</th><th>Última sincronização</th><th class="text-center" data-dt-order="disable">Ações</th></tr></thead>
-                    <tbody>
-                    @foreach($pessoas as $pessoa)
-                        <tr>
-                            <td class="text-nowrap">{{ $pessoa->id }}</td>
-                            <td>{{ $pessoa->nome }}</td>
-                            <td>{{ $pessoa->email }}</td>
-                            <td>{{ $pessoa->perfil ?? '—' }}</td>
-                            <td>{{ $pessoa->perfil_id ?? '—' }}</td>
-                            <td><span class="badge {{ $pessoa->ativo ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $pessoa->ativo ? 'Ativa' : 'Inativa' }}</span></td>
-                            <td class="text-nowrap" data-order="{{ $pessoa->ultimo_acesso?->timestamp ?? 0 }}">{{ $pessoa->ultimo_acesso?->format('d/m/Y H:i') ?? 'Nunca acessou' }}</td>
-                            <td class="text-nowrap" data-order="{{ $pessoa->updated_at?->timestamp ?? 0 }}">{{ $pessoa->updated_at?->format('d/m/Y H:i') ?? '—' }}</td>
-                            <td class="text-center"><a href="{{ route('pessoas.show', $pessoa) }}" class="btn btn-sm btn-outline-dark listagem-acao" title="Visualizar pessoa" aria-label="Visualizar {{ $pessoa->nome }}"><i class="bi bi-eye-fill"></i></a></td>
-                        </tr>
-                    @endforeach
-                    </tbody>
                 </table>
             </div>
         </div>
@@ -52,8 +37,19 @@
 <script src="https://cdn.datatables.net/2.3.2/js/dataTables.bootstrap5.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const table = new DataTable('#pessoasTable', {
+    new DataTable('#pessoasTable', {
+        processing: true,
+        serverSide: true,
+        ajax: @json(route('pessoas.data', [], false)),
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        pagingType: 'full_numbers',
         order: [[0, 'desc']],
+        columns: [
+            {data: 'id'}, {data: 'nome'}, {data: 'email'}, {data: 'perfil'}, {data: 'perfil_id'},
+            {data: 'ativo'}, {data: 'ultimo_acesso'}, {data: 'updated_at'},
+            {data: 'acoes', orderable: false, searchable: false, className: 'text-center'}
+        ],
         language: {
             emptyTable: 'Nenhuma pessoa cadastrada.', info: 'Exibindo _START_ a _END_ de _TOTAL_ pessoas',
             infoEmpty: 'Nenhuma pessoa encontrada', lengthMenu: 'Exibir _MENU_ registros', search: 'Pesquisar:',
