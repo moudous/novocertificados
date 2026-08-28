@@ -10,6 +10,7 @@ use App\Http\Controllers\VariavelController;
 use App\Http\Controllers\RubricaParticipanteController;
 use App\Http\Controllers\ParticipanteTesteController;
 use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\AssinaturaTemplateController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -197,6 +198,21 @@ Route::prefix('templates')->name('templates.')->group(function (): void {
     Route::patch('/{template}/status', [TemplateController::class, 'toggleStatus'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('status');
     Route::delete('/{template}', [TemplateController::class, 'destroy'])->whereNumber('template')->middleware('gi.permission:template.excluir')->name('destroy');
     Route::delete('/{template}/definitivo', [TemplateController::class, 'forceDestroy'])->whereNumber('template')->middleware('gi.permission:template.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('assinaturas_template')->name('assinaturas_template.')->group(function (): void {
+    Route::get('/',[AssinaturaTemplateController::class,'index'])->middleware('gi.permission:assinaturas.listar')->name('index');
+    Route::get('/dados',[AssinaturaTemplateController::class,'data'])->middleware('gi.permission:assinaturas.listar')->name('data');
+    Route::get('/participantes',[AssinaturaTemplateController::class,'participantes'])->name('participantes');
+    Route::get('/templates',[AssinaturaTemplateController::class,'templates'])->name('templates');
+    Route::get('/criar',[AssinaturaTemplateController::class,'create'])->middleware('gi.permission:assinaturas.criar')->name('create');
+    Route::post('/',[AssinaturaTemplateController::class,'store'])->middleware('gi.permission:assinaturas.criar')->name('store');
+    Route::get('/{assinatura}',[AssinaturaTemplateController::class,'show'])->whereNumber('assinatura')->middleware('gi.permission:assinaturas.visualizar')->name('show');
+    Route::get('/{assinatura}/editar',[AssinaturaTemplateController::class,'edit'])->whereNumber('assinatura')->middleware('gi.permission:assinaturas.editar')->name('edit');
+    Route::put('/{assinatura}',[AssinaturaTemplateController::class,'update'])->whereNumber('assinatura')->middleware('gi.permission:assinaturas.editar')->name('update');
+    Route::patch('/{assinatura}/status',[AssinaturaTemplateController::class,'toggleStatus'])->whereNumber('assinatura')->middleware('gi.permission:assinaturas.editar')->name('status');
+    Route::delete('/{assinatura}',[AssinaturaTemplateController::class,'destroy'])->whereNumber('assinatura')->middleware('gi.permission:assinaturas.excluir')->name('destroy');
+    Route::delete('/{assinatura}/definitivo',[AssinaturaTemplateController::class,'forceDestroy'])->whereNumber('assinatura')->middleware('gi.permission:assinaturas.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {

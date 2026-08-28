@@ -63,3 +63,12 @@ template.criar
 template.editar
 template.excluir
 template.excluir_definitivamente
+
+assinaturas.listar
+assinaturas.visualizar
+assinaturas.criar
+assinaturas.editar
+assinaturas.excluir
+assinaturas.excluir_definitivamente
+
+
