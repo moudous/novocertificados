@@ -93,3 +93,4 @@ novos_certificados.excluir
 novos_certificados.excluir_definitivamente
 
 
+Vou adicionar um botão somente com ícone entre as cores do degradê. Cada clique inverterá os valores inicial e final, atualizará os códigos hexadecimais e redesenhará a miniatura imediatamente.

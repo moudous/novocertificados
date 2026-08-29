@@ -33,8 +33,21 @@ class GiPessoaSynchronizer
         $rows = collect($users)
             ->filter(fn ($user): bool => is_array($user))
             ->map(function (array $user) use ($now): array {
-                $profile = (array) ($user['perfil'] ?? ($user['perfis'][0] ?? []));
+                $profiles = collect((array) ($user['perfis'] ?? []))
+                    ->filter(fn ($profile): bool => is_array($profile))
+                    ->map(fn (array $profile): array => [
+                        'id' => isset($profile['id']) ? (int) $profile['id'] : null,
+                        'nome' => trim((string) ($profile['nome'] ?? '')),
+                        'ultimo_login_em' => $profile['ultimo_login_em'] ?? null,
+                    ])
+                    ->filter(fn (array $profile): bool => $profile['id'] !== null && $profile['nome'] !== '')
+                    ->values();
+                $profile = (array) ($user['perfil'] ?? $profiles->first() ?? []);
                 $data = $this->normalize($user, $profile);
+                $data['perfis'] = json_encode(
+                    $profiles->all(),
+                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+                );
                 $data['ultimo_acesso'] ??= null;
 
                 return [...$data, 'created_at' => $now, 'updated_at' => $now];
@@ -49,7 +62,7 @@ class GiPessoaSynchronizer
         DB::transaction(fn () => Pessoa::query()->upsert(
             $rows,
             ['id'],
-            ['usuario', 'nome', 'email', 'perfil', 'perfil_id', 'ativo', 'ultimo_acesso', 'updated_at'],
+            ['usuario', 'nome', 'email', 'perfil', 'perfil_id', 'perfis', 'ativo', 'ultimo_acesso', 'updated_at'],
         ));
 
         return count($rows);

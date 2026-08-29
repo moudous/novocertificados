@@ -22,7 +22,7 @@ class PessoaController extends Controller
     {
         $this->authorizeGiSession($request);
 
-        $columns = ['id', 'nome', 'email', 'perfil', 'perfil_id', 'ativo', 'ultimo_acesso', 'updated_at'];
+        $columns = ['id', 'nome', 'email', 'perfil', 'ativo', 'ultimo_acesso', 'updated_at'];
         $query = Pessoa::query();
         $recordsTotal = (clone $query)->count();
         $search = trim((string) $request->input('search.value', ''));
@@ -49,13 +49,23 @@ class PessoaController extends Controller
                 'id' => $pessoa->id,
                 'nome' => e($pessoa->nome),
                 'email' => e($pessoa->email),
-                'perfil' => e($pessoa->perfil ?: '—'),
-                'perfil_id' => $pessoa->perfil_id ?? '—',
+                'perfil' => collect($pessoa->perfis ?: [[
+                    'id' => $pessoa->perfil_id,
+                    'nome' => $pessoa->perfil,
+                ]])->filter(fn ($perfil): bool => filled($perfil['nome'] ?? null))
+                    ->map(function (array $perfil) use ($pessoa): string {
+                        $ultimo = (int) ($perfil['id'] ?? 0) === (int) $pessoa->perfil_id
+                            && $pessoa->ultimo_acesso !== null;
+                        $cor = $ultimo ? 'text-bg-primary' : 'text-bg-secondary';
+                        $titulo = $ultimo ? ' title="Perfil do último acesso"' : '';
+
+                        return '<span class="badge '.$cor.'"'.$titulo.'>'.e($perfil['nome']).'</span>';
+                    })->implode(', '),
                 'ativo' => $pessoa->ativo
                     ? '<span class="badge text-bg-success">Ativa</span>'
                     : '<span class="badge text-bg-secondary">Inativa</span>',
                 'ultimo_acesso' => $pessoa->ultimo_acesso?->format('d/m/Y H:i') ?? 'Nunca acessou',
-                'updated_at' => $pessoa->updated_at?->format('d/m/Y H:i') ?? '—',
+                'updated_at' => $pessoa->ultimaSincronizacaoLocal()?->format('d/m/Y H:i') ?? '—',
                 'acoes' => '<a href="'.e(route('pessoas.show', $pessoa)).'" class="btn btn-sm btn-outline-dark listagem-acao" title="Visualizar pessoa" aria-label="Visualizar '.e($pessoa->nome).'"><i class="bi bi-eye-fill"></i></a>',
             ]);
 

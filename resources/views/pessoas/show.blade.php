@@ -15,7 +15,7 @@
                     ['Status', $pessoa->ativo ? 'Ativa' : 'Inativa'],
                     ['Último acesso ao sistema', $pessoa->ultimo_acesso?->format('d/m/Y H:i') ?? 'Nunca acessou'],
                     ['Data de cadastro', $pessoa->created_at?->format('d/m/Y H:i')],
-                    ['Última sincronização', $pessoa->updated_at?->format('d/m/Y H:i')],
+                    ['Última sincronização', $pessoa->ultimaSincronizacaoLocal()?->format('d/m/Y H:i')],
                 ];
             @endphp
             <div class="row g-3">

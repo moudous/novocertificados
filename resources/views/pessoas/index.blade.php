@@ -23,7 +23,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table id="pessoasTable" class="table table-hover align-middle w-100 mb-0">
-                    <thead><tr><th>ID GI</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>ID perfil</th><th>Status</th><th>Último acesso</th><th>Última sincronização</th><th class="text-center" data-dt-order="disable">Ações</th></tr></thead>
+                    <thead><tr><th>ID GI</th><th>Nome</th><th>E-mail</th><th>Perfis</th><th>Status</th><th>Último acesso</th><th>Última sincronização</th><th class="text-center" data-dt-order="disable">Ações</th></tr></thead>
                 </table>
             </div>
         </div>
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pagingType: 'full_numbers',
         order: [[0, 'desc']],
         columns: [
-            {data: 'id'}, {data: 'nome'}, {data: 'email'}, {data: 'perfil'}, {data: 'perfil_id'},
+            {data: 'id'}, {data: 'nome'}, {data: 'email'}, {data: 'perfil'},
             {data: 'ativo'}, {data: 'ultimo_acesso'}, {data: 'updated_at'},
             {data: 'acoes', orderable: false, searchable: false, className: 'text-center'}
         ],

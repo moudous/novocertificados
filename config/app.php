@@ -5,6 +5,7 @@ return [
     'env' => env('APP_ENV', 'production'),
     'debug' => (bool) env('APP_DEBUG', false),
     'url' => env('APP_URL'),
+    'display_timezone' => env('APP_TIMEZONE', 'America/Sao_Paulo'),
     'key' => env('APP_KEY'),
     'cipher' => 'AES-256-CBC',
 ];
