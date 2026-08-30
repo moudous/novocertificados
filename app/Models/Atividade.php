@@ -16,7 +16,7 @@ class Atividade extends Model
     public const UPDATED_AT = 'atualizado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['eventoId', 'nome', 'descricao_old', 'periodos', 'ativo', 'imagemFundo', 'template_php'];
+    protected $fillable = ['eventoId', 'nome', 'descricao_old', 'periodos', 'ativo', 'imagemFundo', 'template'];
 
     protected function casts(): array
     {

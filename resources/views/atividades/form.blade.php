@@ -1,11 +1,13 @@
 @extends('layouts.app')
 @section('title', $atividade->exists ? 'Editar atividade' : 'Nova atividade')
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" rel="stylesheet">
-<style>.background-preview{max-width:100%;max-height:22rem;border:1px solid #dee2e6;border-radius:.5rem}.CodeMirror{height:18rem;border:1px solid #dee2e6;border-radius:.375rem;font-size:.9rem}</style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"><link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css" rel="stylesheet">
+<style>.background-preview{max-width:100%;max-height:22rem;border:1px solid #dee2e6;border-radius:.5rem}.CodeMirror{height:24rem;border:1px solid #343a40;border-radius:.375rem;font-size:.9rem;background:#0d1117;color:#f8f8f2}.CodeMirror-gutters{background:#0d1117;border-right-color:#30363d}.CodeMirror-linenumber{color:#8b949e}</style>
 @endpush
 @section('content')
 @php($backgroundExists = $atividade->backgroundExists())
+@php($templateValue = old('template', $atividade->getAttribute('template')))
+@php($templateEnabled = filled($templateValue))
 <div class="mb-4"><h1 class="page-title">{{ $atividade->exists ? 'Editar atividade' : 'Nova atividade' }}</h1><p class="page-description mb-0">Preencha os dados e configure o certificado.</p></div>
 <form id="atividadeForm" method="POST" enctype="multipart/form-data" action="{{ $atividade->exists ? route('atividades.update', $atividade) : route('atividades.store') }}">@csrf @if($atividade->exists) @method('PUT') @endif
 <div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Dados da atividade</h2></div><div class="card-body p-4">
@@ -24,17 +26,23 @@
             <div><button id="removeImage" type="button" class="btn btn-sm btn-outline-danger mt-2"><i class="bi bi-x-lg me-1"></i>Apagar imagem</button></div>
         </div>
     </div>
-    <div class="col-12"><label for="template_php" class="form-label">Template</label><textarea id="template_php" name="template_php" rows="12" class="form-control font-monospace">{{ old('template_php',$atividade->template_php) }}</textarea></div>
+    <div class="col-12">
+        <div class="d-flex align-items-center gap-2 mb-2"><label for="template" class="form-label mb-0">Template</label><button id="toggleTemplate" type="button" class="btn btn-sm {{ $templateEnabled ? 'btn-success' : 'btn-outline-secondary' }}" aria-controls="templateEditorArea" aria-expanded="{{ $templateEnabled ? 'true' : 'false' }}" aria-pressed="{{ $templateEnabled ? 'true' : 'false' }}"><i class="bi {{ $templateEnabled ? 'bi-toggle-on' : 'bi-toggle-off' }} me-1"></i><span>{{ $templateEnabled ? 'Habilitado' : 'Desabilitado' }}</span></button></div>
+        <div class="form-text mb-2"><i class="bi bi-info-circle me-1"></i>Este campo é utilizado somente para a geração de certificados legados.</div>
+        <div id="templateEditorArea" class="{{ $templateEnabled ? '' : 'd-none' }}"><textarea id="template" name="template" rows="12" class="form-control font-monospace">{{ $templateValue }}</textarea></div>
+    </div>
 </div>
 <div class="d-flex justify-content-end gap-2 mt-4"><a href="{{ route('atividades.index') }}" class="btn btn-outline-secondary">Cancelar</a><button class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button></div>
 </div></div></form>
 @endsection
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script><script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script><script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
  $('#eventoId').select2({theme:'bootstrap-5',width:'100%',placeholder:'Pesquise um evento',allowClear:true,ajax:{url:@json(route('atividades.eventos', [], false)),dataType:'json',delay:250,data:p=>({q:p.term||'',page:p.page||1}),processResults:r=>r}});
- const editor=CodeMirror.fromTextArea(document.getElementById('template_php'),{mode:'htmlmixed',lineNumbers:true,lineWrapping:true});
+ const editor=CodeMirror.fromTextArea(document.getElementById('template'),{mode:{name:'php',startOpen:true},theme:'monokai',lineNumbers:true,lineWrapping:true,indentUnit:4,matchBrackets:true});
+ const templateToggle=document.getElementById('toggleTemplate'),templateArea=document.getElementById('templateEditorArea');
+ templateToggle.addEventListener('click',()=>{const enabled=templateArea.classList.contains('d-none');templateArea.classList.toggle('d-none',!enabled);templateToggle.classList.toggle('btn-success',enabled);templateToggle.classList.toggle('btn-outline-secondary',!enabled);templateToggle.setAttribute('aria-expanded',String(enabled));templateToggle.setAttribute('aria-pressed',String(enabled));templateToggle.querySelector('i').className=`bi ${enabled?'bi-toggle-on':'bi-toggle-off'} me-1`;templateToggle.querySelector('span').textContent=enabled?'Habilitado':'Desabilitado';if(enabled)setTimeout(()=>{editor.refresh();editor.focus()},0)});
  const input=document.getElementById('imagemFundo'),area=document.getElementById('previewArea'),img=document.getElementById('imagePreview'),pdf=document.getElementById('pdfPreview'),remove=document.getElementById('removeImage'),flag=document.getElementById('remover_imagem'); let objectUrl=null;
  const clearPreview=()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;input.value='';img.removeAttribute('src');pdf.removeAttribute('src');img.classList.add('d-none');pdf.classList.add('d-none');area.classList.add('d-none');};
  input.addEventListener('change',()=>{const file=input.files[0];if(!file){clearPreview();return}if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=URL.createObjectURL(file);area.classList.remove('d-none');flag.value='0';if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){pdf.src=objectUrl;pdf.classList.remove('d-none');img.classList.add('d-none')}else{img.src=objectUrl;img.classList.remove('d-none');pdf.classList.add('d-none')}});

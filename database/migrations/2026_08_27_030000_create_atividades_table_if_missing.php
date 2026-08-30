@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('periodos', 100)->nullable();
             $table->smallInteger('ativo')->nullable();
             $table->string('imagemFundo', 50)->nullable();
-            $table->text('template_php')->nullable();
+            $table->text('template')->nullable();
             $table->dateTime('criado_em')->nullable()->useCurrent();
             $table->dateTime('atualizado_em')->nullable()->useCurrent();
             $table->dateTime('apagado_em')->nullable()->index();

@@ -163,7 +163,7 @@ class CertificadoController extends Controller
             ->where('arquivo', $arquivo)->where('ativo', true)->whereNull('apagado_em')
             ->whereHas('atividade', fn (Builder $query): Builder => $query->where('ativo', true)->whereNull('apagado_em'))
             ->latest('id')->firstOrFail();
-        $templateCode = $model->atividade?->getAttribute('template_php') ?: $model->atividade?->getAttribute('template');
+        $templateCode = $model->atividade?->getAttribute('template');
         abort_unless(filled($templateCode), 404, 'O certificado não possui template legado.');
 
         if (! class_exists('PDF_HTML', false)) class_alias(LegacyPdfHtml::class, 'PDF_HTML');
