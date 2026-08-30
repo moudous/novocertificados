@@ -45,7 +45,10 @@ class ResponsavelController extends Controller
                 'ativo' => $responsavel->trashed() ? '<span class="badge text-bg-danger">Excluído</span>' : ($responsavel->ativo ? '<span class="badge text-bg-success">Ativo</span>' : '<span class="badge text-bg-secondary">Inativo</span>'),
                 'criado_em' => $responsavel->criado_em?->format('d/m/Y H:i') ?? '—',
                 'alterado_em' => $responsavel->alterado_em?->format('d/m/Y H:i') ?? '—',
-                'acoes' => view('responsaveis.partials.actions', compact('responsavel', 'permissions'))->render(),
+                'acoes' => view('responsaveis.partials.actions', [
+                    'responsavel' => $responsavel,
+                    'permissions' => $permissions,
+                ])->render(),
             ]);
 
         return response()->json(['draw' => (int) $request->input('draw'), 'recordsTotal' => $total, 'recordsFiltered' => $filtered, 'data' => $data]);
