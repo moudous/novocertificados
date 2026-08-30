@@ -56,7 +56,20 @@ class NovoCertificadoController extends Controller
     public function update(Request $request,NovoCertificado $certificado): RedirectResponse { $certificado->update($this->validated($request)); return redirect()->route('certificadosnovos.show',$certificado)->with('status','Novo certificado atualizado com sucesso.'); }
     public function toggleStatus(NovoCertificado $certificado): RedirectResponse { $certificado->update(['ativo'=>!$certificado->ativo]); return redirect()->route('certificadosnovos.index')->with('status','Status atualizado com sucesso.'); }
     public function destroy(NovoCertificado $certificado): RedirectResponse { $certificado->delete(); return redirect()->route('certificadosnovos.index')->with('status','Certificado excluído com sucesso.'); }
-    public function forceDestroy(int $certificado): RedirectResponse { $model=NovoCertificado::withTrashed()->findOrFail($certificado); DB::transaction(function()use($model){$model->participantes()->delete();$model->forceDelete();}); return redirect()->route('certificadosnovos.index')->with('status','Certificado excluído definitivamente.'); }
+    public function forceDestroy(int $certificado): RedirectResponse
+    {
+        $model = NovoCertificado::withTrashed()->withCount('participantes')->findOrFail($certificado);
+
+        if ($model->participantes_count > 0) {
+            return redirect()->route('certificadosnovos.index')->withErrors([
+                'certificado' => 'Não é possível excluir definitivamente uma emissão que possui participantes.',
+            ]);
+        }
+
+        $model->forceDelete();
+
+        return redirect()->route('certificadosnovos.index')->with('status', 'Emissão excluída definitivamente.');
+    }
     public function participants(NovoCertificado $certificado,Request $request): View { return view('certificadosnovos.participantes',['certificado'=>$certificado,'items'=>$certificado->participantes()->with('participante')->orderByDesc('id')->get(),'permissions'=>(array)$request->session()->get('gi_context.permissoes',[])]); }
     public function participantOptions(NovoCertificado $certificado,Request $request): JsonResponse
     {
