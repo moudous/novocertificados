@@ -1,6 +1,6 @@
 <div class="d-inline-flex gap-1">
     @if($certificado->trashed())
-        @if(in_array('novos_certificados.excluir_definitivamente', $permissions, true))
+        @if(in_array('emissoes.excluir_definitivamente', $permissions, true))
             @if((int) ($certificado->participantes_count ?? 0) > 0)
                 <button
                     type="button"
@@ -13,7 +13,7 @@
             @else
                 <form
                     method="POST"
-                    action="{{ route('certificadosnovos.force-destroy', $certificado->id) }}"
+                    action="{{ route('emissoes.force-destroy', $certificado->id) }}"
                     onsubmit="return confirm('Excluir esta emissão definitivamente? Esta ação não pode ser desfeita.')"
                 >
                     @csrf
@@ -25,21 +25,23 @@
             @endif
         @endif
     @else
-        @if(in_array('novos_certificados.visualizar', $permissions, true))
-            <a href="{{ route('certificadosnovos.show', $certificado) }}" class="btn btn-sm btn-outline-dark listagem-acao" title="Visualizar">
+        @if(in_array('emissoes.visualizar', $permissions, true))
+            <a href="{{ route('emissoes.show', $certificado) }}" class="btn btn-sm btn-outline-dark listagem-acao" title="Visualizar">
                 <i class="bi bi-eye"></i>
             </a>
         @endif
-        @if(in_array('novos_certificados.participantes', $permissions, true))
-            <a href="{{ route('certificadosnovos.participantes', $certificado) }}" class="btn btn-sm btn-outline-success listagem-acao" title="Participantes">
+        @if(in_array('emissoes.participantes', $permissions, true))
+            <a href="{{ route('emissoes.participantes', $certificado) }}" class="btn btn-sm btn-outline-success listagem-acao" title="Participantes">
                 <i class="bi bi-people"></i>
             </a>
         @endif
-        @if(in_array('novos_certificados.editar', $permissions, true))
-            <a href="{{ route('certificadosnovos.edit', $certificado) }}" class="btn btn-sm btn-outline-primary listagem-acao" title="Editar">
+        @if(in_array('emissoes.editar', $permissions, true))
+            <a href="{{ route('emissoes.edit', $certificado) }}" class="btn btn-sm btn-outline-primary listagem-acao" title="Editar">
                 <i class="bi bi-pencil"></i>
             </a>
-            <form method="POST" action="{{ route('certificadosnovos.status', $certificado) }}">
+        @endif
+        @if(in_array('emissoes.ativar_desativar', $permissions, true))
+            <form method="POST" action="{{ route('emissoes.status', $certificado) }}">
                 @csrf
                 @method('PATCH')
                 <button class="btn btn-sm btn-outline-warning listagem-acao" title="Alterar status">
@@ -47,8 +49,8 @@
                 </button>
             </form>
         @endif
-        @if(in_array('novos_certificados.excluir', $permissions, true))
-            <form method="POST" action="{{ route('certificadosnovos.destroy', $certificado) }}">
+        @if(in_array('emissoes.excluir', $permissions, true))
+            <form method="POST" action="{{ route('emissoes.destroy', $certificado) }}">
                 @csrf
                 @method('DELETE')
                 <button class="btn btn-sm btn-outline-danger listagem-acao" title="Excluir">

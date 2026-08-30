@@ -3,3 +3,4 @@
 /vendor/
 /storage/framework/sessions/*
 /public/certificado/biblioteca/*
+/public/certificado/emitidos/*

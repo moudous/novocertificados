@@ -14,6 +14,7 @@ use App\Http\Controllers\BibliotecaImagemController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\AssinaturaTemplateController;
 use App\Http\Controllers\NovoCertificadoController;
+use App\Http\Controllers\CertificadoNovoController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -250,25 +251,35 @@ Route::prefix('assinaturas_template')->name('assinaturas_template.')->group(func
     Route::delete('/{assinatura}/definitivo',[AssinaturaTemplateController::class,'forceDestroy'])->whereNumber('assinatura')->middleware('gi.permission:assinaturas.excluir_definitivamente')->name('force-destroy');
 });
 
-Route::prefix('certificadosnovos')->name('certificadosnovos.')->group(function (): void {
-    Route::get('/',[NovoCertificadoController::class,'index'])->middleware('gi.permission:novos_certificados.listar')->name('index');
-    Route::get('/dados',[NovoCertificadoController::class,'data'])->middleware('gi.permission:novos_certificados.listar')->name('data');
+Route::prefix('emissoes')->name('emissoes.')->group(function (): void {
+    Route::get('/',[NovoCertificadoController::class,'index'])->middleware('gi.permission:emissoes.listar')->name('index');
+    Route::get('/dados',[NovoCertificadoController::class,'data'])->middleware('gi.permission:emissoes.listar')->name('data');
     Route::get('/certificados',[NovoCertificadoController::class,'certificados'])->name('certificados');
     Route::get('/templates',[NovoCertificadoController::class,'templates'])->name('templates');
-    Route::get('/criar',[NovoCertificadoController::class,'create'])->middleware('gi.permission:novos_certificados.criar')->name('create');
-    Route::post('/',[NovoCertificadoController::class,'store'])->middleware('gi.permission:novos_certificados.criar')->name('store');
+    Route::get('/atividades',[NovoCertificadoController::class,'activities'])->name('activities');
+    Route::get('/criar',[NovoCertificadoController::class,'create'])->middleware('gi.permission:emissoes.criar')->name('create');
+    Route::post('/',[NovoCertificadoController::class,'store'])->middleware('gi.permission:emissoes.criar')->name('store');
     Route::get('/{certificado}/participantes/opcoes',[NovoCertificadoController::class,'participantOptions'])->whereNumber('certificado')->name('participantes.opcoes');
-    Route::get('/{certificado}/participantes',[NovoCertificadoController::class,'participants'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.participantes')->name('participantes');
-    Route::post('/{certificado}/participantes',[NovoCertificadoController::class,'addParticipants'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.inserir_participantes')->name('participantes.store');
-    Route::post('/{certificado}/gerar',[NovoCertificadoController::class,'generate'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.editar')->name('generate');
-    Route::get('/{certificado}/participantes/{item}/pdf',[NovoCertificadoController::class,'pdf'])->whereNumber(['certificado','item'])->middleware('gi.permission:novos_certificados.visualizar')->name('participantes.pdf');
-    Route::delete('/{certificado}/participantes/{item}',[NovoCertificadoController::class,'removeParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:novos_certificados.excluir_participantes')->name('participantes.destroy');
-    Route::get('/{certificado}',[NovoCertificadoController::class,'show'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.visualizar')->name('show');
-    Route::get('/{certificado}/editar',[NovoCertificadoController::class,'edit'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.editar')->name('edit');
-    Route::put('/{certificado}',[NovoCertificadoController::class,'update'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.editar')->name('update');
-    Route::patch('/{certificado}/status',[NovoCertificadoController::class,'toggleStatus'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.editar')->name('status');
-    Route::delete('/{certificado}',[NovoCertificadoController::class,'destroy'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.excluir')->name('destroy');
-    Route::delete('/{certificado}/definitivo',[NovoCertificadoController::class,'forceDestroy'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.excluir_definitivamente')->name('force-destroy');
+    Route::get('/{certificado}/participantes',[NovoCertificadoController::class,'participants'])->whereNumber('certificado')->middleware('gi.permission:emissoes.participantes')->name('participantes');
+    Route::post('/{certificado}/participantes',[NovoCertificadoController::class,'addParticipants'])->whereNumber('certificado')->middleware('gi.permission:emissoes.inserir_participantes')->name('participantes.store');
+    Route::post('/{certificado}/gerar',[NovoCertificadoController::class,'generate'])->whereNumber('certificado')->middleware('gi.permission:emissoes.gerar_pdfs')->name('generate');
+    Route::get('/{certificado}/participantes/{item}/pdf',[NovoCertificadoController::class,'pdf'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.visualizar')->name('participantes.pdf');
+    Route::delete('/{certificado}/participantes/{item}',[NovoCertificadoController::class,'removeParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.excluir_participantes')->name('participantes.destroy');
+    Route::get('/{certificado}',[NovoCertificadoController::class,'show'])->whereNumber('certificado')->middleware('gi.permission:emissoes.visualizar')->name('show');
+    Route::get('/{certificado}/editar',[NovoCertificadoController::class,'edit'])->whereNumber('certificado')->middleware('gi.permission:emissoes.editar')->name('edit');
+    Route::put('/{certificado}',[NovoCertificadoController::class,'update'])->whereNumber('certificado')->middleware('gi.permission:emissoes.editar')->name('update');
+    Route::patch('/{certificado}/status',[NovoCertificadoController::class,'toggleStatus'])->whereNumber('certificado')->middleware('gi.permission:emissoes.ativar_desativar')->name('status');
+    Route::delete('/{certificado}',[NovoCertificadoController::class,'destroy'])->whereNumber('certificado')->middleware('gi.permission:emissoes.excluir')->name('destroy');
+    Route::delete('/{certificado}/definitivo',[NovoCertificadoController::class,'forceDestroy'])->whereNumber('certificado')->middleware('gi.permission:emissoes.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('certificadosnovos')->name('certificadosnovos.')->group(function (): void {
+    Route::get('/', [CertificadoNovoController::class, 'index'])->middleware('gi.permission:certificadosnovos.listar')->name('index');
+    Route::get('/dados', [CertificadoNovoController::class, 'data'])->middleware('gi.permission:certificadosnovos.listar')->name('data');
+    Route::get('/{item}', [CertificadoNovoController::class, 'show'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.visualizar')->name('show');
+    Route::get('/{item}/pdf', [CertificadoNovoController::class, 'pdf'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.visualizar')->name('pdf');
+    Route::post('/{item}/gerar-pdf', [CertificadoNovoController::class, 'generate'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.gerar_pdf')->name('generate');
+    Route::patch('/{item}/status', [CertificadoNovoController::class, 'toggleStatus'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.ativar_desativar')->name('status');
 });
 
 Route::post('/manutencao/{acao}', function (Request $request, string $acao) {
