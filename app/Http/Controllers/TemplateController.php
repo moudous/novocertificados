@@ -9,6 +9,7 @@ use App\Models\Atividade;
 use App\Models\BibliotecaImagem;
 use App\Models\ParticipanteTeste;
 use App\Models\Responsavel;
+use App\Models\RubricaParticipante;
 use App\Services\TemplateLayoutRenderer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
@@ -94,7 +95,9 @@ class TemplateController extends Controller
         $testParticipants = ParticipanteTeste::query()->with('participante')->orderBy('id')->get();
         $activities = Atividade::query()->where('ativo', true)->orderBy('nome')->get();
         $responsibles = Responsavel::query()->with('participante')->where('ativo', true)->orderBy('id')->get();
-        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'testParticipants', 'activities', 'responsibles'));
+        $responsibleSignatures = RubricaParticipante::query()->with('participante')->where('ativo', true)
+            ->whereHas('participante.responsavel', fn (Builder $query): Builder => $query->where('ativo', true))->orderBy('participante_id')->get();
+        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'testParticipants', 'activities', 'responsibles', 'responsibleSignatures'));
     }
 
     public function saveBuilder(Request $request, Template $template): RedirectResponse
@@ -108,6 +111,7 @@ class TemplateController extends Controller
             'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'library', 'responsible_signature'])],
             'elementos.*.source_key' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::SOURCES))],
             'elementos.*.library_image_id' => ['nullable', 'integer', Rule::exists('biblioteca_imagens', 'id')->whereNull('apagado_em')],
+            'elementos.*.rubrica_id' => ['nullable', 'integer', Rule::exists('rubricas_participantes', 'id')->where(fn ($query) => $query->where('ativo', true)->whereNull('apagado_em'))],
             'elementos.*.content' => ['nullable', 'string', 'max:10000'],
             'elementos.*.rotation' => ['nullable', 'integer', Rule::in([0, 90, 180, 270])],
             'elementos.*.x' => ['required', 'numeric', 'min:0'], 'elementos.*.y' => ['required', 'numeric', 'min:0'],
