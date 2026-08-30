@@ -6,13 +6,13 @@
 @endpush
 @section('content')
 @php($signatureExists=$rubrica->signatureExists())
-<div class="mb-4"><h1 class="page-title">{{ $rubrica->exists?'Editar rubrica':'Nova rubrica' }}</h1><p class="page-description mb-0">Vincule uma rubrica em PNG ao participante.</p></div>
+<div class="mb-4"><h1 class="page-title">{{ $rubrica->exists?'Editar rubrica':'Nova rubrica' }}</h1><p class="page-description mb-0">Vincule uma rubrica em PNG a um participante responsável.</p></div>
 <form id="rubricaForm" method="POST" enctype="multipart/form-data" action="{{ $rubrica->exists?route('rubricas_participantes.update',$rubrica):route('rubricas_participantes.store') }}">@csrf @if($rubrica->exists) @method('PUT') @endif
 <div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Dados da rubrica</h2></div><div class="card-body p-4">
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 <div id="editorAlert" class="alert alert-danger d-none"></div>
 <div class="row g-3">
-    <div class="col-12 col-md-8"><label for="participante_id" class="form-label">Participante</label><select id="participante_id" name="participante_id" class="form-select"><option value=""></option>@if(old('participante_id',$rubrica->participante_id))<option value="{{ old('participante_id',$rubrica->participante_id) }}" selected>{{ $rubrica->participante?->nome ?? 'Participante selecionado' }}</option>@endif</select></div>
+    <div class="col-12 col-md-8"><label for="participante_id" class="form-label">Participante responsável *</label><select id="participante_id" name="participante_id" class="form-select" required><option value=""></option>@if(old('participante_id',$rubrica->participante_id))<option value="{{ old('participante_id',$rubrica->participante_id) }}" selected>{{ $rubrica->participante?->nome ?? 'Responsável selecionado' }}</option>@endif</select></div>
     <div class="col-12 col-md-4"><label for="ativo" class="form-label">Status *</label><select id="ativo" name="ativo" class="form-select" required><option value="1" @selected((string)old('ativo',$rubrica->exists?(int)$rubrica->ativo:1)==='1')>Ativa</option><option value="0" @selected((string)old('ativo',$rubrica->exists?(int)$rubrica->ativo:1)==='0')>Inativa</option></select></div>
     <div class="col-12"><label class="form-label">Rubrica</label><input id="rubrica" name="rubrica" type="file" class="d-none" accept=".png,image/png"><input id="remover_rubrica" name="remover_rubrica" type="hidden" value="{{ old('remover_rubrica',0) }}">
         @if($rubrica->rubrica&&!$signatureExists)<div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1"></i>O arquivo <strong>{{ $rubrica->rubrica }}</strong> não foi encontrado. Envie uma nova rubrica.</div>@endif
@@ -38,7 +38,7 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script><script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
- $('#participante_id').select2({theme:'bootstrap-5',width:'100%',placeholder:'Pesquise por nome ou e-mail',allowClear:true,ajax:{url:@json(route('rubricas_participantes.participantes',[],false)),dataType:'json',delay:250,data:p=>({q:p.term||'',page:p.page||1}),processResults:r=>r}});
+ $('#participante_id').select2({theme:'bootstrap-5',width:'100%',placeholder:'Pesquise um responsável por nome ou e-mail',ajax:{url:@json(route('rubricas_participantes.participantes',[],false)),dataType:'json',delay:250,data:p=>({q:p.term||'',page:p.page||1}),processResults:r=>r}});
  const input=document.getElementById('rubrica'),drop=document.getElementById('dropArea'),editorArea=document.getElementById('editorArea'),image=document.getElementById('editorImage'),processedArea=document.getElementById('processedArea'),processed=document.getElementById('processedImage'),flag=document.getElementById('remover_rubrica'),alertBox=document.getElementById('editorAlert'),tolerance=document.getElementById('tolerance'),toleranceValue=document.getElementById('toleranceValue');let cropper=null,objectUrl=null,processedUrl=null;
  const error=message=>{alertBox.textContent=message;alertBox.classList.remove('d-none')};const clearError=()=>alertBox.classList.add('d-none');
  const destroyUrls=()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);if(processedUrl)URL.revokeObjectURL(processedUrl);objectUrl=null;processedUrl=null};

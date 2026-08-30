@@ -9,6 +9,7 @@ use App\Http\Controllers\CertificadoA1Controller;
 use App\Http\Controllers\VariavelController;
 use App\Http\Controllers\RubricaParticipanteController;
 use App\Http\Controllers\ParticipanteTesteController;
+use App\Http\Controllers\ResponsavelController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\AssinaturaTemplateController;
 use App\Http\Controllers\NovoCertificadoController;
@@ -172,6 +173,21 @@ Route::prefix('rubricas_participantes')->name('rubricas_participantes.')->group(
     Route::patch('/{rubrica}/status', [RubricaParticipanteController::class, 'toggleStatus'])->whereNumber('rubrica')->middleware('gi.permission:rubricas_participantes.editar')->name('status');
     Route::delete('/{rubrica}', [RubricaParticipanteController::class, 'destroy'])->whereNumber('rubrica')->middleware('gi.permission:rubricas_participantes.excluir')->name('destroy');
     Route::delete('/{rubrica}/definitivo', [RubricaParticipanteController::class, 'forceDestroy'])->whereNumber('rubrica')->middleware('gi.permission:rubricas_participantes.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('responsaveis')->name('responsaveis.')->group(function (): void {
+    Route::get('/', [ResponsavelController::class, 'index'])->middleware('gi.permission:responsaveis.listar')->name('index');
+    Route::get('/dados', [ResponsavelController::class, 'data'])->middleware('gi.permission:responsaveis.listar')->name('data');
+    Route::get('/participantes', [ResponsavelController::class, 'participantes'])->name('participantes');
+    Route::get('/criar', [ResponsavelController::class, 'create'])->middleware('gi.permission:responsaveis.criar')->name('create');
+    Route::post('/', [ResponsavelController::class, 'store'])->middleware('gi.permission:responsaveis.criar')->name('store');
+    Route::get('/{responsavel}', [ResponsavelController::class, 'show'])->whereNumber('responsavel')->middleware('gi.permission:responsaveis.visualizar')->name('show');
+    Route::get('/{responsavel}/editar', [ResponsavelController::class, 'edit'])->whereNumber('responsavel')->middleware('gi.permission:responsaveis.editar')->name('edit');
+    Route::put('/{responsavel}', [ResponsavelController::class, 'update'])->whereNumber('responsavel')->middleware('gi.permission:responsaveis.editar')->name('update');
+    Route::patch('/{responsavel}/status', [ResponsavelController::class, 'toggleStatus'])->whereNumber('responsavel')->middleware('gi.permission:responsaveis.editar')->name('status');
+    Route::delete('/{responsavel}', [ResponsavelController::class, 'destroy'])->whereNumber('responsavel')->middleware('gi.permission:responsaveis.excluir')->name('destroy');
+    Route::patch('/{responsavel}/restaurar', [ResponsavelController::class, 'restore'])->whereNumber('responsavel')->middleware('gi.permission:responsaveis.restaurar')->name('restore');
+    Route::delete('/{responsavel}/definitivo', [ResponsavelController::class, 'forceDestroy'])->whereNumber('responsavel')->middleware('gi.permission:responsaveis.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::prefix('participantes_teste')->name('participantes_teste.')->group(function (): void {

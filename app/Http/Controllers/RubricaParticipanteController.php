@@ -86,6 +86,7 @@ class RubricaParticipanteController extends Controller
         $search = trim((string) $request->input('q', ''));
         $page = max((int) $request->input('page', 1), 1);
         $items = Participante::query()
+            ->whereHas('responsavel', fn (Builder $query): Builder => $query->where('ativo', true))
             ->when($search !== '', fn (Builder $query): Builder => $query->where(function (Builder $filter) use ($search): void {
                 $filter->where('nome', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
             }))
@@ -182,7 +183,11 @@ class RubricaParticipanteController extends Controller
         return $request->validate([
             'rubrica' => ['nullable', 'image', 'mimes:png', 'max:2048'],
             'remover_rubrica' => ['nullable', 'boolean'],
-            'participante_id' => ['nullable', 'integer', Rule::exists('participantes', 'id')->whereNull('excluido_em')],
+            'participante_id' => [
+                'required',
+                'integer',
+                Rule::exists('responsaveis', 'participante_id')->where(fn ($query) => $query->where('ativo', true)->whereNull('apagado_em')),
+            ],
             'ativo' => ['required', 'boolean'],
         ]);
     }

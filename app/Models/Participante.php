@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Participante extends Model
@@ -52,5 +53,10 @@ class Participante extends Model
     public function certificados(): HasMany
     {
         return $this->hasMany(Certificado::class, 'participanteId', 'id')->withTrashed();
+    }
+
+    public function responsavel(): HasOne
+    {
+        return $this->hasOne(Responsavel::class, 'participante_id');
     }
 }

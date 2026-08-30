@@ -50,6 +50,14 @@ rubricas_participantes.editar
 rubricas_participantes.excluir
 rubricas_participantes.excluir_definitivamente
 
+responsaveis.listar
+responsaveis.visualizar
+responsaveis.criar
+responsaveis.editar
+responsaveis.excluir
+responsaveis.restaurar
+responsaveis.excluir_definitivamente
+
 participantes_teste.listar
 participantes_teste.visualizar
 participantes_teste.criar
