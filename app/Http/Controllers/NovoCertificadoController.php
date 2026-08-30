@@ -97,11 +97,36 @@ class NovoCertificadoController extends Controller
     {
         $certificado->load(['template.imagemBiblioteca','atividade.evento','responsavel.participante','rubrica','participantes.participante']);
         abort_unless($certificado->template,422,'Selecione um template antes de gerar.');
-        $directory=public_path('certificado/emitidos');File::ensureDirectoryExists($directory);
-        foreach($certificado->participantes as $item){try{$code=$item->codigo?:strtoupper(Str::random(16));$r=$certificado->responsavel;$rubrica=$certificado->rubrica?:$r?->participante?->rubricas()->where('ativo',true)->first();$context=['participante'=>['nome'=>$item->participante?->nome,'email'=>$item->participante?->email,'cpf'=>$item->participante?->cpf],'evento'=>['nome'=>$certificado->atividade?->evento?->nome,'descricao'=>$certificado->atividade?->evento?->descricao],'atividade'=>['nome'=>$certificado->atividade?->nome,'carga_horaria'=>data_get($certificado->campos_personalizados,'carga_horaria','')],'responsavel'=>['nome'=>$r?->participante?->nome,'cargo'=>$r?->cargo,'titulacao'=>$r?->titulacao,'rubrica_path'=>$renderer->rubricaPath($rubrica)],'emissao'=>['nome'=>$certificado->nome,'data'=>($certificado->data_emissao?:now())->format('d/m/Y')],'certificado'=>['codigo'=>$code]];$elements=collect($renderer->elements($certificado->template->elementos_layout??[],$context));$width=max($certificado->template->largura,1);$height=max($certificado->template->altura,1);$background=$renderer->background($certificado->template);$fonts=collect($renderer->fonts());$pdf=Pdf::loadView('templates.preview-pdf',['template'=>$certificado->template,'elements'=>$elements,'width'=>$width,'height'=>$height,'background'=>$background,'fonts'=>$fonts])->setPaper([0,0,$width*2.834645669,$height*2.834645669]);$name='certificado-'.$item->id.'-'.$code.'.pdf';File::put($directory.'/'.$name,$pdf->output());$item->update(['codigo'=>$code,'arquivo_pdf'=>$name,'snapshot_dados'=>$context,'snapshot_template'=>$certificado->template->elementos_layout,'gerado_em'=>now(),'erro_geracao'=>null]);}catch(\Throwable $e){report($e);$item->update(['erro_geracao'=>Str::limit($e->getMessage(),1000),'gerado_em'=>null]);}}
+        foreach($certificado->participantes as $item){try{$this->generateItem($certificado,$item,$renderer);}catch(\Throwable $e){report($e);$item->update(['erro_geracao'=>Str::limit($e->getMessage(),1000),'gerado_em'=>null]);}}
         return back()->with('status','Geração concluída. Consulte o resultado de cada participante.');
     }
+    public function generateParticipant(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer): RedirectResponse
+    {
+        abort_unless($item->novo_certificado_id === $certificado->id, 404);
+        $certificado->load(['template.imagemBiblioteca','atividade.evento','responsavel.participante','rubrica']);
+        $item->load('participante');
+        abort_unless($certificado->template, 422, 'Selecione um template antes de gerar.');
+        try {
+            $this->generateItem($certificado, $item, $renderer);
+        } catch (\Throwable $exception) {
+            report($exception);
+            $item->update(['erro_geracao'=>Str::limit($exception->getMessage(),1000),'gerado_em'=>null]);
+            return back()->withErrors(['pdf' => 'Não foi possível gerar o PDF deste participante.']);
+        }
+        return back()->with('status', 'PDF do participante gerado com sucesso.');
+    }
     public function pdf(NovoCertificado $certificado, ListaParticipante $item): BinaryFileResponse { abort_unless($item->novo_certificado_id===$certificado->id&&filled($item->arquivo_pdf),404);$path=public_path('certificado/emitidos/'.$item->arquivo_pdf);abort_unless(is_file($path),404);return response()->file($path); }
+    private function generateItem(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer): void
+    {
+        $directory=public_path('certificado/emitidos'); File::ensureDirectoryExists($directory);
+        $code=$item->codigo?:strtoupper(Str::random(16)); $responsavel=$certificado->responsavel;
+        $rubrica=$certificado->rubrica?:$responsavel?->participante?->rubricas()->where('ativo',true)->first();
+        $context=['participante'=>['nome'=>$item->participante?->nome,'email'=>$item->participante?->email,'cpf'=>$item->participante?->cpf],'evento'=>['nome'=>$certificado->atividade?->evento?->nome,'descricao'=>$certificado->atividade?->evento?->descricao],'atividade'=>['nome'=>$certificado->atividade?->nome,'carga_horaria'=>data_get($certificado->campos_personalizados,'carga_horaria','')],'responsavel'=>['nome'=>$responsavel?->participante?->nome,'cargo'=>$responsavel?->cargo,'titulacao'=>$responsavel?->titulacao,'rubrica_path'=>$renderer->rubricaPath($rubrica)],'emissao'=>['nome'=>$certificado->nome,'data'=>($certificado->data_emissao?:now())->format('d/m/Y')],'certificado'=>['codigo'=>$code]];
+        $elements=collect($renderer->elements($certificado->template->elementos_layout??[],$context)); $width=max($certificado->template->largura,1); $height=max($certificado->template->altura,1); $background=$renderer->background($certificado->template); $fonts=collect($renderer->fonts());
+        $pdf=Pdf::loadView('templates.preview-pdf',['template'=>$certificado->template,'elements'=>$elements,'width'=>$width,'height'=>$height,'background'=>$background,'fonts'=>$fonts])->setPaper([0,0,$width*2.834645669,$height*2.834645669]);
+        $name='certificado-'.$item->id.'-'.$code.'.pdf'; File::put($directory.'/'.$name,$pdf->output());
+        $item->update(['codigo'=>$code,'arquivo_pdf'=>$name,'snapshot_dados'=>$context,'snapshot_template'=>$certificado->template->elementos_layout,'gerado_em'=>now(),'erro_geracao'=>null]);
+    }
     private function validated(Request $request): array
     {
         $eventoId = $request->integer('evento_id');

@@ -11,7 +11,8 @@ class AllowGiEmbedding
     public function handle(Request $request, Closure $next): Response
     {
         if (! filter_var(config('gi.allow_outside_iframe'), FILTER_VALIDATE_BOOL)
-            && ! $request->is('health')) {
+            && ! $request->is('health')
+            && ! $request->routeIs('certificadosnovos.public.pdf')) {
             $destination = strtolower((string) $request->header('Sec-Fetch-Dest'));
 
             if (in_array($destination, ['', 'document'], true)) {

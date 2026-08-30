@@ -266,6 +266,7 @@ Route::prefix('emissoes')->name('emissoes.')->group(function (): void {
     Route::get('/{certificado}/participantes',[NovoCertificadoController::class,'participants'])->whereNumber('certificado')->middleware('gi.permission:emissoes.participantes')->name('participantes');
     Route::post('/{certificado}/participantes',[NovoCertificadoController::class,'addParticipants'])->whereNumber('certificado')->middleware('gi.permission:emissoes.inserir_participantes')->name('participantes.store');
     Route::post('/{certificado}/gerar',[NovoCertificadoController::class,'generate'])->whereNumber('certificado')->middleware('gi.permission:emissoes.gerar_pdfs')->name('generate');
+    Route::post('/{certificado}/participantes/{item}/gerar',[NovoCertificadoController::class,'generateParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.gerar_pdfs')->name('participantes.generate');
     Route::get('/{certificado}/participantes/{item}/pdf',[NovoCertificadoController::class,'pdf'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.visualizar')->name('participantes.pdf');
     Route::delete('/{certificado}/participantes/{item}',[NovoCertificadoController::class,'removeParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.excluir_participantes')->name('participantes.destroy');
     Route::get('/{certificado}',[NovoCertificadoController::class,'show'])->whereNumber('certificado')->middleware('gi.permission:emissoes.visualizar')->name('show');
@@ -277,6 +278,7 @@ Route::prefix('emissoes')->name('emissoes.')->group(function (): void {
 });
 
 Route::prefix('certificadosnovos')->name('certificadosnovos.')->group(function (): void {
+    Route::get('/v/{codigo}', [CertificadoNovoController::class, 'publicPdf'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.pdf');
     Route::get('/', [CertificadoNovoController::class, 'index'])->middleware('gi.permission:certificadosnovos.listar')->name('index');
     Route::get('/dados', [CertificadoNovoController::class, 'data'])->middleware('gi.permission:certificadosnovos.listar')->name('data');
     Route::get('/{item}', [CertificadoNovoController::class, 'show'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.visualizar')->name('show');

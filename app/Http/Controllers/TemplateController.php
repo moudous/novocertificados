@@ -110,7 +110,7 @@ class TemplateController extends Controller
 
         return redirect()->route('templates.edit', $copy)->with('status', 'Template duplicado. Revise o nome e salve as alterações.');
     }
-    public function builder(Template $template): View
+    public function builder(Request $request, Template $template): View
     {
         $uploadedFonts = FonteLayout::query()->orderBy('nome')->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'url' => $font->url()]);
         $fallbackFonts = collect(TemplateLayoutRenderer::FALLBACK_FONTS)->map(fn (string $file, string $name): array => [
@@ -122,10 +122,10 @@ class TemplateController extends Controller
         $libraryImages = BibliotecaImagem::query()->where('ativo', true)->orderBy('categoria')->orderBy('nome')->get();
         $testParticipants = ParticipanteTeste::query()->with('participante')->orderBy('id')->get();
         $activities = Atividade::query()->where('ativo', true)->orderBy('nome')->get();
-        $responsibles = Responsavel::query()->with('participante')->where('ativo', true)->orderBy('id')->get();
+        $testSelection = (array) $request->session()->get('armazem.templates.construtor.participante', []);
         $responsibleSignatures = RubricaParticipante::query()->with('participante')->where('ativo', true)
             ->whereHas('participante.responsavel', fn (Builder $query): Builder => $query->where('ativo', true))->orderBy('participante_id')->get();
-        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'testParticipants', 'activities', 'responsibles', 'responsibleSignatures'));
+        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures'));
     }
 
     public function fallbackFont(string $family): \Symfony\Component\HttpFoundation\BinaryFileResponse
@@ -172,12 +172,20 @@ class TemplateController extends Controller
     public function previewPdf(Request $request, Template $template, TemplateLayoutRenderer $renderer): Response
     {
         File::ensureDirectoryExists(storage_path('fonts'), 0775, true);
-        $request->validate(['layout_json' => ['required', 'json']]);
+        $request->validate([
+            'layout_json' => ['required', 'json'],
+            'participante_teste_id' => ['nullable', 'required_with:atividade_id', 'integer', Rule::exists('participantes_de_teste', 'id')->whereNull('apagado_em')],
+            'atividade_id' => ['nullable', 'required_with:participante_teste_id', 'integer', Rule::exists('atividades', 'id')->where(fn ($query) => $query->where('ativo', true)->whereNull('apagado_em'))],
+        ]);
+        if ($request->has('participante_teste_id') || $request->has('atividade_id')) {
+            $request->session()->put('armazem.templates.construtor.participante', [
+                'participante_teste_id' => $request->integer('participante_teste_id') ?: null,
+                'atividade_id' => $request->integer('atividade_id') ?: null,
+            ]);
+        }
         $test = $request->filled('participante_teste_id') ? ParticipanteTeste::with('participante')->findOrFail($request->integer('participante_teste_id')) : null;
         $activity = $request->filled('atividade_id') ? Atividade::with('evento')->findOrFail($request->integer('atividade_id')) : null;
-        $responsible = $request->filled('responsavel_id') ? Responsavel::with('participante')->findOrFail($request->integer('responsavel_id')) : null;
-        $rubrica = $responsible?->participante ? $responsible->participante->rubricas()->where('ativo', true)->first() : null;
-        $context = $this->previewContext($test?->participante, $activity, $responsible, $renderer->rubricaPath($rubrica));
+        $context = $this->previewContext($test?->participante, $activity, null, null);
         $elements = collect($renderer->elements(json_decode((string)$request->input('layout_json'), true) ?: [], $context));
         $width = max((int) $template->largura, 1); $height = max((int) $template->altura, 1);
         $background = $renderer->background($template);

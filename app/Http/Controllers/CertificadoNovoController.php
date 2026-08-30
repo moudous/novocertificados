@@ -82,4 +82,24 @@ class CertificadoNovoController extends Controller
         abort_unless($item->arquivoExists(), 404);
         return response()->file($item->arquivoPath());
     }
+
+    public function publicPdf(string $codigo): BinaryFileResponse
+    {
+        abort_unless(preg_match('/^[A-Za-z0-9-]{6,64}$/', $codigo) === 1, 404);
+        $item = ListaParticipante::query()
+            ->where('codigo', $codigo)
+            ->where('ativo', true)
+            ->whereHas('novoCertificado', fn (Builder $query): Builder => $query
+                ->where('ativo', true)
+                ->whereNull('apagado_em'))
+            ->firstOrFail();
+        abort_unless($item->arquivoExists(), 404);
+
+        return response()->file($item->arquivoPath(), [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="certificado-'.$codigo.'.pdf"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
 }
