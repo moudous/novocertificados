@@ -58,6 +58,11 @@ responsaveis.excluir
 responsaveis.restaurar
 responsaveis.excluir_definitivamente
 
+biblioteca_imagens.listar
+biblioteca_imagens.criar
+biblioteca_imagens.editar
+biblioteca_imagens.excluir
+
 participantes_teste.listar
 participantes_teste.visualizar
 participantes_teste.criar

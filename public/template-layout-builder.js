@@ -1,111 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const config = window.layoutBuilderConfig;
-    const canvas = document.getElementById('layoutCanvas');
-    const list = document.getElementById('variableList');
-    const properties = document.getElementById('properties');
-    const fields = {text: document.getElementById('propText'), x: document.getElementById('propX'), y: document.getElementById('propY'), width: document.getElementById('propWidth'), height: document.getElementById('propHeight'), color: document.getElementById('propColor'), align: document.getElementById('propAlign'), fontFamily: document.getElementById('propFontFamily'), fontSize: document.getElementById('propFontSize'), bold: document.getElementById('propBold'), italic: document.getElementById('propItalic'), underline: document.getElementById('propUnderline')};
-    const alignments = {esquerda: 'left', direita: 'right', centralizado: 'center', justificado: 'justify'};
-    const mainFonts = ['Arial','Helvetica','Times New Roman','Georgia','Courier New','Verdana','Trebuchet MS','Tahoma','Garamond','DejaVu Sans'];
-    let elements = Array.isArray(config.elements) ? config.elements : [];
-    let selected = null;
-
-    const clamp = (value, min, max) => Math.min(Math.max(Number(value) || 0, min), max);
-    const variableById = id => config.variables.find(variable => Number(variable.id) === Number(id));
-    const normalize = item => {
-        const variable = variableById(item.variable_id);
-        return {
-            uid: item.uid || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-            variable_id: Number(item.variable_id), type: item.type || variable?.type || 'texto',
-            text: item.text ?? variable?.text ?? '', image: variable?.image || item.image || null,
-            x: clamp(item.x ?? variable?.x ?? 0, 0, config.width - 1), y: clamp(item.y ?? variable?.y ?? 0, 0, config.height - 1),
-            width: clamp(item.width ?? variable?.width ?? 40, 1, config.width), height: clamp(item.height ?? variable?.height ?? 12, 1, config.height),
-            color: /^#[0-9a-f]{6}$/i.test(item.color || '') ? item.color : (variable?.color || '#111827'), align: item.align || variable?.align || 'esquerda',
-            font_family: item.font_family || 'Arial', font_size: clamp(item.font_size || 12, 1, 300), bold: Boolean(item.bold), italic: Boolean(item.italic), underline: Boolean(item.underline)
-        };
-    };
-    elements = elements.filter(item => variableById(item.variable_id)).map(normalize);
-
-    const addFontOption = (name, url = null) => {
-        if (![...fields.fontFamily.options].some(option => option.value === name)) fields.fontFamily.add(new Option(name, name));
-        if (url && 'FontFace' in window) new FontFace(name, `url(${JSON.stringify(url)})`).load().then(font => document.fonts.add(font)).catch(() => {});
-    };
-    mainFonts.forEach(name => addFontOption(name)); (config.fonts || []).forEach(font => addFontOption(font.name, font.url));
-
-    config.variables.forEach(variable => {
-        const button = document.createElement('button'); button.type = 'button'; button.className = 'variable-button';
-        const icon = variable.type === 'imagem' && variable.image ? `<img class="variable-thumb" src="${variable.image}" alt="">` : `<span class="context-icon"><i class="bi ${variable.type === 'imagem' ? 'bi-image' : 'bi-fonts'}"></i></span>`;
-        button.innerHTML = `${icon}<span class="text-truncate"><strong class="d-block small">${escapeHtml(variable.name)}</strong><span class="small text-muted">${variable.type === 'imagem' ? 'Imagem' : 'Texto'} · ${escapeHtml(variable.label)}</span></span>`;
-        button.addEventListener('click', () => { const item = normalize({...variable, variable_id: variable.id, uid: ''}); elements.push(item); render(); select(item.uid); }); list.appendChild(button);
-    });
-    if (!config.variables.length) list.innerHTML = '<div class="alert alert-light small">Nenhuma variável ativa disponível.</div>';
-
-    function escapeHtml(value) { const span = document.createElement('span'); span.textContent = value || ''; return span.innerHTML; }
-    function render() {
-        canvas.querySelectorAll('.layout-element').forEach(node => node.remove());
-        elements.forEach(item => {
-            const node = document.createElement('div'); node.className = `layout-element ${item.type === 'imagem' ? 'image' : 'text'}${selected === item.uid ? ' selected' : ''}`; node.dataset.uid = item.uid;
-            applyBox(node, item);
-            if (item.type === 'imagem') node.innerHTML = item.image ? `<img src="${item.image}" alt="Variável de imagem"><span class="resize-handle"></span>` : '<span class="small text-danger">Imagem indisponível</span><span class="resize-handle"></span>';
-            else { node.classList.add('layout-element-text'); node.textContent = item.text || 'Texto'; node.style.color = item.color; node.style.textAlign = alignments[item.align] || 'left'; node.style.fontFamily = item.font_family; node.style.fontSize = `${item.font_size}pt`; node.style.fontWeight = item.bold ? 'bold' : 'normal'; node.style.fontStyle = item.italic ? 'italic' : 'normal'; node.style.textDecoration = item.underline ? 'underline' : 'none'; const handle = document.createElement('span'); handle.className = 'resize-handle'; node.appendChild(handle); }
-            node.addEventListener('pointerdown', event => startPointer(event, item, node)); canvas.appendChild(node);
-        });
-    }
-    function applyBox(node, item) { node.style.left = `${item.x / config.width * 100}%`; node.style.top = `${item.y / config.height * 100}%`; node.style.width = `${item.width / config.width * 100}%`; node.style.height = `${item.height / config.height * 100}%`; }
-    function select(uid) { selected = uid; const item = elements.find(entry => entry.uid === uid); render(); properties.classList.toggle('d-none', !item); if (!item) return; fields.text.value = item.text || ''; fields.x.value = rounded(item.x); fields.y.value = rounded(item.y); fields.width.value = rounded(item.width); fields.height.value = rounded(item.height); fields.color.value = item.color || '#111827'; fields.align.value = item.align || 'esquerda'; fields.fontFamily.value = item.font_family || 'Arial'; fields.fontSize.value = item.font_size || 12; fields.bold.checked = item.bold; fields.italic.checked = item.italic; fields.underline.checked = item.underline; document.getElementById('textProperty').classList.toggle('d-none', item.type !== 'texto'); document.getElementById('textStyles').classList.toggle('d-none', item.type !== 'texto'); }
-    const rounded = value => Math.round(value * 10) / 10;
-    function startPointer(event, item, node) {
-        event.preventDefault(); const resizing = event.target.classList.contains('resize-handle'); select(item.uid); const activeNode = canvas.querySelector(`[data-uid="${CSS.escape(item.uid)}"]`); const rect = canvas.getBoundingClientRect(); const start = {x: event.clientX, y: event.clientY, left: item.x, top: item.y, width: item.width, height: item.height};
-        const move = moveEvent => { const dx = (moveEvent.clientX - start.x) / rect.width * config.width, dy = (moveEvent.clientY - start.y) / rect.height * config.height; if (resizing) { item.width = clamp(start.width + dx, 1, config.width - item.x); item.height = clamp(start.height + dy, 1, config.height - item.y); } else { item.x = clamp(start.left + dx, 0, config.width - item.width); item.y = clamp(start.top + dy, 0, config.height - item.height); } applyBox(activeNode, item); syncControls(item); };
-        const stop = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', stop); };
-        document.addEventListener('pointermove', move); document.addEventListener('pointerup', stop);
-    }
-    function syncControls(item) { fields.x.value = rounded(item.x); fields.y.value = rounded(item.y); fields.width.value = rounded(item.width); fields.height.value = rounded(item.height); }
-    ['x','y','width','height'].forEach(key => fields[key].addEventListener('input', () => { const item = elements.find(entry => entry.uid === selected); if (!item) return; const maximum = key === 'x' ? config.width - item.width : key === 'y' ? config.height - item.height : key === 'width' ? config.width - item.x : config.height - item.y; item[key] = clamp(fields[key].value, key === 'width' || key === 'height' ? 1 : 0, maximum); render(); }));
-    fields.text.addEventListener('input', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.text = fields.text.value; render(); } });
-    fields.color.addEventListener('input', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.color = fields.color.value; render(); } });
-    fields.align.addEventListener('change', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.align = fields.align.value; render(); } });
-    fields.fontFamily.addEventListener('change', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.font_family = fields.fontFamily.value; render(); } });
-    fields.fontSize.addEventListener('input', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.font_size = clamp(fields.fontSize.value, 1, 300); render(); } });
-    ['bold','italic','underline'].forEach(key => fields[key].addEventListener('change', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item[key] = fields[key].checked; render(); } }));
-    const duplicateSelectedElement = () => {
-        const item = elements.find(entry => entry.uid === selected);
-        if (!item) return;
-        const offset = 5;
-        const copy = {
-            ...item,
-            uid: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-            x: clamp(item.x + offset, 0, config.width - item.width),
-            y: clamp(item.y + offset, 0, config.height - item.height),
-        };
-        elements.push(copy);
-        select(copy.uid);
-    };
-    const removeSelectedElement = () => { if (!selected) return; elements = elements.filter(item => item.uid !== selected); selected = null; properties.classList.add('d-none'); render(); };
-    document.getElementById('duplicateElement').addEventListener('click', duplicateSelectedElement);
-    document.getElementById('removeElement').addEventListener('click', removeSelectedElement);
-    document.addEventListener('keydown', event => {
-        if (event.key !== 'Delete' || !selected) return;
-        const target = event.target;
-        if (target instanceof HTMLElement && (target.matches('input, textarea, select') || target.isContentEditable)) return;
-        event.preventDefault(); removeSelectedElement();
-    });
-    canvas.addEventListener('pointerdown', event => { if (event.target === canvas) select(null); });
-    const serializeElements = () => JSON.stringify(elements.map(({uid, variable_id, type, text, x, y, width, height, color, align, font_family, font_size, bold, italic, underline}) => ({uid, variable_id, type, text, x: rounded(x), y: rounded(y), width: rounded(width), height: rounded(height), color, align, font_family, font_size, bold, italic, underline})));
-    document.getElementById('builderForm').addEventListener('submit', () => { document.getElementById('layoutJson').value = serializeElements(); });
-    document.getElementById('previewPdf').addEventListener('click', () => {
-        const previewForm = document.createElement('form'); previewForm.method = 'POST'; previewForm.action = config.previewUrl; previewForm.target = '_blank'; previewForm.style.display = 'none';
-        const token = document.querySelector('#builderForm input[name="_token"]').cloneNode();
-        const payload = document.createElement('input'); payload.type = 'hidden'; payload.name = 'layout_json'; payload.value = serializeElements();
-        previewForm.append(token, payload); document.body.appendChild(previewForm); previewForm.submit(); previewForm.remove();
-    });
-    const fontFile = document.getElementById('fontFile'), fontMessage = document.getElementById('fontMessage');
-    document.getElementById('importFont').addEventListener('click', () => fontFile.click());
-    fontFile.addEventListener('change', async () => {
-        if (!fontFile.files[0]) return; const data = new FormData(); data.append('fonte', fontFile.files[0]);
-        fontMessage.className = 'small mt-1 text-muted'; fontMessage.textContent = 'Importando fonte...';
-        try { const response = await fetch(config.fontUploadUrl, {method:'POST', headers:{'X-CSRF-TOKEN':document.querySelector('#builderForm input[name="_token"]').value,'Accept':'application/json'}, body:data}); const result = await response.json(); if (!response.ok) throw new Error(result.message || Object.values(result.errors || {}).flat()[0] || 'Falha ao importar.'); addFontOption(result.font.name, result.font.url); fields.fontFamily.value = result.font.name; const item = elements.find(entry => entry.uid === selected); if (item?.type === 'texto') { item.font_family = result.font.name; render(); } fontMessage.className = 'small mt-1 text-success'; fontMessage.textContent = `Fonte “${result.font.name}” importada.`; }
-        catch (error) { fontMessage.className = 'small mt-1 text-danger'; fontMessage.textContent = error.message; }
-        finally { fontFile.value = ''; }
-    });
-    render();
+ const c=window.layoutBuilderConfig,cv=document.getElementById('layoutCanvas'),p=document.getElementById('properties'),g=id=>document.getElementById(id),f={text:g('propText'),source_type:g('propSourceType'),source_key:g('propSourceKey'),library_image_id:g('propLibraryImage'),x:g('propX'),y:g('propY'),width:g('propWidth'),height:g('propHeight'),color:g('propColor'),align:g('propAlign'),font_family:g('propFontFamily'),font_size:g('propFontSize'),bold:g('propBold'),italic:g('propItalic'),underline:g('propUnderline')};
+ let items=Array.isArray(c.elements)?c.elements:[],selected=null;const clamp=(v,min,max)=>Math.min(Math.max(Number(v)||0,min),Math.max(max,min)),round=v=>Math.round(v*10)/10,uid=()=>`${Date.now()}-${Math.random().toString(16).slice(2)}`,align={esquerda:'left',direita:'right',centralizado:'center',justificado:'justify'};
+ const norm=i=>({uid:i.uid||uid(),type:['text','rich_text','image'].includes(i.type)?i.type:(i.type==='imagem'?'image':'text'),source_type:i.source_type||(i.type==='imagem'?'library':'fixed'),source_key:i.source_key||'participante.nome',library_image_id:Number(i.library_image_id)||null,content:i.content??i.text??'',x:clamp(i.x??10,0,c.width-1),y:clamp(i.y??10,0,c.height-1),width:clamp(i.width??70,1,c.width),height:clamp(i.height??12,1,c.height),color:/^#[0-9a-f]{6}$/i.test(i.color||'')?i.color:'#111827',align:i.align||'esquerda',font_family:i.font_family||'Arial',font_size:clamp(i.font_size||12,1,300),bold:Boolean(i.bold),italic:Boolean(i.italic),underline:Boolean(i.underline)});items=items.map(norm);
+ const addFont=(name,url)=>{if(![...f.font_family.options].some(o=>o.value===name))f.font_family.add(new Option(name,name));if(url&&'FontFace'in window)new FontFace(name,`url(${JSON.stringify(url)})`).load().then(x=>document.fonts.add(x)).catch(()=>{})};['Arial','Helvetica','Times New Roman','Georgia','Courier New','Verdana','Trebuchet MS','Tahoma','Garamond','DejaVu Sans'].forEach(x=>addFont(x));(c.fonts||[]).forEach(x=>addFont(x.name,x.url));
+ const libUrl=i=>[...f.library_image_id.options].find(o=>Number(o.value)===Number(i.library_image_id))?.dataset.url||null,text=i=>i.source_type==='dynamic'?`{{ ${i.source_key} }}`:i.content||'Texto';
+ const safe=html=>{const t=document.createElement('template');t.innerHTML=html;t.content.querySelectorAll('*').forEach(n=>{if(!['STRONG','B','EM','I','U','BR','SPAN'].includes(n.tagName))n.replaceWith(...n.childNodes);else[...n.attributes].forEach(a=>{if(a.name!=='style')n.removeAttribute(a.name)})});return t.innerHTML};
+ function box(n,i){n.style.left=`${i.x/c.width*100}%`;n.style.top=`${i.y/c.height*100}%`;n.style.width=`${i.width/c.width*100}%`;n.style.height=`${i.height/c.height*100}%`}
+ function render(){cv.querySelectorAll('.layout-element').forEach(n=>n.remove());items.forEach(i=>{const n=document.createElement('div');n.className=`layout-element ${i.type==='image'?'image':'text'}${selected===i.uid?' selected':''}`;n.dataset.uid=i.uid;box(n,i);if(i.type==='image'){const url=i.source_type==='library'?libUrl(i):null;n.innerHTML=url?`<img src="${url}" alt="Imagem"><span class="resize-handle"></span>`:'<span class="small text-muted">Rubrica dinâmica</span><span class="resize-handle"></span>'}else{n.classList.add('layout-element-text');i.type==='rich_text'?n.innerHTML=safe(text(i)):n.textContent=text(i);Object.assign(n.style,{color:i.color,textAlign:align[i.align]||'left',fontFamily:i.font_family,fontSize:`${i.font_size}pt`,fontWeight:i.bold?'bold':'normal',fontStyle:i.italic?'italic':'normal',textDecoration:i.underline?'underline':'none'});const h=document.createElement('span');h.className='resize-handle';n.appendChild(h)}n.addEventListener('pointerdown',e=>pointer(e,i));cv.appendChild(n)})}
+ function visibility(i){const image=i.type==='image',rich=i.type==='rich_text';[...f.source_type.options].forEach(o=>o.hidden=image?!['library','responsible_signature'].includes(o.value):!['fixed','dynamic'].includes(o.value));g('dynamicProperty').classList.toggle('d-none',i.source_type!=='dynamic');g('libraryProperty').classList.toggle('d-none',i.source_type!=='library');g('textProperty').classList.toggle('d-none',image);g('textStyles').classList.toggle('d-none',image);g('richToolbar').classList.toggle('d-none',!rich);g('richHelp').classList.toggle('d-none',!rich)}
+ function select(id){selected=id;const i=items.find(x=>x.uid===id);render();p.classList.toggle('d-none',!i);if(!i)return;f.text.value=i.content;Object.keys(f).forEach(k=>{if(k==='text')return;if(['bold','italic','underline'].includes(k))f[k].checked=i[k];else f[k].value=i[k]??''});visibility(i)}
+ function add(type){const i=norm({type,source_type:type==='image'?'library':'fixed',content:type==='rich_text'?'Certificamos que <strong>{{ participante.nome }}</strong> concluiu {{ atividade.nome }}.':'Novo texto',width:type==='rich_text'?120:type==='image'?40:70,height:type==='rich_text'?35:type==='image'?30:12});items.push(i);select(i.uid)}g('addText').onclick=()=>add('text');g('addRichText').onclick=()=>add('rich_text');g('addImage').onclick=()=>add('image');
+ function pointer(e,i){e.preventDefault();e.stopPropagation();const resize=e.target.classList.contains('resize-handle');select(i.uid);const n=cv.querySelector(`[data-uid="${CSS.escape(i.uid)}"]`),r=cv.getBoundingClientRect(),s={cx:e.clientX,cy:e.clientY,x:i.x,y:i.y,w:i.width,h:i.height},move=m=>{const dx=(m.clientX-s.cx)/r.width*c.width,dy=(m.clientY-s.cy)/r.height*c.height;if(resize){i.width=clamp(s.w+dx,1,c.width-i.x);i.height=clamp(s.h+dy,1,c.height-i.y)}else{i.x=clamp(s.x+dx,0,c.width-i.width);i.y=clamp(s.y+dy,0,c.height-i.height)}box(n,i);['x','y','width','height'].forEach(k=>f[k].value=round(i[k]))},stop=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',stop)};document.addEventListener('pointermove',move);document.addEventListener('pointerup',stop)}
+ ['x','y','width','height'].forEach(k=>f[k].oninput=()=>{const i=items.find(x=>x.uid===selected);if(!i)return;const max=k==='x'?c.width-i.width:k==='y'?c.height-i.height:k==='width'?c.width-i.x:c.height-i.y;i[k]=clamp(f[k].value,['width','height'].includes(k)?1:0,max);render()});f.text.oninput=()=>{const i=items.find(x=>x.uid===selected);if(i){i.content=f.text.value;render()}};f.source_type.onchange=()=>{const i=items.find(x=>x.uid===selected);if(i){i.source_type=f.source_type.value;visibility(i);render()}};f.source_key.onchange=()=>{const i=items.find(x=>x.uid===selected);if(i){i.source_key=f.source_key.value;render()}};f.library_image_id.onchange=()=>{const i=items.find(x=>x.uid===selected);if(i){i.library_image_id=Number(f.library_image_id.value)||null;render()}};
+ ['color','align','font_family','font_size'].forEach(k=>f[k].oninput=()=>{const i=items.find(x=>x.uid===selected);if(i){i[k]=k==='font_size'?clamp(f[k].value,1,300):f[k].value;render()}});['bold','italic','underline'].forEach(k=>f[k].onchange=()=>{const i=items.find(x=>x.uid===selected);if(i){i[k]=f[k].checked;render()}});
+ g('richToolbar').querySelectorAll('[data-tag]').forEach(b=>b.onclick=()=>{const a=f.text.selectionStart,z=f.text.selectionEnd,t=b.dataset.tag,v=f.text.value;f.text.value=`${v.slice(0,a)}<${t}>${v.slice(a,z)}</${t}>${v.slice(z)}`;f.text.oninput();f.text.focus()});g('insertToken').onclick=()=>{const a=f.text.selectionStart,v=f.text.value;f.text.value=v.slice(0,a)+`{{ ${f.source_key.value} }}`+v.slice(a);f.text.oninput()};
+ g('duplicateElement').onclick=()=>{const i=items.find(x=>x.uid===selected);if(!i)return;const x={...i,uid:uid(),x:clamp(i.x+5,0,c.width-i.width),y:clamp(i.y+5,0,c.height-i.height)};items.push(x);select(x.uid)};const remove=()=>{items=items.filter(x=>x.uid!==selected);select(null)};g('removeElement').onclick=remove;document.addEventListener('keydown',e=>{if(e.key==='Delete'&&selected&&!e.target.matches('input,textarea,select')){e.preventDefault();remove()}});cv.addEventListener('pointerdown',e=>{if(e.target===cv)select(null)});
+ const json=()=>JSON.stringify(items.map(i=>({...i,x:round(i.x),y:round(i.y),width:round(i.width),height:round(i.height)})));g('builderForm').onsubmit=()=>g('layoutJson').value=json();const preview=extra=>{const form=document.createElement('form');form.method='POST';form.action=c.previewUrl;form.target='_blank';form.hidden=true;const token=document.querySelector('#builderForm input[name="_token"]').cloneNode(),layout=document.createElement('input');layout.name='layout_json';layout.value=json();form.append(token,layout);Object.entries(extra||{}).forEach(([k,v])=>{const x=document.createElement('input');x.name=k;x.value=v;form.append(x)});document.body.appendChild(form);form.submit();form.remove()};g('previewPdf').onclick=()=>preview();const modal=new bootstrap.Modal(g('testModal'));g('testTemplate').onclick=()=>modal.show();g('testForm').onsubmit=e=>{e.preventDefault();preview(Object.fromEntries(new FormData(e.currentTarget)));modal.hide()};
+ const ff=g('fontFile'),fm=g('fontMessage');g('importFont').onclick=()=>ff.click();ff.onchange=async()=>{if(!ff.files[0])return;const d=new FormData();d.append('fonte',ff.files[0]);try{const r=await fetch(c.fontUploadUrl,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('#builderForm input[name="_token"]').value,'Accept':'application/json'},body:d}),j=await r.json();if(!r.ok)throw new Error(j.message||'Falha ao importar.');addFont(j.font.name,j.font.url);fm.className='small mt-1 text-success';fm.textContent='Fonte importada.'}catch(e){fm.className='small mt-1 text-danger';fm.textContent=e.message}finally{ff.value=''}};render();
 });

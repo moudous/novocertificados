@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\CertificadoA1;
 use App\Models\Template;
-use App\Models\Variavel;
 use App\Models\FonteLayout;
+use App\Models\Atividade;
+use App\Models\BibliotecaImagem;
+use App\Models\ParticipanteTeste;
+use App\Models\Responsavel;
+use App\Services\TemplateLayoutRenderer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -81,22 +85,16 @@ class TemplateController extends Controller
         return redirect()->route('templates.show', $template)->with('status', 'Template cadastrado com sucesso.');
     }
     public function show(Template $template): View { $template->load('certificadoA1'); return view('templates.show', compact('template')); }
-    public function edit(Template $template): View { $template->load('certificadoA1'); return view('templates.form', compact('template')); }
+    public function edit(Template $template): View { $template->load(['certificadoA1','imagemBiblioteca']); return view('templates.form', compact('template')); }
     public function builder(Template $template): View
     {
-        $variables = Variavel::query()->where('ativo', true)->orderBy('tipo')->orderBy('id')->get()
-            ->map(fn (Variavel $variable): array => [
-                'id' => $variable->id, 'name' => $variable->nome ?: 'Variável #'.$variable->id, 'type' => $variable->tipo,
-                'label' => $variable->tipo === 'texto' ? Str::limit($variable->texto ?: 'Texto sem conteúdo', 45) : ($variable->imagem ?: 'Imagem'),
-                'text' => $variable->texto, 'image' => $variable->imageUrl(),
-                'width' => max((int) ($variable->largura ?: ($variable->tipo === 'imagem' ? 40 : 70)), 1),
-                'height' => max((int) ($variable->altura ?: ($variable->tipo === 'imagem' ? 30 : 12)), 1),
-                'x' => max((int) ($variable->pos_x ?: 0), 0), 'y' => max((int) ($variable->pox_y ?: 0), 0),
-                'color' => $variable->cor ?: '#111827', 'align' => $variable->alinhamento ?: 'esquerda',
-            ])->values();
-
         $fonts = FonteLayout::query()->orderBy('nome')->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'url' => $font->url()])->values();
-        return view('templates.builder', compact('template', 'variables', 'fonts'));
+        $dynamicSources = TemplateLayoutRenderer::SOURCES;
+        $libraryImages = BibliotecaImagem::query()->where('ativo', true)->orderBy('categoria')->orderBy('nome')->get();
+        $testParticipants = ParticipanteTeste::query()->with('participante')->orderBy('id')->get();
+        $activities = Atividade::query()->where('ativo', true)->orderBy('nome')->get();
+        $responsibles = Responsavel::query()->with('participante')->where('ativo', true)->orderBy('id')->get();
+        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'testParticipants', 'activities', 'responsibles'));
     }
 
     public function saveBuilder(Request $request, Template $template): RedirectResponse
@@ -106,9 +104,11 @@ class TemplateController extends Controller
         $validated = $request->validate([
             'elementos' => ['present', 'array', 'max:200'],
             'elementos.*.uid' => ['required', 'string', 'max:80'],
-            'elementos.*.variable_id' => ['required', 'integer', Rule::exists('variaveis', 'id')->whereNull('apagado_em')],
-            'elementos.*.type' => ['required', Rule::in(['texto', 'imagem'])],
-            'elementos.*.text' => ['nullable', 'string', 'max:5000'],
+            'elementos.*.type' => ['required', Rule::in(['text', 'rich_text', 'image'])],
+            'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'library', 'responsible_signature'])],
+            'elementos.*.source_key' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::SOURCES))],
+            'elementos.*.library_image_id' => ['nullable', 'integer', Rule::exists('biblioteca_imagens', 'id')->whereNull('apagado_em')],
+            'elementos.*.content' => ['nullable', 'string', 'max:10000'],
             'elementos.*.x' => ['required', 'numeric', 'min:0'], 'elementos.*.y' => ['required', 'numeric', 'min:0'],
             'elementos.*.width' => ['required', 'numeric', 'min:1'], 'elementos.*.height' => ['required', 'numeric', 'min:1'],
             'elementos.*.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
@@ -120,32 +120,19 @@ class TemplateController extends Controller
         return redirect()->route('templates.builder', $template)->with('status', 'Layout salvo com sucesso.');
     }
 
-    public function previewPdf(Request $request, Template $template): Response
+    public function previewPdf(Request $request, Template $template, TemplateLayoutRenderer $renderer): Response
     {
         File::ensureDirectoryExists(storage_path('fonts'), 0775, true);
         $request->validate(['layout_json' => ['required', 'json']]);
-        $elements = collect(json_decode((string) $request->input('layout_json'), true) ?: [])->take(200);
-        $variables = Variavel::query()->whereIn('id', $elements->pluck('variable_id')->filter()->unique())->get()->keyBy('id');
-        $elements = $elements->map(function (array $element) use ($variables): ?array {
-            $variable = $variables->get((int) ($element['variable_id'] ?? 0));
-            if (! $variable || ! in_array($variable->tipo, ['texto', 'imagem'], true)) return null;
-            return [
-                'type' => $variable->tipo,
-                'text' => Str::limit((string) ($element['text'] ?? $variable->texto ?? ''), 5000, ''),
-                'image' => $variable->tipo === 'imagem' ? $this->fileDataUri($variable->imageExists() ? public_path('certificado/imagem_fundo/'.$variable->imagem) : null) : null,
-                'x' => max((float) ($element['x'] ?? 0), 0), 'y' => max((float) ($element['y'] ?? 0), 0),
-                'width' => max((float) ($element['width'] ?? 1), 1), 'height' => max((float) ($element['height'] ?? 1), 1),
-                'color' => preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($element['color'] ?? '')) ? $element['color'] : '#111827',
-                'align' => in_array(($element['align'] ?? ''), ['esquerda', 'direita', 'centralizado', 'justificado'], true) ? $element['align'] : 'esquerda',
-                'font_family' => Str::limit(preg_replace('/[^\pL\pN _-]/u', '', (string) ($element['font_family'] ?? 'Arial')) ?: 'Arial', 100, ''),
-                'font_size' => min(max((float) ($element['font_size'] ?? 12), 1), 300),
-                'bold' => filter_var($element['bold'] ?? false, FILTER_VALIDATE_BOOLEAN), 'italic' => filter_var($element['italic'] ?? false, FILTER_VALIDATE_BOOLEAN), 'underline' => filter_var($element['underline'] ?? false, FILTER_VALIDATE_BOOLEAN),
-            ];
-        })->filter()->values();
+        $test = $request->filled('participante_teste_id') ? ParticipanteTeste::with('participante')->findOrFail($request->integer('participante_teste_id')) : null;
+        $activity = $request->filled('atividade_id') ? Atividade::with('evento')->findOrFail($request->integer('atividade_id')) : null;
+        $responsible = $request->filled('responsavel_id') ? Responsavel::with('participante')->findOrFail($request->integer('responsavel_id')) : null;
+        $rubrica = $responsible?->participante ? $responsible->participante->rubricas()->where('ativo', true)->first() : null;
+        $context = $this->previewContext($test?->participante, $activity, $responsible, $renderer->rubricaPath($rubrica));
+        $elements = collect($renderer->elements(json_decode((string)$request->input('layout_json'), true) ?: [], $context));
         $width = max((int) $template->largura, 1); $height = max((int) $template->altura, 1);
-        $activeBackground = $template->activeBackgroundFilename();
-        $background = $this->fileDataUri($activeBackground ? public_path('certificado/imagem_fundo/'.$activeBackground) : null);
-        $fonts = FonteLayout::query()->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'data' => $this->fileDataUri($font->path()), 'format' => strtolower(pathinfo($font->arquivo, PATHINFO_EXTENSION))])->filter(fn (array $font): bool => filled($font['data']));
+        $background = $renderer->background($template);
+        $fonts = collect($renderer->fonts());
         $paper = [0, 0, $width * 2.834645669, $height * 2.834645669];
 
         return Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background', 'fonts'))
@@ -194,7 +181,8 @@ class TemplateController extends Controller
         return $request->validate([
             'nome' => ['nullable','string','max:100'], 'fundo' => ['nullable','image','mimes:png,jpg,jpeg','max:10240'],
             'remover_fundo' => ['nullable','boolean'], 'remover_fundo_colorido' => ['nullable','boolean'], 'remover_fundo_degrade' => ['nullable','boolean'],
-            'fundo_colorido_ativo' => ['nullable','boolean'], 'tipo_fundo' => ['required',Rule::in(['imagem','colorido','degrade'])],
+            'fundo_colorido_ativo' => ['nullable','boolean'], 'tipo_fundo' => ['required',Rule::in(['imagem','biblioteca','colorido','degrade'])],
+            'biblioteca_imagem_id' => ['nullable','integer',Rule::exists('biblioteca_imagens','id')->where(fn($q)=>$q->where('ativo',true)->whereNull('apagado_em'))],
             'cor_fundo' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_inicio' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'cor_degrade_fim' => ['nullable','regex:/^#[0-9a-fA-F]{6}$/'], 'direcao_degrade' => ['nullable',Rule::in(['cima_baixo','baixo_cima','esquerda_direita','direita_esquerda','superior_esquerdo_inferior_direito','inferior_direito_superior_esquerdo','superior_direito_inferior_esquerdo','inferior_esquerdo_superior_direito'])],
             'ativo' => ['required','boolean'], 'certificado_a1' => ['nullable','integer',Rule::exists('certificados_a1','id')->whereNull('apagado_em')],
             'largura' => ['nullable','integer','min:1'], 'altura' => ['nullable','integer','min:1'], 'pagina' => ['nullable',Rule::in(['A4','Carta','Oficio','Personalizado'])], 'layout_pagina' => ['nullable',Rule::in(['Retrato','Paisagem'])],
@@ -250,5 +238,16 @@ class TemplateController extends Controller
         if (! $path || ! is_file($path)) return null;
         $mime = File::mimeType($path) ?: 'image/png';
         return 'data:'.$mime.';base64,'.base64_encode((string) File::get($path));
+    }
+
+    private function previewContext($participant, ?Atividade $activity, ?Responsavel $responsible, ?string $rubricaPath): array
+    {
+        return [
+            'participante'=>['nome'=>$participant?->nome ?? 'Nome do participante','email'=>$participant?->email ?? 'email@exemplo.com','cpf'=>$participant?->cpf ?? '000.000.000-00'],
+            'evento'=>['nome'=>$activity?->evento?->nome ?? 'Nome do evento','descricao'=>$activity?->evento?->descricao ?? ''],
+            'atividade'=>['nome'=>$activity?->nome ?? 'Nome da atividade','carga_horaria'=>'60 horas'],
+            'responsavel'=>['nome'=>$responsible?->participante?->nome ?? 'Nome do responsável','cargo'=>$responsible?->cargo ?? 'Instrutor','titulacao'=>$responsible?->titulacao ?? '', 'rubrica_path'=>$rubricaPath],
+            'emissao'=>['nome'=>'Emissão de teste','data'=>now()->format('d/m/Y')], 'certificado'=>['codigo'=>'TESTE-000001'],
+        ];
     }
 }

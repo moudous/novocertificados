@@ -10,6 +10,7 @@ use App\Http\Controllers\VariavelController;
 use App\Http\Controllers\RubricaParticipanteController;
 use App\Http\Controllers\ParticipanteTesteController;
 use App\Http\Controllers\ResponsavelController;
+use App\Http\Controllers\BibliotecaImagemController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\AssinaturaTemplateController;
 use App\Http\Controllers\NovoCertificadoController;
@@ -221,6 +222,17 @@ Route::prefix('templates')->name('templates.')->group(function (): void {
     Route::delete('/{template}/definitivo', [TemplateController::class, 'forceDestroy'])->whereNumber('template')->middleware('gi.permission:template.excluir_definitivamente')->name('force-destroy');
 });
 
+Route::prefix('biblioteca-imagens')->name('biblioteca_imagens.')->group(function (): void {
+    Route::get('/',[BibliotecaImagemController::class,'index'])->middleware('gi.permission:biblioteca_imagens.listar')->name('index');
+    Route::get('/dados',[BibliotecaImagemController::class,'data'])->middleware('gi.permission:biblioteca_imagens.listar')->name('data');
+    Route::get('/criar',[BibliotecaImagemController::class,'create'])->middleware('gi.permission:biblioteca_imagens.criar')->name('create');
+    Route::post('/',[BibliotecaImagemController::class,'store'])->middleware('gi.permission:biblioteca_imagens.criar')->name('store');
+    Route::get('/{imagem}/editar',[BibliotecaImagemController::class,'edit'])->middleware('gi.permission:biblioteca_imagens.editar')->name('edit');
+    Route::put('/{imagem}',[BibliotecaImagemController::class,'update'])->middleware('gi.permission:biblioteca_imagens.editar')->name('update');
+    Route::patch('/{imagem}/status',[BibliotecaImagemController::class,'toggle'])->middleware('gi.permission:biblioteca_imagens.editar')->name('status');
+    Route::delete('/{imagem}',[BibliotecaImagemController::class,'destroy'])->middleware('gi.permission:biblioteca_imagens.excluir')->name('destroy');
+});
+
 Route::prefix('assinaturas_template')->name('assinaturas_template.')->group(function (): void {
     Route::get('/',[AssinaturaTemplateController::class,'index'])->middleware('gi.permission:assinaturas.listar')->name('index');
     Route::get('/dados',[AssinaturaTemplateController::class,'data'])->middleware('gi.permission:assinaturas.listar')->name('data');
@@ -246,6 +258,8 @@ Route::prefix('certificadosnovos')->name('certificadosnovos.')->group(function (
     Route::get('/{certificado}/participantes/opcoes',[NovoCertificadoController::class,'participantOptions'])->whereNumber('certificado')->name('participantes.opcoes');
     Route::get('/{certificado}/participantes',[NovoCertificadoController::class,'participants'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.participantes')->name('participantes');
     Route::post('/{certificado}/participantes',[NovoCertificadoController::class,'addParticipants'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.inserir_participantes')->name('participantes.store');
+    Route::post('/{certificado}/gerar',[NovoCertificadoController::class,'generate'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.editar')->name('generate');
+    Route::get('/{certificado}/participantes/{item}/pdf',[NovoCertificadoController::class,'pdf'])->whereNumber(['certificado','item'])->middleware('gi.permission:novos_certificados.visualizar')->name('participantes.pdf');
     Route::delete('/{certificado}/participantes/{item}',[NovoCertificadoController::class,'removeParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:novos_certificados.excluir_participantes')->name('participantes.destroy');
     Route::get('/{certificado}',[NovoCertificadoController::class,'show'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.visualizar')->name('show');
     Route::get('/{certificado}/editar',[NovoCertificadoController::class,'edit'])->whereNumber('certificado')->middleware('gi.permission:novos_certificados.editar')->name('edit');

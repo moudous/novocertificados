@@ -16,12 +16,12 @@ class Template extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome', 'fundo', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'direcao_degrade', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
+    protected $fillable = ['nome', 'fundo', 'biblioteca_imagem_id', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'direcao_degrade', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
 
     protected function casts(): array
     {
         return [
-            'id' => 'integer', 'ativo' => 'boolean', 'fundo_colorido_ativo' => 'boolean', 'certificado_a1' => 'integer',
+            'id' => 'integer', 'ativo' => 'boolean', 'fundo_colorido_ativo' => 'boolean', 'certificado_a1' => 'integer', 'biblioteca_imagem_id' => 'integer',
             'largura' => 'integer', 'altura' => 'integer', 'crido_em' => 'datetime',
             'alterado_em' => 'datetime', 'apagado_em' => 'datetime', 'elementos_layout' => 'array',
         ];
@@ -32,6 +32,11 @@ class Template extends Model
         return $this->belongsTo(CertificadoA1::class, 'certificado_a1')->withTrashed();
     }
 
+    public function imagemBiblioteca(): BelongsTo
+    {
+        return $this->belongsTo(BibliotecaImagem::class, 'biblioteca_imagem_id')->withTrashed();
+    }
+
     public function backgroundExists(): bool
     {
         return $this->activeBackgroundFilename() !== null;
@@ -39,6 +44,7 @@ class Template extends Model
 
     public function backgroundUrl(): ?string
     {
+        if ($this->tipo_fundo === 'biblioteca' && $this->imagemBiblioteca?->url()) return $this->imagemBiblioteca->url();
         $filename = $this->activeBackgroundFilename();
         return $filename ? asset('certificado/imagem_fundo/'.$filename) : null;
     }

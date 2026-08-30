@@ -59,4 +59,9 @@ class Participante extends Model
     {
         return $this->hasOne(Responsavel::class, 'participante_id');
     }
+
+    public function rubricas(): HasMany
+    {
+        return $this->hasMany(RubricaParticipante::class, 'participante_id');
+    }
 }
