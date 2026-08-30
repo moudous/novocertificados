@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -87,9 +88,36 @@ class TemplateController extends Controller
     }
     public function show(Template $template): View { $template->load('certificadoA1'); return view('templates.show', compact('template')); }
     public function edit(Template $template): View { $template->load(['certificadoA1','imagemBiblioteca']); return view('templates.form', compact('template')); }
+    public function duplicate(Template $template): RedirectResponse
+    {
+        $createdFiles = [];
+        try {
+            $copy = DB::transaction(function () use ($template, &$createdFiles): Template {
+                $copy = $template->replicate();
+                $baseName = filled($template->nome) ? (string) $template->nome : 'Template';
+                $copy->nome = Str::limit($baseName, 90, '').' # cópia';
+                foreach (['fundo', 'fundo_colorido', 'fundo_degrade'] as $attribute) {
+                    $copy->{$attribute} = $this->duplicateBackground($template->{$attribute}, $createdFiles);
+                }
+                $copy->save();
+                return $copy;
+            });
+        } catch (\Throwable $exception) {
+            foreach ($createdFiles as $file) File::delete($file);
+            report($exception);
+            return back()->withErrors(['template' => 'Não foi possível duplicar o template e seus arquivos de fundo.']);
+        }
+
+        return redirect()->route('templates.edit', $copy)->with('status', 'Template duplicado. Revise o nome e salve as alterações.');
+    }
     public function builder(Template $template): View
     {
-        $fonts = FonteLayout::query()->orderBy('nome')->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'url' => $font->url()])->values();
+        $uploadedFonts = FonteLayout::query()->orderBy('nome')->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'url' => $font->url()]);
+        $fallbackFonts = collect(TemplateLayoutRenderer::FALLBACK_FONTS)->map(fn (string $file, string $name): array => [
+            'name' => $name,
+            'url' => route('templates.fallback-font', ['family' => $name]),
+        ]);
+        $fonts = $uploadedFonts->concat($fallbackFonts)->unique('name')->values();
         $dynamicSources = TemplateLayoutRenderer::SOURCES;
         $libraryImages = BibliotecaImagem::query()->where('ativo', true)->orderBy('categoria')->orderBy('nome')->get();
         $testParticipants = ParticipanteTeste::query()->with('participante')->orderBy('id')->get();
@@ -98,6 +126,16 @@ class TemplateController extends Controller
         $responsibleSignatures = RubricaParticipante::query()->with('participante')->where('ativo', true)
             ->whereHas('participante.responsavel', fn (Builder $query): Builder => $query->where('ativo', true))->orderBy('participante_id')->get();
         return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'testParticipants', 'activities', 'responsibles', 'responsibleSignatures'));
+    }
+
+    public function fallbackFont(string $family): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $file = TemplateLayoutRenderer::FALLBACK_FONTS[$family] ?? null;
+        abort_unless($file, 404);
+        $path = base_path('vendor/dompdf/dompdf/lib/fonts/'.$file);
+        abort_unless(is_file($path), 404);
+
+        return response()->file($path, ['Content-Type' => 'font/ttf', 'Cache-Control' => 'public, max-age=31536000, immutable']);
     }
 
     public function saveBuilder(Request $request, Template $template): RedirectResponse
@@ -121,7 +159,13 @@ class TemplateController extends Controller
             'elementos.*.font_family' => ['nullable', 'string', 'max:100'], 'elementos.*.font_size' => ['nullable', 'numeric', 'min:1', 'max:300'],
             'elementos.*.bold' => ['nullable', 'boolean'], 'elementos.*.italic' => ['nullable', 'boolean'], 'elementos.*.underline' => ['nullable', 'boolean'],
         ]);
-        $template->update(['elementos_layout' => array_values($validated['elementos'])]);
+        $elements = array_map(function (array $element): array {
+            foreach (['x', 'y', 'width', 'height'] as $property) {
+                $element[$property] = round((float) $element[$property], 1);
+            }
+            return $element;
+        }, array_values($validated['elementos']));
+        $template->update(['elementos_layout' => $elements]);
         return redirect()->route('templates.builder', $template)->with('status', 'Layout salvo com sucesso.');
     }
 
@@ -215,6 +259,21 @@ class TemplateController extends Controller
         return $data;
     }
     private function storeBackground(Request $request): string { $file=$request->file('fundo'); $name=hash('sha1',Str::uuid()->toString()).'.'.strtolower($file->getClientOriginalExtension()); $dir=public_path('certificado/imagem_fundo'); File::ensureDirectoryExists($dir); $file->move($dir,$name); return $name; }
+    private function duplicateBackground(?string $filename, array &$createdFiles): ?string
+    {
+        if (blank($filename)) return null;
+        if (basename((string) $filename) !== $filename) throw new \RuntimeException('Nome de arquivo de fundo inválido.');
+        $source = public_path('certificado/imagem_fundo/'.$filename);
+        if (! is_file($source)) throw new \RuntimeException('Arquivo de fundo não encontrado: '.$filename);
+        $extension = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+        $name = hash('sha1', Str::uuid()->toString()).($extension !== '' ? '.'.$extension : '');
+        $directory = public_path('certificado/imagem_fundo');
+        File::ensureDirectoryExists($directory);
+        $destination = $directory.'/'.$name;
+        if (! File::copy($source, $destination)) throw new \RuntimeException('Não foi possível copiar o arquivo de fundo.');
+        $createdFiles[] = $destination;
+        return $name;
+    }
     private function createColoredBackground(string $color, int $widthMm, int $heightMm): string
     {
         $width = max((int) round($widthMm / 25.4 * 96), 1); $height = max((int) round($heightMm / 25.4 * 96), 1);

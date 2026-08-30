@@ -22,7 +22,7 @@ class CertificadoNovoController extends Controller
 
     public function data(Request $request): JsonResponse
     {
-        $query = ListaParticipante::query()->with(['participante', 'novoCertificado.template', 'novoCertificado.evento', 'novoCertificado.atividade.evento']);
+        $query = ListaParticipante::query()->with(['participante', 'novoCertificado.certificadoAntigo', 'novoCertificado.template', 'novoCertificado.evento', 'novoCertificado.atividade.evento']);
         $total = (clone $query)->count();
         $search = trim((string) $request->input('search.value', ''));
         if ($search !== '') {

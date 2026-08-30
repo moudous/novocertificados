@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Atividade;
 use App\Models\Certificado;
 use App\Models\Participante;
+use App\Support\LegacyPdfHtml;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class CertificadoController extends Controller
 {
+    public mixed $pdf = null;
     private const COLUMNS = ['id', 'nome', 'participanteId', 'atividadeId', 'tipo', 'cargaHoraria', 'ativo', 'criado_em', 'atualizado_em'];
 
     public function index(Request $request): View
@@ -151,6 +154,51 @@ class CertificadoController extends Controller
         $certificado->load(['participante', 'atividade']);
 
         return view('certificados.show', compact('certificado'));
+    }
+
+    public function legacy(string $arquivo): Response
+    {
+        abort_unless(preg_match('/^[a-z0-9-]{1,50}$/i', $arquivo) === 1, 404);
+        $model = Certificado::query()->with(['participante', 'atividade.evento'])
+            ->where('arquivo', $arquivo)->where('ativo', true)->whereNull('apagado_em')
+            ->whereHas('atividade', fn (Builder $query): Builder => $query->where('ativo', true)->whereNull('apagado_em'))
+            ->latest('id')->firstOrFail();
+        $templateCode = $model->atividade?->getAttribute('template_php') ?: $model->atividade?->getAttribute('template');
+        abort_unless(filled($templateCode), 404, 'O certificado não possui template legado.');
+
+        if (! class_exists('PDF_HTML', false)) class_alias(LegacyPdfHtml::class, 'PDF_HTML');
+        $certificado = (object) array_merge($model->getAttributes(), [
+            'evento' => $model->atividade?->evento?->nome,
+            'atividade' => $model->atividade?->nome,
+            'periodo_atividade' => $model->atividade?->periodos,
+            'template' => $templateCode,
+            'imagemFundo' => basename((string) $model->atividade?->imagemFundo),
+            'periodos' => $model->atividade?->evento?->periodos,
+            'categoria' => $model->tipo,
+            'participante' => $model->participante?->nome ?: $model->nome,
+        ]);
+        $localBackground = public_path('certificado/imagem_fundo/'.basename((string) $certificado->imagemFundo));
+        $fundos = is_file($localBackground)
+            ? public_path('certificado/imagem_fundo').DIRECTORY_SEPARATOR
+            : 'https://certificados.nossafco.com.br/uploads/certificados/';
+        $template = preg_replace('/\$this->load->library\([^;]+;/', '', (string) $certificado->template);
+        $template = preg_replace("/FCPATH\s*\.\s*['\"]\\/uploads\\/certificados\\/['\"]\s*\./", '\$fundos.', (string) $template);
+        // Os templates do CodeIgniter enviavam cabeçalhos e o PDF diretamente.
+        // Aqui o Laravel deve ser o único responsável pela resposta HTTP.
+        $template = preg_replace('/\bheader\s*\([^;]*\)\s*;/i', '', (string) $template);
+        $template = preg_replace('/\$pdf->Output\s*\([^;]*\)\s*;/i', "echo \$pdf->Output('S');", (string) $template);
+
+        ob_start();
+        try { eval((string) $template); $pdf = (string) ob_get_clean(); }
+        catch (\Throwable $exception) { ob_end_clean(); report($exception); abort(500, 'Não foi possível gerar o certificado legado.'); }
+        abort_if($pdf === '', 500, 'O template legado não gerou o certificado.');
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="certificado.pdf"',
+            'Content-Length' => (string) strlen($pdf),
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function edit(Certificado $certificado): View

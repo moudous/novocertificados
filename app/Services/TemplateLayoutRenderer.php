@@ -11,6 +11,13 @@ use Illuminate\Support\Str;
 
 class TemplateLayoutRenderer
 {
+    public const FALLBACK_FONTS = [
+        'Arial' => 'DejaVuSans.ttf', 'Helvetica' => 'DejaVuSans.ttf',
+        'Verdana' => 'DejaVuSans.ttf', 'Trebuchet MS' => 'DejaVuSans.ttf', 'Tahoma' => 'DejaVuSans.ttf',
+        'Times New Roman' => 'DejaVuSerif.ttf', 'Georgia' => 'DejaVuSerif.ttf', 'Garamond' => 'DejaVuSerif.ttf',
+        'Courier New' => 'DejaVuSansMono.ttf',
+    ];
+
     public const SOURCES = [
         'participante.nome' => 'Participante · Nome', 'participante.email' => 'Participante · E-mail', 'participante.cpf' => 'Participante · CPF',
         'evento.nome' => 'Evento · Nome', 'evento.descricao' => 'Evento · Descrição',
@@ -81,7 +88,13 @@ class TemplateLayoutRenderer
 
     public function fonts(): array
     {
-        return FonteLayout::query()->get()->map(fn (FonteLayout $font): array => ['name'=>$font->nome,'data'=>$this->fileDataUri($font->path())])->filter(fn(array $font)=>filled($font['data']))->values()->all();
+        $uploaded = FonteLayout::query()->get()->map(fn (FonteLayout $font): array => ['name'=>$font->nome,'data'=>$this->fileDataUri($font->path())]);
+        $fallbacks = collect(self::FALLBACK_FONTS)->map(fn (string $file, string $name): array => [
+            'name' => $name,
+            'data' => $this->fileDataUri(base_path('vendor/dompdf/dompdf/lib/fonts/'.$file)),
+        ]);
+
+        return $uploaded->concat($fallbacks)->filter(fn(array $font)=>filled($font['data']))->unique('name')->values()->all();
     }
 
     public function background(Template $template): ?string

@@ -9,6 +9,7 @@
 @php($coloredExists=$template->coloredBackgroundExists())
 @php($gradientExists=$template->gradientBackgroundExists())
 <div class="mb-4"><h1 class="page-title">{{ $template->exists?'Editar template':'Novo template' }}</h1><p class="page-description mb-0">Configure o modelo e sua imagem de fundo.</p></div>
+@if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
 <form id="templateForm" method="POST" enctype="multipart/form-data" action="{{ $template->exists?route('templates.update',$template):route('templates.store') }}">@csrf @if($template->exists) @method('PUT') @endif
 <div class="card content-card"><div class="card-header"><h2 class="h5 fw-bold mb-0">Dados do template</h2></div><div class="card-body p-4">
 @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif

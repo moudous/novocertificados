@@ -129,6 +129,7 @@ Route::prefix('certificados')->name('certificados.')->group(function (): void {
     Route::get('/atividades', [CertificadoController::class, 'atividades'])->name('atividades');
     Route::get('/criar', [CertificadoController::class, 'create'])->middleware('gi.permission:certificados.criar')->name('create');
     Route::post('/', [CertificadoController::class, 'store'])->middleware('gi.permission:certificados.criar')->name('store');
+    Route::get('/v/{arquivo}', [CertificadoController::class, 'legacy'])->where('arquivo', '[A-Za-z0-9-]+')->middleware('gi.permission:certificados.visualizar')->name('legacy');
     Route::get('/{certificado}', [CertificadoController::class, 'show'])->whereNumber('certificado')->middleware('gi.permission:certificados.visualizar')->name('show');
     Route::get('/{certificado}/editar', [CertificadoController::class, 'edit'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('edit');
     Route::put('/{certificado}', [CertificadoController::class, 'update'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('update');
@@ -209,8 +210,10 @@ Route::prefix('templates')->name('templates.')->group(function (): void {
     Route::get('/', [TemplateController::class, 'index'])->middleware('gi.permission:template.listar')->name('index');
     Route::get('/dados', [TemplateController::class, 'data'])->middleware('gi.permission:template.listar')->name('data');
     Route::get('/certificados-a1', [TemplateController::class, 'certificadosA1'])->name('certificados-a1');
+    Route::get('/fontes-padrao/{family}', [TemplateController::class, 'fallbackFont'])->middleware('gi.permission:template.editar')->name('fallback-font');
     Route::get('/criar', [TemplateController::class, 'create'])->middleware('gi.permission:template.criar')->name('create');
     Route::post('/', [TemplateController::class, 'store'])->middleware('gi.permission:template.criar')->name('store');
+    Route::post('/{template}/duplicar', [TemplateController::class, 'duplicate'])->whereNumber('template')->middleware(['gi.permission:template.criar', 'gi.permission:template.editar'])->name('duplicate');
     Route::get('/{template}/construtor', [TemplateController::class, 'builder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder');
     Route::put('/{template}/construtor', [TemplateController::class, 'saveBuilder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.save');
     Route::post('/{template}/construtor/preview-pdf', [TemplateController::class, 'previewPdf'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.preview');
