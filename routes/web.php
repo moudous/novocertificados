@@ -129,7 +129,7 @@ Route::prefix('certificados')->name('certificados.')->group(function (): void {
     Route::get('/atividades', [CertificadoController::class, 'atividades'])->name('atividades');
     Route::get('/criar', [CertificadoController::class, 'create'])->middleware('gi.permission:certificados.criar')->name('create');
     Route::post('/', [CertificadoController::class, 'store'])->middleware('gi.permission:certificados.criar')->name('store');
-    Route::get('/v/{arquivo}', [CertificadoController::class, 'legacy'])->where('arquivo', '[A-Za-z0-9-]+')->middleware('gi.permission:certificados.visualizar')->name('legacy');
+    Route::get('/v/{arquivo}', [CertificadoController::class, 'legacy'])->where('arquivo', '[A-Za-z0-9-]+')->name('legacy');
     Route::get('/{certificado}', [CertificadoController::class, 'show'])->whereNumber('certificado')->middleware('gi.permission:certificados.visualizar')->name('show');
     Route::get('/{certificado}/editar', [CertificadoController::class, 'edit'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('edit');
     Route::put('/{certificado}', [CertificadoController::class, 'update'])->whereNumber('certificado')->middleware('gi.permission:certificados.editar')->name('update');

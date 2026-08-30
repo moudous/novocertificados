@@ -52,9 +52,9 @@ class CertificadoNovoController extends Controller
                 'atividade' => e($item->novoCertificado?->atividade?->nome ?: '—'),
                 'data_certificado' => $item->novoCertificado?->data_emissao?->format('d/m/Y') ?? '—',
                 'horas' => e((string) (data_get($item->snapshot_dados, 'atividade.carga_horaria') ?: data_get($item->novoCertificado?->campos_personalizados, 'carga_horaria') ?: '—')),
-                'pdf' => $item->arquivoExists() && in_array('certificadosnovos.visualizar', $permissions, true) ? '<a target="_blank" href="'.e(route('certificadosnovos.pdf', $item)).'" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>' : '—',
+                'pdf' => $item->arquivoExists() && filled($item->codigo) ? '<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.pdf', $item->codigo)).'" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>' : '—',
                 'ativo' => $item->ativo ? '<span class="badge text-bg-success">Ativo</span>' : '<span class="badge text-bg-secondary">Inativo</span>',
-                'acoes' => view('certificadosnovos.certificados.actions', compact('item', 'permissions'))->render(),
+                'acoes' => view('certificadosnovos.certificados.actions', ['item' => $item, 'permissions' => $permissions])->render(),
             ]),
         ]);
     }
