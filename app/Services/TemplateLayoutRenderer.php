@@ -32,7 +32,9 @@ class TemplateLayoutRenderer
                 'align'=>in_array(($item['align']??''),['esquerda','direita','centralizado','justificado'],true)?$item['align']:'esquerda',
                 'font_family'=>Str::limit(preg_replace('/[^\pL\pN _-]/u','',(string)($item['font_family']??'Arial'))?:'Arial',100,''),
                 'font_size'=>min(max((float)($item['font_size']??12),1),300), 'bold'=>(bool)($item['bold']??false),
-                'italic'=>(bool)($item['italic']??false), 'underline'=>(bool)($item['underline']??false), 'image'=>null, 'text'=>'', 'html'=>'',
+                'italic'=>(bool)($item['italic']??false), 'underline'=>(bool)($item['underline']??false),
+                'rotation'=>in_array((int)($item['rotation']??0),[0,90,180,270],true)?(int)($item['rotation']??0):0,
+                'image'=>null, 'text'=>'', 'html'=>'',
             ];
             if ($type === 'image') {
                 $path = null;

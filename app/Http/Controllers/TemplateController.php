@@ -109,6 +109,7 @@ class TemplateController extends Controller
             'elementos.*.source_key' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::SOURCES))],
             'elementos.*.library_image_id' => ['nullable', 'integer', Rule::exists('biblioteca_imagens', 'id')->whereNull('apagado_em')],
             'elementos.*.content' => ['nullable', 'string', 'max:10000'],
+            'elementos.*.rotation' => ['nullable', 'integer', Rule::in([0, 90, 180, 270])],
             'elementos.*.x' => ['required', 'numeric', 'min:0'], 'elementos.*.y' => ['required', 'numeric', 'min:0'],
             'elementos.*.width' => ['required', 'numeric', 'min:1'], 'elementos.*.height' => ['required', 'numeric', 'min:1'],
             'elementos.*.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
