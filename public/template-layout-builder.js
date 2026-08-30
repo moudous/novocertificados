@@ -67,7 +67,21 @@ document.addEventListener('DOMContentLoaded', () => {
     fields.fontFamily.addEventListener('change', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.font_family = fields.fontFamily.value; render(); } });
     fields.fontSize.addEventListener('input', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item.font_size = clamp(fields.fontSize.value, 1, 300); render(); } });
     ['bold','italic','underline'].forEach(key => fields[key].addEventListener('change', () => { const item = elements.find(entry => entry.uid === selected); if (item) { item[key] = fields[key].checked; render(); } }));
+    const duplicateSelectedElement = () => {
+        const item = elements.find(entry => entry.uid === selected);
+        if (!item) return;
+        const offset = 5;
+        const copy = {
+            ...item,
+            uid: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            x: clamp(item.x + offset, 0, config.width - item.width),
+            y: clamp(item.y + offset, 0, config.height - item.height),
+        };
+        elements.push(copy);
+        select(copy.uid);
+    };
     const removeSelectedElement = () => { if (!selected) return; elements = elements.filter(item => item.uid !== selected); selected = null; properties.classList.add('d-none'); render(); };
+    document.getElementById('duplicateElement').addEventListener('click', duplicateSelectedElement);
     document.getElementById('removeElement').addEventListener('click', removeSelectedElement);
     document.addEventListener('keydown', event => {
         if (event.key !== 'Delete' || !selected) return;
