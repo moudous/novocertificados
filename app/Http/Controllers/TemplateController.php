@@ -196,7 +196,7 @@ class TemplateController extends Controller
     private function normalizePage(array $data): array
     {
         $data['pagina'] ??= 'A4';
-        $data['layout_pagina'] ??= 'Retrato';
+        $data['layout_pagina'] ??= 'Paisagem';
         $dimensions = [
             'A4' => [210, 297],
             'Carta' => [216, 279],
