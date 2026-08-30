@@ -231,6 +231,8 @@ Route::prefix('biblioteca-imagens')->name('biblioteca_imagens.')->group(function
     Route::put('/{imagem}',[BibliotecaImagemController::class,'update'])->middleware('gi.permission:biblioteca_imagens.editar')->name('update');
     Route::patch('/{imagem}/status',[BibliotecaImagemController::class,'toggle'])->middleware('gi.permission:biblioteca_imagens.editar')->name('status');
     Route::delete('/{imagem}',[BibliotecaImagemController::class,'destroy'])->middleware('gi.permission:biblioteca_imagens.excluir')->name('destroy');
+    Route::patch('/{imagem}/restaurar',[BibliotecaImagemController::class,'restore'])->whereNumber('imagem')->middleware('gi.permission:biblioteca_imagens.restaurar')->name('restore');
+    Route::delete('/{imagem}/definitivo',[BibliotecaImagemController::class,'forceDestroy'])->whereNumber('imagem')->middleware('gi.permission:biblioteca_imagens.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::prefix('assinaturas_template')->name('assinaturas_template.')->group(function (): void {

@@ -62,6 +62,8 @@ biblioteca_imagens.listar
 biblioteca_imagens.criar
 biblioteca_imagens.editar
 biblioteca_imagens.excluir
+biblioteca_imagens.restaurar
+biblioteca_imagens.excluir_definitivamente
 
 participantes_teste.listar
 participantes_teste.visualizar
