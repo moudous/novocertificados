@@ -13,6 +13,7 @@ use App\Models\Responsavel;
 use App\Models\RubricaParticipante;
 use App\Services\TemplateLayoutRenderer;
 use App\Services\CertificadoImageGenerator;
+use App\Services\PdfDigitalSigner;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -94,21 +95,21 @@ class NovoCertificadoController extends Controller
         $data=$request->validate(['participantes'=>['required','array','min:1'],'participantes.*'=>['integer','distinct',Rule::exists('participantes','id')->whereNull('excluido_em')]]); DB::transaction(function()use($certificado,$data){foreach($data['participantes'] as $id)$certificado->participantes()->firstOrCreate(['participante_id'=>$id]);$certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]);}); return back()->with('status','Participantes adicionados com sucesso.');
     }
     public function removeParticipant(NovoCertificado $certificado,ListaParticipante $item): RedirectResponse { abort_unless($item->novo_certificado_id===$certificado->id,404); $item->delete(); $certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]); return back()->with('status','Participante removido com sucesso.'); }
-    public function generate(NovoCertificado $certificado, TemplateLayoutRenderer $renderer): RedirectResponse
+    public function generate(NovoCertificado $certificado, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): RedirectResponse
     {
-        $certificado->load(['template.imagemBiblioteca','atividade.evento','responsavel.participante','rubrica','participantes.participante']);
+        $certificado->load(['template.imagemBiblioteca','template.certificadoA1','atividade.evento','responsavel.participante','rubrica','participantes.participante']);
         abort_unless($certificado->template,422,'Selecione um template antes de gerar.');
-        foreach($certificado->participantes as $item){try{$this->generateItem($certificado,$item,$renderer);}catch(\Throwable $e){report($e);$item->update(['erro_geracao'=>Str::limit($e->getMessage(),1000),'gerado_em'=>null]);}}
+        foreach($certificado->participantes as $item){try{$this->generateItem($certificado,$item,$renderer,$signer);}catch(\Throwable $e){report($e);$item->update(['erro_geracao'=>Str::limit($e->getMessage(),1000),'gerado_em'=>null]);}}
         return back()->with('status','Geração concluída. Consulte o resultado de cada participante.');
     }
-    public function generateParticipant(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer): RedirectResponse
+    public function generateParticipant(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): RedirectResponse
     {
         abort_unless($item->novo_certificado_id === $certificado->id, 404);
-        $certificado->load(['template.imagemBiblioteca','atividade.evento','responsavel.participante','rubrica']);
+        $certificado->load(['template.imagemBiblioteca','template.certificadoA1','atividade.evento','responsavel.participante','rubrica']);
         $item->load('participante');
         abort_unless($certificado->template, 422, 'Selecione um template antes de gerar.');
         try {
-            $this->generateItem($certificado, $item, $renderer);
+            $this->generateItem($certificado, $item, $renderer, $signer);
         } catch (\Throwable $exception) {
             report($exception);
             $item->update(['erro_geracao'=>Str::limit($exception->getMessage(),1000),'gerado_em'=>null]);
@@ -124,7 +125,7 @@ class NovoCertificadoController extends Controller
         return back()->with('status','Imagem do participante gerada com sucesso.');
     }
     public function pdf(NovoCertificado $certificado, ListaParticipante $item): BinaryFileResponse { abort_unless($item->novo_certificado_id===$certificado->id&&filled($item->arquivo_pdf),404);$path=public_path('certificado/emitidos/'.$item->arquivo_pdf);abort_unless(is_file($path),404);return response()->file($path); }
-    private function generateItem(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer): void
+    private function generateItem(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): void
     {
         $directory=public_path('certificado/emitidos'); File::ensureDirectoryExists($directory);
         $code=$item->codigo?:strtoupper(Str::random(16)); $responsavel=$certificado->responsavel;
@@ -132,7 +133,7 @@ class NovoCertificadoController extends Controller
         $context=['participante'=>['nome'=>$item->participante?->nome,'email'=>$item->participante?->email,'cpf'=>$item->participante?->cpf],'evento'=>['nome'=>$certificado->atividade?->evento?->nome,'descricao'=>$certificado->atividade?->evento?->descricao],'atividade'=>['nome'=>$certificado->atividade?->nome,'carga_horaria'=>data_get($certificado->campos_personalizados,'carga_horaria','')],'responsavel'=>['nome'=>$responsavel?->participante?->nome,'cargo'=>$responsavel?->cargo,'titulacao'=>$responsavel?->titulacao,'rubrica_path'=>$renderer->rubricaPath($rubrica)],'emissao'=>['nome'=>$certificado->nome,'data'=>($certificado->data_emissao?:now())->format('d/m/Y')],'certificado'=>['codigo'=>$code],'link_validacao'=>route('certificadosnovos.public.pdf',$code)];
         $elements=collect($renderer->elements($certificado->template->elementos_layout??[],$context)); $width=max($certificado->template->largura,1); $height=max($certificado->template->altura,1); $background=$renderer->background($certificado->template); $fonts=collect($renderer->fonts());
         $pdf=Pdf::loadView('templates.preview-pdf',['template'=>$certificado->template,'elements'=>$elements,'width'=>$width,'height'=>$height,'background'=>$background,'fonts'=>$fonts])->setPaper([0,0,$width*2.834645669,$height*2.834645669]);
-        $name='certificado-'.$item->id.'-'.$code.'.pdf'; File::put($directory.'/'.$name,$pdf->output());
+        $name='certificado-'.$item->id.'-'.$code.'.pdf'; File::put($directory.'/'.$name,$signer->output($pdf,$certificado->template->certificadoA1,'Emissão de certificado digital'));
         $item->update(['codigo'=>$code,'arquivo_pdf'=>$name,'snapshot_dados'=>$context,'snapshot_template'=>$certificado->template->elementos_layout,'gerado_em'=>now(),'erro_geracao'=>null]);
     }
     private function validated(Request $request): array

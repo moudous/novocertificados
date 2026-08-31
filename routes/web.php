@@ -285,6 +285,8 @@ Route::prefix('emissoes')->name('emissoes.')->group(function (): void {
 Route::prefix('certificadosnovos')->name('certificadosnovos.')->group(function (): void {
     Route::get('/v2/{codigo}', [CertificadoNovoController::class, 'publicImage'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.image');
     Route::get('/v2/{codigo}/imagem', [CertificadoNovoController::class, 'publicImageFile'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.image-file');
+    Route::get('/v2/{codigo}/baixar-imagem', [CertificadoNovoController::class, 'downloadPublicImage'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.image-download');
+    Route::get('/v2/{codigo}/baixar-pdf', [CertificadoNovoController::class, 'downloadPublicPdfByImageCode'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.image-pdf-download');
     Route::get('/v/{codigo}', [CertificadoNovoController::class, 'publicPdf'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.pdf');
     Route::get('/', [CertificadoNovoController::class, 'index'])->middleware('gi.permission:certificadosnovos.listar')->name('index');
     Route::get('/dados', [CertificadoNovoController::class, 'data'])->middleware('gi.permission:certificadosnovos.listar')->name('data');

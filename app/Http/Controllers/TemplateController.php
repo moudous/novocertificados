@@ -211,8 +211,8 @@ class TemplateController extends Controller
         $paper = [0, 0, $width * 2.834645669, $height * 2.834645669];
 
         $pdf=Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background', 'fonts'))->setPaper($paper);
-        $signer->sign($pdf,$template->certificadoA1,'Preview do template #'.$template->id);
-        return $pdf->stream('preview-template-'.$template->id.'.pdf', ['Attachment' => false]);
+        $output=$signer->output($pdf,$template->certificadoA1,'Preview do template #'.$template->id);
+        return response($output,200,['Content-Type'=>'application/pdf','Content-Disposition'=>'inline; filename="preview-template-'.$template->id.'.pdf"']);
     }
 
     public function previewImage(Request $request, Template $template, CertificadoImageGenerator $generator): View

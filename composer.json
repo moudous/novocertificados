@@ -6,7 +6,9 @@
         "laravel/framework": "^13.0",
         "barryvdh/laravel-dompdf": "^3.1",
         "fpdf/fpdf": "^1.86",
-        "endroid/qr-code": "^5.0"
+        "endroid/qr-code": "^5.0",
+        "setasign/fpdi": "^2.6",
+        "tecnickcom/tcpdf": "^6.11"
     },
     "autoload": {
         "psr-4": {

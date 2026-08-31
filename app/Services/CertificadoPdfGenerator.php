@@ -48,11 +48,10 @@ class CertificadoPdfGenerator
                 'background' => $this->renderer->background($template),
                 'fonts' => collect($this->renderer->fonts()),
             ])->setPaper([0, 0, $width * 2.834645669, $height * 2.834645669]);
-            $this->signer->sign($pdf,$template->certificadoA1,'Emissão de certificado digital');
             $directory = public_path('certificado/emitidos');
             File::ensureDirectoryExists($directory);
             $name = 'certificado-'.$item->id.'-'.$code.'.pdf';
-            File::put($directory.'/'.$name, $pdf->output());
+            File::put($directory.'/'.$name, $this->signer->output($pdf,$template->certificadoA1,'Emissão de certificado digital'));
             $item->update(['codigo' => $code, 'arquivo_pdf' => $name, 'snapshot_dados' => $context, 'snapshot_template' => $template->elementos_layout, 'gerado_em' => now(), 'erro_geracao' => null]);
         } catch (\Throwable $exception) {
             report($exception);

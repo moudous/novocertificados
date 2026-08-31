@@ -136,6 +136,19 @@ class CertificadoNovoController extends Controller
         return response()->file($item->imagemPath(),['Content-Type'=>'image/png','Cache-Control'=>'private, no-store','X-Content-Type-Options'=>'nosniff']);
     }
 
+    public function downloadPublicImage(string $codigo): BinaryFileResponse
+    {
+        $item=$this->publicImageItem($codigo);
+        return response()->download($item->imagemPath(),'certificado-'.$codigo.'.png',['Content-Type'=>'image/png','X-Content-Type-Options'=>'nosniff']);
+    }
+
+    public function downloadPublicPdfByImageCode(string $codigo): BinaryFileResponse
+    {
+        $item=$this->publicImageItem($codigo);
+        abort_unless($item->arquivoExists(),404);
+        return response()->download($item->arquivoPath(),'certificado-'.$codigo.'.pdf',['Content-Type'=>'application/pdf','X-Content-Type-Options'=>'nosniff']);
+    }
+
     private function publicImageItem(string $codigo): ListaParticipante
     {
         abort_unless(preg_match('/^[A-Za-z0-9-]{6,64}$/',$codigo)===1,404);
