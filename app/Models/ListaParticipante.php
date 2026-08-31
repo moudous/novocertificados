@@ -13,8 +13,8 @@ class ListaParticipante extends Model
     protected $keyType = 'int';
     public const CREATED_AT = 'criado_em';
     public const UPDATED_AT = 'alterado_em';
-    protected $fillable = ['participante_id','novo_certificado_id','ativo','codigo','codigo_img','arquivo_pdf','arquivo_img','dados_personalizados','snapshot_dados','snapshot_template','gerado_em','erro_geracao'];
-    protected function casts(): array { return ['id'=>'integer','participante_id'=>'integer','novo_certificado_id'=>'integer','ativo'=>'boolean','dados_personalizados'=>'array','snapshot_dados'=>'array','snapshot_template'=>'array','gerado_em'=>'datetime','criado_em'=>'datetime','alterado_em'=>'datetime']; }
+    protected $fillable = ['participante_id','novo_certificado_id','adicionado_por','ativo','codigo','codigo_img','arquivo_pdf','arquivo_img','dados_personalizados','snapshot_dados','snapshot_template','gerado_em','erro_geracao'];
+    protected function casts(): array { return ['id'=>'integer','participante_id'=>'integer','novo_certificado_id'=>'integer','adicionado_por'=>'integer','ativo'=>'boolean','dados_personalizados'=>'array','snapshot_dados'=>'array','snapshot_template'=>'array','gerado_em'=>'datetime','criado_em'=>'datetime','alterado_em'=>'datetime']; }
     public function participante(): BelongsTo { return $this->belongsTo(Participante::class, 'participante_id')->withTrashed(); }
     public function novoCertificado(): BelongsTo { return $this->belongsTo(NovoCertificado::class, 'novo_certificado_id')->withTrashed(); }
     public function arquivoPath(): string { return public_path('certificado/emitidos/'.basename((string) $this->arquivo_pdf)); }

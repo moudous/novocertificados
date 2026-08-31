@@ -14,6 +14,8 @@ use App\Models\RubricaParticipante;
 use App\Services\TemplateLayoutRenderer;
 use App\Services\CertificadoImageGenerator;
 use App\Services\PdfDigitalSigner;
+use App\Services\ParticipantSpreadsheetReader;
+use App\Services\ParticipantImportAnalyzer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +26,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class NovoCertificadoController extends Controller
@@ -83,7 +86,12 @@ class NovoCertificadoController extends Controller
 
         return redirect()->route('emissoes.index')->with('status', 'Emissão excluída definitivamente.');
     }
-    public function participants(NovoCertificado $certificado,Request $request): View { return view('emissoes.participantes',['certificado'=>$certificado,'items'=>$certificado->participantes()->with('participante')->orderByDesc('id')->get(),'permissions'=>(array)$request->session()->get('gi_context.permissoes',[])]); }
+    public function participants(NovoCertificado $certificado,Request $request,ParticipantImportAnalyzer $analyzer): View
+    {
+        $stored=(array)$request->session()->get($this->importSessionKey($certificado),[]);
+        $importAnalysis=isset($stored['rows'])?$analyzer->analyze($certificado,(array)$stored['rows']):null;
+        return view('emissoes.participantes',['certificado'=>$certificado,'items'=>$certificado->participantes()->with('participante')->orderByDesc('id')->get(),'permissions'=>(array)$request->session()->get('gi_context.permissoes',[]),'importAnalysis'=>$importAnalysis]);
+    }
     public function participantOptions(NovoCertificado $certificado,Request $request): JsonResponse
     {
         $permissions=(array)$request->session()->get('gi_context.permissoes',[]); abort_unless(in_array('emissoes.inserir_participantes',$permissions,true),403); $search=trim((string)$request->input('q',''));
@@ -92,7 +100,24 @@ class NovoCertificadoController extends Controller
     }
     public function addParticipants(NovoCertificado $certificado,Request $request): RedirectResponse
     {
-        $data=$request->validate(['participantes'=>['required','array','min:1'],'participantes.*'=>['integer','distinct',Rule::exists('participantes','id')->whereNull('excluido_em')]]); DB::transaction(function()use($certificado,$data){foreach($data['participantes'] as $id)$certificado->participantes()->firstOrCreate(['participante_id'=>$id]);$certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]);}); return back()->with('status','Participantes adicionados com sucesso.');
+        $data=$request->validate(['participantes'=>['required','array','min:1'],'participantes.*'=>['integer','distinct',Rule::exists('participantes','id')->whereNull('excluido_em')]]);$userId=$this->sessionUserId($request);DB::transaction(function()use($certificado,$data,$userId){foreach($data['participantes'] as $id)$certificado->participantes()->firstOrCreate(['participante_id'=>$id],['adicionado_por'=>$userId]);$certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]);}); return back()->with('status','Participantes adicionados com sucesso.');
+    }
+    public function analyzeParticipantSpreadsheet(NovoCertificado $certificado,Request $request,ParticipantSpreadsheetReader $reader): RedirectResponse
+    {
+        $data=$request->validate(['planilha'=>['required','file','max:10240','extensions:csv,xls,xlsx,ods,odt']]);
+        $rows=$reader->read($data['planilha']);
+        $request->session()->put($this->importSessionKey($certificado),['rows'=>$rows,'filename'=>$data['planilha']->getClientOriginalName()]);
+        return back()->with('status','Planilha analisada. Revise as decisões antes de importar.')->with('participant_add_mode','spreadsheet');
+    }
+    public function importParticipantSpreadsheet(NovoCertificado $certificado,Request $request,ParticipantImportAnalyzer $analyzer): RedirectResponse
+    {
+        $stored=(array)$request->session()->get($this->importSessionKey($certificado),[]);$original=(array)($stored['rows']??[]);if(!$original)return back()->withErrors(['planilha'=>'A análise expirou. Envie a planilha novamente.'])->with('participant_add_mode','spreadsheet');
+        $input=(array)$request->input('rows',[]);$adjusted=[];foreach($original as $index=>$row){$row['nome']=trim((string)data_get($input,$index.'.nome',$row['nome']??''));$row['email']=trim((string)data_get($input,$index.'.email',$row['email']??''));$adjusted[]=$row;}
+        $request->session()->put($this->importSessionKey($certificado),['rows'=>$adjusted,'filename'=>$stored['filename']??'planilha']);
+        $analysis=$analyzer->analyze($certificado,$adjusted);$userId=$this->sessionUserId($request);$created=0;$recovered=0;$skipped=0;
+        DB::transaction(function()use($certificado,$analysis,$input,$userId,&$created,&$recovered,&$skipped){foreach($analysis['rows'] as $row){$action=(string)data_get($input,$row['index'].'.action','');if(in_array($row['kind'],['linked','repeated'],true)||$action==='skip'){$skipped++;continue;}if($row['kind']==='incomplete')throw ValidationException::withMessages(['planilha'=>'Preencha nome e e-mail ou escolha “Não importar” na linha '.$row['line'].'.']);$participantId=null;if($row['kind']==='recovered'){$participantId=$row['existing_id'];$recovered++;}elseif($row['kind']==='conflict'){if(!in_array($action,['use_existing','create_new'],true))throw ValidationException::withMessages(['planilha'=>'Selecione uma ação para a linha '.$row['line'].'.']);if($action==='use_existing'){$participantId=$row['existing_id'];$recovered++;}}if(!$participantId){$participant=Participante::query()->create(['nome'=>$row['nome'],'email'=>$row['email'],'sexo'=>$this->normalizeSex($row['sexo']),'cpf'=>strlen($row['cpf'])===11?$row['cpf']:null,'grupo'=>mb_substr($row['grupo'],0,1)?:null,'ativo'=>true]);$participantId=$participant->id;$created++;}$certificado->participantes()->firstOrCreate(['participante_id'=>$participantId],['adicionado_por'=>$userId]);}$certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]);});
+        $request->session()->forget($this->importSessionKey($certificado));
+        return back()->with('status',"Importação concluída: {$created} novo(s), {$recovered} recuperado(s) e {$skipped} não importado(s).");
     }
     public function removeParticipant(NovoCertificado $certificado,ListaParticipante $item): RedirectResponse { abort_unless($item->novo_certificado_id===$certificado->id,404); $item->delete(); $certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]); return back()->with('status','Participante removido com sucesso.'); }
     public function generate(NovoCertificado $certificado, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): RedirectResponse
@@ -102,7 +127,7 @@ class NovoCertificadoController extends Controller
         foreach($certificado->participantes as $item){try{$this->generateItem($certificado,$item,$renderer,$signer);}catch(\Throwable $e){report($e);$item->update(['erro_geracao'=>Str::limit($e->getMessage(),1000),'gerado_em'=>null]);}}
         return back()->with('status','Geração concluída. Consulte o resultado de cada participante.');
     }
-    public function generateParticipant(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): RedirectResponse
+    public function generateParticipant(Request $request, NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): RedirectResponse|JsonResponse
     {
         abort_unless($item->novo_certificado_id === $certificado->id, 404);
         $certificado->load(['template.imagemBiblioteca','template.certificadoA1','atividade.evento','responsavel.participante','rubrica']);
@@ -113,15 +138,19 @@ class NovoCertificadoController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
             $item->update(['erro_geracao'=>Str::limit($exception->getMessage(),1000),'gerado_em'=>null]);
+            if($request->expectsJson())return response()->json(['message'=>'Não foi possível gerar o PDF deste participante.'],422);
             return back()->withErrors(['pdf' => 'Não foi possível gerar o PDF deste participante.']);
         }
+        if($request->expectsJson())return response()->json(['html'=>'<a target="_blank" rel="noopener noreferrer" href="'.e(route('emissoes.participantes.pdf',[$certificado,$item])).'" class="btn btn-sm btn-outline-danger listagem-acao" title="Abrir PDF" aria-label="Abrir PDF"><i class="bi bi-file-earmark-pdf-fill"></i></a>']);
         return back()->with('status', 'PDF do participante gerado com sucesso.');
     }
-    public function generateParticipantImage(NovoCertificado $certificado, ListaParticipante $item, CertificadoImageGenerator $generator): RedirectResponse
+    public function generateParticipantImage(Request $request, NovoCertificado $certificado, ListaParticipante $item, CertificadoImageGenerator $generator): RedirectResponse|JsonResponse
     {
         abort_unless($item->novo_certificado_id === $certificado->id, 404);
         try { $generator->generate($item); }
-        catch (\Throwable $exception) { report($exception); return back()->withErrors(['img'=>'Não foi possível gerar a imagem deste participante.']); }
+        catch (\Throwable $exception) { report($exception); if($request->expectsJson())return response()->json(['message'=>'Não foi possível gerar a imagem deste participante.'],422); return back()->withErrors(['img'=>'Não foi possível gerar a imagem deste participante.']); }
+        $item->refresh();
+        if($request->expectsJson())return response()->json(['html'=>'<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.image',$item->codigo_img)).'" class="btn btn-sm btn-outline-primary listagem-acao" title="Abrir imagem" aria-label="Abrir imagem"><i class="bi bi-image-fill"></i></a>']);
         return back()->with('status','Imagem do participante gerada com sucesso.');
     }
     public function pdf(NovoCertificado $certificado, ListaParticipante $item): BinaryFileResponse { abort_unless($item->novo_certificado_id===$certificado->id&&filled($item->arquivo_pdf),404);$path=public_path('certificado/emitidos/'.$item->arquivo_pdf);abort_unless(is_file($path),404);return response()->file($path); }
@@ -156,6 +185,9 @@ class NovoCertificadoController extends Controller
     }
     private function formData(NovoCertificado $certificado): array { return compact('certificado')+['events'=>Evento::where('ativo',true)->orderBy('nome')->get(),'responsibles'=>Responsavel::with('participante')->where('ativo',true)->orderBy('id')->get(),'signatures'=>RubricaParticipante::with('participante')->where('ativo',true)->whereHas('participante.responsavel',fn(Builder $q)=>$q->where('ativo',true))->get()]; }
     private function authorizeEditor(Request $request): void { $p=(array)$request->session()->get('gi_context.permissoes',[]); abort_unless(in_array('emissoes.criar',$p,true)||in_array('emissoes.editar',$p,true),403); }
+    private function importSessionKey(NovoCertificado $certificado): string { return 'emissoes.'.$certificado->id.'.participant_import'; }
+    private function sessionUserId(Request $request): ?int { $id=(int)$request->session()->get('gi_context.usuario.id',0);return $id>0?$id:null; }
+    private function normalizeSex(string $value): ?string { $value=mb_strtoupper(trim($value));return in_array($value,['M','F'],true)?$value:null; }
     private function oldCertificateLabel(?Certificado $c): string { return $c?"#{$c->id} - ".($c->nome?:'Sem nome').' - '.($c->atividade?->nome?:'Sem atividade'):'—'; }
     private function templateLabel(?Template $t): string { return $t?"#{$t->id} - ".($t->nome?:'Sem nome')." - (".($t->pagina?:'—').' - '.($t->layout_pagina?:'—').')':'—'; }
 }
