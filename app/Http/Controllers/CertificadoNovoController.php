@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ListaParticipante;
 use App\Services\CertificadoPdfGenerator;
+use App\Services\CertificadoImageGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CertificadoNovoController extends Controller
 {
-    private const COLUMNS = ['id', 'id', 'id', 'participante_id', 'id', 'id', 'id', 'id', 'id', 'ativo', 'id'];
+    private const COLUMNS = ['id', 'id', 'id', 'participante_id', 'id', 'id', 'id', 'id', 'id', 'id', 'ativo', 'id'];
 
     public function index(Request $request): View
     {
@@ -52,7 +53,8 @@ class CertificadoNovoController extends Controller
                 'atividade' => e($item->novoCertificado?->atividade?->nome ?: '—'),
                 'data_certificado' => $item->novoCertificado?->data_emissao?->format('d/m/Y') ?? '—',
                 'horas' => e((string) (data_get($item->snapshot_dados, 'atividade.carga_horaria') ?: data_get($item->novoCertificado?->campos_personalizados, 'carga_horaria') ?: '—')),
-                'pdf' => $item->arquivoExists() && filled($item->codigo) ? '<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.pdf', $item->codigo)).'" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>' : '—',
+                'pdf' => $item->arquivoExists() && filled($item->codigo) ? '<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.pdf', $item->codigo)).'" class="btn btn-sm btn-outline-danger" title="Abrir PDF"><i class="bi bi-file-earmark-pdf"></i></a>' : (in_array('certificadosnovos.gerar_pdf',$permissions,true)?'<button type="button" class="btn btn-sm btn-link js-generate-certificate p-0" data-url="'.e(route('certificadosnovos.generate',$item)).'">Gerar</button>':'—'),
+                'img' => $item->imagemExists() && filled($item->codigo_img) ? '<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.image', $item->codigo_img)).'" class="btn btn-sm btn-outline-primary" title="Abrir imagem"><i class="bi bi-image"></i></a>' : (in_array('certificadosnovos.gerar_pdf',$permissions,true)?'<button type="button" class="btn btn-sm btn-link js-generate-certificate p-0" data-url="'.e(route('certificadosnovos.generate-image',$item)).'">Gerar</button>':'—'),
                 'ativo' => $item->ativo ? '<span class="badge text-bg-success">Ativo</span>' : '<span class="badge text-bg-secondary">Inativo</span>',
                 'acoes' => view('certificadosnovos.certificados.actions', ['item' => $item, 'permissions' => $permissions])->render(),
             ]),
@@ -71,10 +73,27 @@ class CertificadoNovoController extends Controller
         return back()->with('status', 'Status do certificado atualizado com sucesso.');
     }
 
-    public function generate(ListaParticipante $item, CertificadoPdfGenerator $generator): RedirectResponse
+    public function generate(Request $request, ListaParticipante $item, CertificadoPdfGenerator $generator): RedirectResponse|JsonResponse
     {
-        try { $generator->generate($item); } catch (\Throwable) { return back()->withErrors(['pdf' => 'Não foi possível gerar o PDF. Consulte o registro de erros.']); }
+        try { $generator->generate($item); } catch (\Throwable) {
+            if ($request->expectsJson()) return response()->json(['message'=>'Não foi possível gerar o PDF.'],422);
+            return back()->withErrors(['pdf' => 'Não foi possível gerar o PDF. Consulte o registro de erros.']);
+        }
+        if ($request->expectsJson()) return response()->json(['html'=>'<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.pdf',$item->fresh()->codigo)).'" class="btn btn-sm btn-outline-danger" title="Abrir PDF"><i class="bi bi-file-earmark-pdf"></i></a>']);
         return back()->with('status', 'PDF gerado com sucesso.');
+    }
+
+    public function generateImage(Request $request, ListaParticipante $item, CertificadoImageGenerator $generator): RedirectResponse|JsonResponse
+    {
+        try { $generator->generate($item); } catch (\Throwable $exception) {
+            report($exception);
+            if ($request->expectsJson()) return response()->json(['message'=>'Não foi possível gerar a imagem.'],422);
+            return back()->withErrors(['img'=>'Não foi possível gerar a imagem.']);
+        }
+        $item->refresh();
+        $html='<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.image',$item->codigo_img)).'" class="btn btn-sm btn-outline-primary" title="Abrir imagem"><i class="bi bi-image"></i></a>';
+        if ($request->expectsJson()) return response()->json(compact('html'));
+        return back()->with('status','Imagem gerada com sucesso.');
     }
 
     public function pdf(ListaParticipante $item): BinaryFileResponse
@@ -101,5 +120,27 @@ class CertificadoNovoController extends Controller
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    public function publicImage(string $codigo): View
+    {
+        $item=$this->publicImageItem($codigo);
+        $dimensions=@getimagesize($item->imagemPath());
+        $landscape=($dimensions[0]??1)>=($dimensions[1]??1);
+        return view('certificadosnovos.certificados.public-image',compact('item','landscape'));
+    }
+
+    public function publicImageFile(string $codigo): BinaryFileResponse
+    {
+        $item=$this->publicImageItem($codigo);
+        return response()->file($item->imagemPath(),['Content-Type'=>'image/png','Cache-Control'=>'private, no-store','X-Content-Type-Options'=>'nosniff']);
+    }
+
+    private function publicImageItem(string $codigo): ListaParticipante
+    {
+        abort_unless(preg_match('/^[A-Za-z0-9-]{6,64}$/',$codigo)===1,404);
+        $item=ListaParticipante::query()->with(['participante','novoCertificado.evento','novoCertificado.atividade.evento'])->where('codigo_img',$codigo)->where('ativo',true)->whereHas('novoCertificado',fn(Builder $query):Builder=>$query->where('ativo',true)->whereNull('apagado_em'))->firstOrFail();
+        abort_unless($item->imagemExists(),404);
+        return $item;
     }
 }

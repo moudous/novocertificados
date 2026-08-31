@@ -4,3 +4,4 @@
 /storage/framework/sessions/*
 /public/certificado/biblioteca/*
 /public/certificado/emitidos/*
+/storage/app/private/certificados-imagens/*

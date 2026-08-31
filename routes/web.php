@@ -218,6 +218,7 @@ Route::prefix('templates')->name('templates.')->group(function (): void {
     Route::get('/{template}/construtor', [TemplateController::class, 'builder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder');
     Route::put('/{template}/construtor', [TemplateController::class, 'saveBuilder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.save');
     Route::post('/{template}/construtor/preview-pdf', [TemplateController::class, 'previewPdf'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.preview');
+    Route::post('/{template}/construtor/preview-img', [TemplateController::class, 'previewImage'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.preview-image');
     Route::post('/{template}/construtor/fontes', [TemplateController::class, 'uploadFont'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.fonts.store');
     Route::post('/{template}/construtor/imagens', [ImagemTemplateController::class, 'store'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.images.store');
     Route::delete('/{template}/construtor/imagens/{image}', [ImagemTemplateController::class, 'destroy'])->whereNumber(['template','image'])->middleware('gi.permission:template.editar')->name('builder.images.destroy');
@@ -270,6 +271,7 @@ Route::prefix('emissoes')->name('emissoes.')->group(function (): void {
     Route::post('/{certificado}/participantes',[NovoCertificadoController::class,'addParticipants'])->whereNumber('certificado')->middleware('gi.permission:emissoes.inserir_participantes')->name('participantes.store');
     Route::post('/{certificado}/gerar',[NovoCertificadoController::class,'generate'])->whereNumber('certificado')->middleware('gi.permission:emissoes.gerar_pdfs')->name('generate');
     Route::post('/{certificado}/participantes/{item}/gerar',[NovoCertificadoController::class,'generateParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.gerar_pdfs')->name('participantes.generate');
+    Route::post('/{certificado}/participantes/{item}/gerar-img',[NovoCertificadoController::class,'generateParticipantImage'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.gerar_pdfs')->name('participantes.generate-image');
     Route::get('/{certificado}/participantes/{item}/pdf',[NovoCertificadoController::class,'pdf'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.visualizar')->name('participantes.pdf');
     Route::delete('/{certificado}/participantes/{item}',[NovoCertificadoController::class,'removeParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.excluir_participantes')->name('participantes.destroy');
     Route::get('/{certificado}',[NovoCertificadoController::class,'show'])->whereNumber('certificado')->middleware('gi.permission:emissoes.visualizar')->name('show');
@@ -281,12 +283,15 @@ Route::prefix('emissoes')->name('emissoes.')->group(function (): void {
 });
 
 Route::prefix('certificadosnovos')->name('certificadosnovos.')->group(function (): void {
+    Route::get('/v2/{codigo}', [CertificadoNovoController::class, 'publicImage'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.image');
+    Route::get('/v2/{codigo}/imagem', [CertificadoNovoController::class, 'publicImageFile'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.image-file');
     Route::get('/v/{codigo}', [CertificadoNovoController::class, 'publicPdf'])->where('codigo', '[A-Za-z0-9-]{6,64}')->name('public.pdf');
     Route::get('/', [CertificadoNovoController::class, 'index'])->middleware('gi.permission:certificadosnovos.listar')->name('index');
     Route::get('/dados', [CertificadoNovoController::class, 'data'])->middleware('gi.permission:certificadosnovos.listar')->name('data');
     Route::get('/{item}', [CertificadoNovoController::class, 'show'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.visualizar')->name('show');
     Route::get('/{item}/pdf', [CertificadoNovoController::class, 'pdf'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.visualizar')->name('pdf');
     Route::post('/{item}/gerar-pdf', [CertificadoNovoController::class, 'generate'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.gerar_pdf')->name('generate');
+    Route::post('/{item}/gerar-img', [CertificadoNovoController::class, 'generateImage'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.gerar_pdf')->name('generate-image');
     Route::patch('/{item}/status', [CertificadoNovoController::class, 'toggleStatus'])->whereNumber('item')->middleware('gi.permission:certificadosnovos.ativar_desativar')->name('status');
 });
 

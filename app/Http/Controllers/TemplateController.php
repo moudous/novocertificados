@@ -12,6 +12,7 @@ use App\Models\Responsavel;
 use App\Models\RubricaParticipante;
 use App\Services\TemplateLayoutRenderer;
 use App\Services\PdfDigitalSigner;
+use App\Services\CertificadoImageGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -135,7 +136,7 @@ class TemplateController extends Controller
             'fonts'=>$fonts->values()->all(),'sources'=>$dynamicSources,
             'librarySvgs'=>$libraryImages->filter(fn(BibliotecaImagem $image):bool=>filled($image->svg))->mapWithKeys(fn(BibliotecaImagem $image):array=>[$image->id=>$image->svg])->all(),
             'templateImages'=>$templateImages->map(fn($image):array=>['id'=>$image->id,'name'=>$image->nome,'svg'=>$image->svg,'url'=>$image->dataUrl(),'library_image_id'=>$image->biblioteca_imagem_id,'element_uid'=>$image->element_uid])->values()->all(),
-            'previewUrl'=>route('templates.builder.preview',$template),'fontUploadUrl'=>route('templates.builder.fonts.store',$template),
+            'previewUrl'=>route('templates.builder.preview',$template),'previewImageUrl'=>route('templates.builder.preview-image',$template),'fontUploadUrl'=>route('templates.builder.fonts.store',$template),
             'imageStoreUrl'=>route('templates.builder.images.store',$template),'imageDeleteUrl'=>route('templates.builder.images.destroy',[$template,'__IMAGE__']),
             'validationPreviewUrl'=>route('certificadosnovos.public.pdf','TESTE-000001'),
             'qrPreviews'=>collect(TemplateLayoutRenderer::QR_STYLES)->mapWithKeys(fn(string $label,string $style):array=>[$style=>$renderer->validationQrDataUri(route('certificadosnovos.public.pdf','TESTE-000001'),$style)])->all(),
@@ -212,6 +213,27 @@ class TemplateController extends Controller
         $pdf=Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background', 'fonts'))->setPaper($paper);
         $signer->sign($pdf,$template->certificadoA1,'Preview do template #'.$template->id);
         return $pdf->stream('preview-template-'.$template->id.'.pdf', ['Attachment' => false]);
+    }
+
+    public function previewImage(Request $request, Template $template, CertificadoImageGenerator $generator): View
+    {
+        $request->validate([
+            'layout_json'=>['required','json'],
+            'participante_teste_id'=>['nullable','integer',Rule::exists('participantes_de_teste','id')->whereNull('apagado_em')],
+            'atividade_id'=>['nullable','integer',Rule::exists('atividades','id')->where(fn($query)=>$query->where('ativo',true)->whereNull('apagado_em'))],
+        ]);
+        $test=$request->filled('participante_teste_id')?ParticipanteTeste::with('participante')->findOrFail($request->integer('participante_teste_id')):null;
+        $activity=$request->filled('atividade_id')?Atividade::with('evento')->findOrFail($request->integer('atividade_id')):null;
+        $context=$this->previewContext($test?->participante,$activity,null,null);
+        $png=$generator->render($template,json_decode((string)$request->input('layout_json'),true)?:[],$context);
+        $image='data:image/png;base64,'.base64_encode($png);
+        return view('templates.preview-image',[
+            'image'=>$image,
+            'participant'=>$context['participante']['nome'],
+            'event'=>$context['evento']['nome'],
+            'activity'=>$context['atividade']['nome'],
+            'hours'=>$context['atividade']['carga_horaria'],
+        ]);
     }
 
     public function uploadFont(Request $request, Template $template): JsonResponse

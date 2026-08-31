@@ -12,6 +12,7 @@ use App\Models\Atividade;
 use App\Models\Responsavel;
 use App\Models\RubricaParticipante;
 use App\Services\TemplateLayoutRenderer;
+use App\Services\CertificadoImageGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -114,6 +115,13 @@ class NovoCertificadoController extends Controller
             return back()->withErrors(['pdf' => 'Não foi possível gerar o PDF deste participante.']);
         }
         return back()->with('status', 'PDF do participante gerado com sucesso.');
+    }
+    public function generateParticipantImage(NovoCertificado $certificado, ListaParticipante $item, CertificadoImageGenerator $generator): RedirectResponse
+    {
+        abort_unless($item->novo_certificado_id === $certificado->id, 404);
+        try { $generator->generate($item); }
+        catch (\Throwable $exception) { report($exception); return back()->withErrors(['img'=>'Não foi possível gerar a imagem deste participante.']); }
+        return back()->with('status','Imagem do participante gerada com sucesso.');
     }
     public function pdf(NovoCertificado $certificado, ListaParticipante $item): BinaryFileResponse { abort_unless($item->novo_certificado_id===$certificado->id&&filled($item->arquivo_pdf),404);$path=public_path('certificado/emitidos/'.$item->arquivo_pdf);abort_unless(is_file($path),404);return response()->file($path); }
     private function generateItem(NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer): void
