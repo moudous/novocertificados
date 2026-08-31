@@ -11,6 +11,7 @@ use App\Http\Controllers\RubricaParticipanteController;
 use App\Http\Controllers\ParticipanteTesteController;
 use App\Http\Controllers\ResponsavelController;
 use App\Http\Controllers\BibliotecaImagemController;
+use App\Http\Controllers\ImagemTemplateController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\AssinaturaTemplateController;
 use App\Http\Controllers\NovoCertificadoController;
@@ -218,6 +219,8 @@ Route::prefix('templates')->name('templates.')->group(function (): void {
     Route::put('/{template}/construtor', [TemplateController::class, 'saveBuilder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.save');
     Route::post('/{template}/construtor/preview-pdf', [TemplateController::class, 'previewPdf'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.preview');
     Route::post('/{template}/construtor/fontes', [TemplateController::class, 'uploadFont'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.fonts.store');
+    Route::post('/{template}/construtor/imagens', [ImagemTemplateController::class, 'store'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.images.store');
+    Route::delete('/{template}/construtor/imagens/{image}', [ImagemTemplateController::class, 'destroy'])->whereNumber(['template','image'])->middleware('gi.permission:template.editar')->name('builder.images.destroy');
     Route::get('/{template}', [TemplateController::class, 'show'])->whereNumber('template')->middleware('gi.permission:template.visualizar')->name('show');
     Route::get('/{template}/editar', [TemplateController::class, 'edit'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('edit');
     Route::put('/{template}', [TemplateController::class, 'update'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('update');

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Template extends Model
@@ -36,6 +37,8 @@ class Template extends Model
     {
         return $this->belongsTo(BibliotecaImagem::class, 'biblioteca_imagem_id')->withTrashed();
     }
+
+    public function imagensTemplate(): HasMany { return $this->hasMany(ImagemTemplate::class); }
 
     public function backgroundExists(): bool
     {

@@ -100,6 +100,9 @@ class TemplateController extends Controller
                     $copy->{$attribute} = $this->duplicateBackground($template->{$attribute}, $createdFiles);
                 }
                 $copy->save();
+                $imageIds=[];
+                foreach($template->imagensTemplate()->get() as $image){$imageCopy=$image->replicate();$imageCopy->template_id=$copy->id;$imageCopy->save();$imageIds[$image->id]=$imageCopy->id;}
+                if($imageIds){$layout=array_map(function(array $element)use($imageIds):array{if(isset($imageIds[(int)($element['template_image_id']??0)]))$element['template_image_id']=$imageIds[(int)$element['template_image_id']];return $element;},$copy->elementos_layout??[]);$copy->update(['elementos_layout'=>$layout]);}
                 return $copy;
             });
         } catch (\Throwable $exception) {
@@ -120,12 +123,21 @@ class TemplateController extends Controller
         $fonts = $uploadedFonts->concat($fallbackFonts)->unique('name')->values();
         $dynamicSources = TemplateLayoutRenderer::SOURCES;
         $libraryImages = BibliotecaImagem::query()->where('ativo', true)->orderBy('categoria')->orderBy('nome')->get();
+        $templateImages = $template->imagensTemplate()->orderBy('nome')->get();
         $testParticipants = ParticipanteTeste::query()->with('participante')->orderBy('id')->get();
         $activities = Atividade::query()->where('ativo', true)->orderBy('nome')->get();
         $testSelection = (array) $request->session()->get('armazem.templates.construtor.participante', []);
         $responsibleSignatures = RubricaParticipante::query()->with('participante')->where('ativo', true)
             ->whereHas('participante.responsavel', fn (Builder $query): Builder => $query->where('ativo', true))->orderBy('participante_id')->get();
-        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures'));
+        $builderConfig = [
+            'width'=>max((int)$template->largura,1),'height'=>max((int)$template->altura,1),'elements'=>$template->elementos_layout??[],
+            'fonts'=>$fonts->values()->all(),'sources'=>$dynamicSources,
+            'librarySvgs'=>$libraryImages->filter(fn(BibliotecaImagem $image):bool=>filled($image->svg))->mapWithKeys(fn(BibliotecaImagem $image):array=>[$image->id=>$image->svg])->all(),
+            'templateImages'=>$templateImages->map(fn($image):array=>['id'=>$image->id,'name'=>$image->nome,'svg'=>$image->svg,'url'=>$image->dataUrl(),'library_image_id'=>$image->biblioteca_imagem_id,'element_uid'=>$image->element_uid])->values()->all(),
+            'previewUrl'=>route('templates.builder.preview',$template),'fontUploadUrl'=>route('templates.builder.fonts.store',$template),
+            'imageStoreUrl'=>route('templates.builder.images.store',$template),'imageDeleteUrl'=>route('templates.builder.images.destroy',[$template,'__IMAGE__']),
+        ];
+        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'templateImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures', 'builderConfig'));
     }
 
     public function fallbackFont(string $family): \Symfony\Component\HttpFoundation\BinaryFileResponse
@@ -146,9 +158,10 @@ class TemplateController extends Controller
             'elementos' => ['present', 'array', 'max:200'],
             'elementos.*.uid' => ['required', 'string', 'max:80'],
             'elementos.*.type' => ['required', Rule::in(['text', 'rich_text', 'image'])],
-            'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'library', 'responsible_signature'])],
+            'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'library', 'responsible_signature', 'template_image'])],
             'elementos.*.source_key' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::SOURCES))],
             'elementos.*.library_image_id' => ['nullable', 'integer', Rule::exists('biblioteca_imagens', 'id')->whereNull('apagado_em')],
+            'elementos.*.template_image_id' => ['nullable', 'integer', Rule::exists('imagens_template', 'id')->where(fn($query)=>$query->where('template_id',$template->id))],
             'elementos.*.rubrica_id' => ['nullable', 'integer', Rule::exists('rubricas_participantes', 'id')->where(fn ($query) => $query->where('ativo', true)->whereNull('apagado_em'))],
             'elementos.*.content' => ['nullable', 'string', 'max:10000'],
             'elementos.*.rotation' => ['nullable', 'integer', Rule::in([0, 90, 180, 270])],

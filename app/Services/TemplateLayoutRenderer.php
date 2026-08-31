@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BibliotecaImagem;
 use App\Models\FonteLayout;
+use App\Models\ImagemTemplate;
 use App\Models\RubricaParticipante;
 use App\Models\Template;
 use Illuminate\Support\Facades\File;
@@ -29,8 +30,9 @@ class TemplateLayoutRenderer
     public function elements(array $layout, array $context = []): array
     {
         $library = BibliotecaImagem::withTrashed()->whereIn('id', collect($layout)->pluck('library_image_id')->filter()->unique())->get()->keyBy('id');
+        $templateImages = ImagemTemplate::query()->whereIn('id',collect($layout)->pluck('template_image_id')->filter()->unique())->get()->keyBy('id');
         $signatures = RubricaParticipante::withTrashed()->whereIn('id', collect($layout)->pluck('rubrica_id')->filter()->unique())->get()->keyBy('id');
-        return collect($layout)->take(200)->map(function (array $item) use ($context, $library, $signatures): ?array {
+        return collect($layout)->take(200)->map(function (array $item) use ($context, $library, $templateImages, $signatures): ?array {
             $type = (string) ($item['type'] ?? 'text');
             if (! in_array($type, ['text','rich_text','image'], true)) return null;
             $element = [
@@ -47,11 +49,12 @@ class TemplateLayoutRenderer
             if ($type === 'image') {
                 $path = null;
                 if (($item['source_type']??'') === 'library') $path = $library->get((int)($item['library_image_id']??0))?->path();
+                if (($item['source_type']??'') === 'template_image') $element['image'] = $templateImages->get((int)($item['template_image_id']??0))?->dataUrl();
                 if (($item['source_type']??'') === 'responsible_signature') {
                     $signature = $signatures->get((int)($item['rubrica_id']??0));
                     $path = $signature?->signatureExists() ? public_path('certificado/rubricas_participantes/'.$signature->rubrica) : ($context['responsavel']['rubrica_path'] ?? null);
                 }
-                $element['image'] = $this->fileDataUri($path);
+                if(!$element['image'])$element['image'] = $this->fileDataUri($path);
             } else {
                 $content = (string)($item['content']??$item['text']??'');
                 if (($item['source_type']??'fixed') === 'dynamic') $content = '{{ '.($item['source_key']??'').' }}';
