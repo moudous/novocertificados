@@ -1,21 +1,21 @@
 {
     "schema": "gi.perfis-menus.v1",
-    "exportado_em": "2026-08-28T13:04:47-03:00",
+    "exportado_em": "2026-08-30T21:25:01-03:00",
     "sistema": {
-        "id": 13,
+        "id": 17,
         "nome": "Sistema de Certificados",
-        "sigla": "cert"
+        "sigla": "CERT"
     },
     "perfis": [
         {
-            "id": 38,
+            "id": 117,
             "nome": "TI",
             "ativo": true,
             "permissoes_aplicacoes_externas": [
                 {
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     },
                     "permissoes": [
@@ -63,6 +63,7 @@
                         "rubricas_participantes.criar",
                         "rubricas_participantes.editar",
                         "rubricas_participantes.excluir",
+                        "rubricas_participantes.restaurar",
                         "rubricas_participantes.excluir_definitivamente",
                         "participantes_teste.listar",
                         "participantes_teste.visualizar",
@@ -75,7 +76,15 @@
                         "template.criar",
                         "template.editar",
                         "template.excluir",
+                        "template.restaurar",
                         "template.excluir_definitivamente",
+                        "assinaturas.listar",
+                        "assinaturas.visualizar",
+                        "assinaturas.criar",
+                        "assinaturas.editar",
+                        "assinaturas.excluir",
+                        "assinaturas.restaurar",
+                        "assinaturas.excluir_definitivamente",
                         "novos_certificados.listar",
                         "novos_certificados.participantes",
                         "novos_certificados.inserir_participantes",
@@ -84,13 +93,41 @@
                         "novos_certificados.criar",
                         "novos_certificados.editar",
                         "novos_certificados.excluir",
-                        "novos_certificados.excluir_definitivamente"
+                        "novos_certificados.excluir_definitivamente",
+                        "responsaveis.listar",
+                        "responsaveis.visualizar",
+                        "responsaveis.criar",
+                        "responsaveis.editar",
+                        "responsaveis.excluir",
+                        "responsaveis.excluir_definitivamente",
+                        "responsaveis.gerenciar_rubricas",
+                        "biblioteca_imagens.criar",
+                        "biblioteca_imagens.listar",
+                        "biblioteca_imagens.editar",
+                        "biblioteca_imagens.excluir",
+                        "biblioteca_imagens.excluir_definitivamente",
+                        "biblioteca_imagens.restaurar",
+                        "certificadosnovos.listar",
+                        "certificadosnovos.visualizar",
+                        "certificadosnovos.gerar_pdf",
+                        "certificadosnovos.ativar_desativar",
+                        "emissoes.listar",
+                        "emissoes.criar",
+                        "emissoes.visualizar",
+                        "emissoes.editar",
+                        "emissoes.ativar_desativar",
+                        "emissoes.participantes",
+                        "emissoes.inserir_participantes",
+                        "emissoes.excluir_participantes",
+                        "emissoes.gerar_pdfs",
+                        "emissoes.excluir",
+                        "emissoes.excluir_definitivamente"
                     ]
                 }
             ],
             "menus": [
                 {
-                    "id": 113,
+                    "id": 350,
                     "texto": "Teste",
                     "icone": "bi bi-bug",
                     "tipo_link": "external_embed",
@@ -101,13 +138,13 @@
                     "ordem": 1,
                     "permissoes_externas": [],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 114,
+                    "id": 352,
                     "texto": "Pessoas",
                     "icone": "bi bi-person-circle",
                     "tipo_link": "external_embed",
@@ -118,13 +155,13 @@
                     "ordem": 2,
                     "permissoes_externas": [],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 115,
+                    "id": 353,
                     "texto": "Participantes",
                     "icone": "bi bi-file-person",
                     "tipo_link": "external_embed",
@@ -137,13 +174,13 @@
                         "participantes.listar"
                     ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 116,
+                    "id": 354,
                     "texto": "Eventos",
                     "icone": "bi bi-calendar2-event",
                     "tipo_link": "external_embed",
@@ -156,13 +193,13 @@
                         "eventos.listar"
                     ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 117,
+                    "id": 355,
                     "texto": "Atividades",
                     "icone": "bi bi-list-check",
                     "tipo_link": "external_embed",
@@ -175,13 +212,13 @@
                         "atividades.listar"
                     ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 118,
+                    "id": 356,
                     "texto": "Certificados",
                     "icone": "bi bi-patch-check-fill",
                     "tipo_link": "external_embed",
@@ -194,13 +231,13 @@
                         "certificados.listar"
                     ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 119,
+                    "id": 357,
                     "texto": "Certificado A1",
                     "icone": "bi bi-patch-check",
                     "tipo_link": "external_embed",
@@ -213,13 +250,13 @@
                         "certificados_a1.listar"
                     ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 120,
+                    "id": 358,
                     "texto": "Variáveis / Parâmetros",
                     "icone": "fa-brands fa-tex",
                     "tipo_link": "external_embed",
@@ -230,13 +267,13 @@
                     "ordem": 8,
                     "permissoes_externas": [],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 121,
+                    "id": 359,
                     "texto": "Rúbricas",
                     "icone": "fa-classic fa-solid fa-pencil",
                     "tipo_link": "external_embed",
@@ -249,13 +286,13 @@
                         "rubricas_participantes.listar"
                     ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 122,
+                    "id": 360,
                     "texto": "Participantes de Teste",
                     "icone": "bi bi-file-earmark-person",
                     "tipo_link": "external_embed",
@@ -266,15 +303,15 @@
                     "ordem": 10,
                     "permissoes_externas": [],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 123,
+                    "id": 361,
                     "texto": "Templates",
-                    "icone": "gi gi-template",
+                    "icone": "bi bi-bounding-box-circles",
                     "tipo_link": "external_embed",
                     "classe": null,
                     "link": "/templates",
@@ -285,14 +322,14 @@
                         "template.listar"
                     ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 },
                 {
-                    "id": 124,
-                    "texto": "Certificdos Novos",
+                    "id": 362,
+                    "texto": "Certificados Novos",
                     "icone": "bi bi-patch-exclamation",
                     "tipo_link": "external_embed",
                     "classe": null,
@@ -300,10 +337,69 @@
                     "extra": null,
                     "ativo": true,
                     "ordem": 12,
-                    "permissoes_externas": [],
+                    "permissoes_externas": [
+                        "certificadosnovos.listar"
+                    ],
                     "aplicacao_externa": {
-                        "id": 6,
-                        "nome": "Aplicação Certificados",
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
+                        "slug": "certificados"
+                    }
+                },
+                {
+                    "id": 363,
+                    "texto": "Responsáveis",
+                    "icone": "fa-classic fa-solid fa-people-pulling",
+                    "tipo_link": "external_embed",
+                    "classe": null,
+                    "link": "/responsaveis",
+                    "extra": null,
+                    "ativo": true,
+                    "ordem": 13,
+                    "permissoes_externas": [
+                        "responsaveis.listar"
+                    ],
+                    "aplicacao_externa": {
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
+                        "slug": "certificados"
+                    }
+                },
+                {
+                    "id": 364,
+                    "texto": "Biblioteca de Imagens",
+                    "icone": "fa-classic fa-regular fa-images",
+                    "tipo_link": "external_embed",
+                    "classe": null,
+                    "link": "/biblioteca-imagens",
+                    "extra": null,
+                    "ativo": true,
+                    "ordem": 14,
+                    "permissoes_externas": [
+                        "biblioteca_imagens.listar"
+                    ],
+                    "aplicacao_externa": {
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
+                        "slug": "certificados"
+                    }
+                },
+                {
+                    "id": 365,
+                    "texto": "Emissões em Lote",
+                    "icone": "gi gi-certificado1",
+                    "tipo_link": "external_embed",
+                    "classe": null,
+                    "link": "/emissoes",
+                    "extra": null,
+                    "ativo": true,
+                    "ordem": 15,
+                    "permissoes_externas": [
+                        "emissoes.listar"
+                    ],
+                    "aplicacao_externa": {
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
                         "slug": "certificados"
                     }
                 }
