@@ -11,6 +11,7 @@ use App\Models\ParticipanteTeste;
 use App\Models\Responsavel;
 use App\Models\RubricaParticipante;
 use App\Services\TemplateLayoutRenderer;
+use App\Services\PdfDigitalSigner;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -182,7 +183,7 @@ class TemplateController extends Controller
         return redirect()->route('templates.builder', $template)->with('status', 'Layout salvo com sucesso.');
     }
 
-    public function previewPdf(Request $request, Template $template, TemplateLayoutRenderer $renderer): Response
+    public function previewPdf(Request $request, Template $template, TemplateLayoutRenderer $renderer,PdfDigitalSigner $signer): Response
     {
         File::ensureDirectoryExists(storage_path('fonts'), 0775, true);
         $request->validate([
@@ -205,8 +206,9 @@ class TemplateController extends Controller
         $fonts = collect($renderer->fonts());
         $paper = [0, 0, $width * 2.834645669, $height * 2.834645669];
 
-        return Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background', 'fonts'))
-            ->setPaper($paper)->stream('preview-template-'.$template->id.'.pdf', ['Attachment' => false]);
+        $pdf=Pdf::loadView('templates.preview-pdf', compact('template', 'elements', 'width', 'height', 'background', 'fonts'))->setPaper($paper);
+        $signer->sign($pdf,$template->certificadoA1,'Preview do template #'.$template->id);
+        return $pdf->stream('preview-template-'.$template->id.'.pdf', ['Attachment' => false]);
     }
 
     public function uploadFont(Request $request, Template $template): JsonResponse

@@ -9,13 +9,13 @@ use Illuminate\Support\Str;
 
 class CertificadoPdfGenerator
 {
-    public function __construct(private readonly TemplateLayoutRenderer $renderer) {}
+    public function __construct(private readonly TemplateLayoutRenderer $renderer,private readonly PdfDigitalSigner $signer) {}
 
     public function generate(ListaParticipante $item): void
     {
         $item->loadMissing([
             'participante',
-            'novoCertificado.template.imagemBiblioteca',
+            'novoCertificado.template.imagemBiblioteca','novoCertificado.template.certificadoA1',
             'novoCertificado.atividade.evento',
             'novoCertificado.responsavel.participante',
             'novoCertificado.rubrica',
@@ -47,6 +47,7 @@ class CertificadoPdfGenerator
                 'background' => $this->renderer->background($template),
                 'fonts' => collect($this->renderer->fonts()),
             ])->setPaper([0, 0, $width * 2.834645669, $height * 2.834645669]);
+            $this->signer->sign($pdf,$template->certificadoA1,'Emissão de certificado digital');
             $directory = public_path('certificado/emitidos');
             File::ensureDirectoryExists($directory);
             $name = 'certificado-'.$item->id.'-'.$code.'.pdf';

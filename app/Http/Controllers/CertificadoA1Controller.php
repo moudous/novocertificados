@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class CertificadoA1Controller extends Controller
@@ -68,7 +71,8 @@ class CertificadoA1Controller extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $certificado = CertificadoA1::query()->create($this->validated($request));
+        $data=$this->validated($request);unset($data['arquivo_certificado'],$data['senha_certificado']);$data=array_merge($data,$this->storeCertificate($request));
+        $certificado = CertificadoA1::query()->create($data);
 
         return redirect()->route('certificados_a1.show', $certificado)
             ->with('status', 'Certificado A1 cadastrado com sucesso.');
@@ -86,7 +90,11 @@ class CertificadoA1Controller extends Controller
 
     public function update(Request $request, CertificadoA1 $certificado): RedirectResponse
     {
-        $certificado->update($this->validated($request));
+        $data=$this->validated($request,true);unset($data['arquivo_certificado'],$data['senha_certificado']);$old=$certificado->arquivo;
+        if($request->hasFile('arquivo_certificado'))$data=array_merge($data,$this->storeCertificate($request));
+        elseif($request->filled('senha_certificado')){$metadata=$this->readCertificate($certificado->certificatePath(),(string)$request->input('senha_certificado'));$data=array_merge($data,$metadata,['senha'=>(string)$request->input('senha_certificado')]);}
+        $certificado->update($data);
+        if($request->hasFile('arquivo_certificado')&&filled($old)&&$old!==$certificado->arquivo)Storage::disk('local')->delete('certificados-a1/'.$old);
 
         return redirect()->route('certificados_a1.show', $certificado)
             ->with('status', 'Certificado A1 atualizado com sucesso.');
@@ -102,16 +110,34 @@ class CertificadoA1Controller extends Controller
 
     public function forceDestroy(int $certificado): RedirectResponse
     {
-        CertificadoA1::withTrashed()->findOrFail($certificado)->forceDelete();
+        $model=CertificadoA1::withTrashed()->findOrFail($certificado);if(filled($model->arquivo))Storage::disk('local')->delete('certificados-a1/'.$model->arquivo);$model->forceDelete();
 
         return redirect()->route('certificados_a1.index')
             ->with('status', 'Certificado A1 excluído definitivamente.');
     }
 
-    private function validated(Request $request): array
+    private function validated(Request $request,bool $editing=false): array
     {
         return $request->validate([
             'nome' => ['nullable', 'string', 'max:50'],
+            'arquivo_certificado'=>[$editing?'nullable':'required','file','max:5120','extensions:pfx,p12'],
+            'senha_certificado'=>[$request->hasFile('arquivo_certificado')?'required':'nullable','string','max:255'],
         ]);
+    }
+
+    private function storeCertificate(Request $request): array
+    {
+        $file=$request->file('arquivo_certificado');$password=(string)$request->input('senha_certificado');$metadata=$this->readCertificate($file->getRealPath(),$password);
+        $name=Str::uuid()->toString().'.'.strtolower($file->getClientOriginalExtension());$stored=Storage::disk('local')->putFileAs('certificados-a1',$file,$name);if(!$stored)throw ValidationException::withMessages(['arquivo_certificado'=>'Não foi possível armazenar o certificado em área privada.']);
+        return array_merge($metadata,['arquivo'=>$name,'nome_arquivo_original'=>$file->getClientOriginalName(),'senha'=>$password]);
+    }
+
+    private function readCertificate(?string $path,string $password): array
+    {
+        if(!$path||!is_file($path))throw ValidationException::withMessages(['arquivo_certificado'=>'O arquivo atual do certificado não foi encontrado.']);
+        $certificates=[];$valid=@openssl_pkcs12_read((string)file_get_contents($path),$certificates,$password);
+        if(!$valid||empty($certificates['cert']))throw ValidationException::withMessages(['arquivo_certificado'=>'Não foi possível abrir o certificado. Verifique o arquivo e a senha informada.']);
+        $details=openssl_x509_parse($certificates['cert'])?:[];$subject=(array)($details['subject']??[]);$holder=$subject['CN']??$subject['O']??null;
+        return ['titular'=>$holder,'impressao_digital'=>openssl_x509_fingerprint($certificates['cert'],'sha256')?:null,'valido_de'=>isset($details['validFrom_time_t'])?date('Y-m-d H:i:s',$details['validFrom_time_t']):null,'valido_ate'=>isset($details['validTo_time_t'])?date('Y-m-d H:i:s',$details['validTo_time_t']):null];
     }
 }
