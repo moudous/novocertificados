@@ -35,6 +35,7 @@ class CertificadoPdfGenerator
                 'responsavel' => ['nome' => $responsavel?->participante?->nome, 'cargo' => $responsavel?->cargo, 'titulacao' => $responsavel?->titulacao, 'rubrica_path' => $this->renderer->rubricaPath($rubrica)],
                 'emissao' => ['nome' => $emissao->nome, 'data' => ($emissao->data_emissao ?: now())->format('d/m/Y')],
                 'certificado' => ['codigo' => $code],
+                'link_validacao' => route('certificadosnovos.public.pdf', $code),
             ];
             $template = $emissao->template;
             $width = max($template->largura, 1);

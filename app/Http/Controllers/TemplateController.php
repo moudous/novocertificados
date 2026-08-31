@@ -137,6 +137,7 @@ class TemplateController extends Controller
             'templateImages'=>$templateImages->map(fn($image):array=>['id'=>$image->id,'name'=>$image->nome,'svg'=>$image->svg,'url'=>$image->dataUrl(),'library_image_id'=>$image->biblioteca_imagem_id,'element_uid'=>$image->element_uid])->values()->all(),
             'previewUrl'=>route('templates.builder.preview',$template),'fontUploadUrl'=>route('templates.builder.fonts.store',$template),
             'imageStoreUrl'=>route('templates.builder.images.store',$template),'imageDeleteUrl'=>route('templates.builder.images.destroy',[$template,'__IMAGE__']),
+            'validationPreviewUrl'=>route('certificadosnovos.public.pdf','TESTE-000001'),
         ];
         return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'templateImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures', 'builderConfig'));
     }
@@ -159,7 +160,7 @@ class TemplateController extends Controller
             'elementos' => ['present', 'array', 'max:200'],
             'elementos.*.uid' => ['required', 'string', 'max:80'],
             'elementos.*.type' => ['required', Rule::in(['text', 'rich_text', 'image'])],
-            'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'library', 'responsible_signature', 'template_image'])],
+            'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'validation_link', 'library', 'responsible_signature', 'template_image'])],
             'elementos.*.source_key' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::SOURCES))],
             'elementos.*.library_image_id' => ['nullable', 'integer', Rule::exists('biblioteca_imagens', 'id')->whereNull('apagado_em')],
             'elementos.*.template_image_id' => ['nullable', 'integer', Rule::exists('imagens_template', 'id')->where(fn($query)=>$query->where('template_id',$template->id))],
@@ -335,6 +336,7 @@ class TemplateController extends Controller
             'atividade'=>['nome'=>$activity?->nome ?? 'Nome da atividade','carga_horaria'=>'60 horas'],
             'responsavel'=>['nome'=>$responsible?->participante?->nome ?? 'Nome do responsável','cargo'=>$responsible?->cargo ?? 'Instrutor','titulacao'=>$responsible?->titulacao ?? '', 'rubrica_path'=>$rubricaPath],
             'emissao'=>['nome'=>'Emissão de teste','data'=>now()->format('d/m/Y')], 'certificado'=>['codigo'=>'TESTE-000001'],
+            'link_validacao'=>route('certificadosnovos.public.pdf','TESTE-000001'),
         ];
     }
 }

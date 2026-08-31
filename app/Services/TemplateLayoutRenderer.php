@@ -58,6 +58,7 @@ class TemplateLayoutRenderer
             } else {
                 $content = (string)($item['content']??$item['text']??'');
                 if (($item['source_type']??'fixed') === 'dynamic') $content = '{{ '.($item['source_key']??'').' }}';
+                if (($item['source_type']??'fixed') === 'validation_link' && trim($content) === '') $content = '<a href="{{link_validacao}}">{{link_validacao}}</a>';
                 $resolved = $this->resolveTokens($content, $context);
                 if ($type === 'rich_text') $element['html'] = $this->sanitizeRichText($resolved);
                 else $element['text'] = trim(strip_tags($resolved));
@@ -68,23 +69,28 @@ class TemplateLayoutRenderer
 
     public function resolveTokens(string $content, array $context): string
     {
-        return preg_replace_callback('/\{\{\s*([a-z_]+\.[a-z_]+)\s*\}\}/i', function (array $match) use ($context): string {
-            [$group,$field] = explode('.', $match[1], 2);
-            $fallback = '['.(self::SOURCES[$match[1]] ?? $match[1]).']';
-            return e((string) data_get($context, $group.'.'.$field, $fallback));
+        return preg_replace_callback('/\{\{\s*((?:[a-z_]+\.[a-z_]+)|link_validacao)\s*\}\}/i', function (array $match) use ($context): string {
+            $key = strtolower($match[1]);
+            $fallback = '['.(self::SOURCES[$key] ?? ($key === 'link_validacao' ? 'Link de validação' : $key)).']';
+            return e((string) data_get($context, $key, $fallback));
         }, $content) ?? $content;
     }
 
     public function sanitizeRichText(string $html): string
     {
-        $html = strip_tags($html, '<strong><b><em><i><u><br><span>');
-        $html = preg_replace('/<(?!span\b)(\w+)[^>]*>/i', '<$1>', $html) ?? $html;
+        $html = strip_tags($html, '<strong><b><em><i><u><br><span><a>');
+        $html = preg_replace('/<(?!span\b|a\b)(\w+)[^>]*>/i', '<$1>', $html) ?? $html;
         $html = preg_replace_callback('/<span\b([^>]*)>/i', function (array $match): string {
             preg_match('/style\s*=\s*["\']([^"\']*)["\']/i', $match[1], $style);
             $allowed = [];
             if (preg_match('/color\s*:\s*(#[0-9a-f]{6})/i', $style[1]??'', $color)) $allowed[]='color:'.$color[1];
             if (preg_match('/font-size\s*:\s*([0-9]{1,3}(?:\.[0-9]+)?(?:pt|px))/i', $style[1]??'', $size)) $allowed[]='font-size:'.$size[1];
             return $allowed ? '<span style="'.implode(';',$allowed).'">' : '<span>';
+        }, $html) ?? $html;
+        $html = preg_replace_callback('/<a\b([^>]*)>/i', function (array $match): string {
+            preg_match('/href\s*=\s*["\']([^"\']*)["\']/i', $match[1], $href);
+            $url = html_entity_decode($href[1] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            return preg_match('#^https?://[^\s<>]+$#i', $url) ? '<a href="'.e($url).'">' : '<a>';
         }, $html) ?? $html;
         return $html;
     }
