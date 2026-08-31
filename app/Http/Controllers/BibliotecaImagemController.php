@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class BibliotecaImagemController extends Controller
@@ -32,7 +33,35 @@ class BibliotecaImagemController extends Controller
         File::delete($model->path());$model->forceDelete();
         return back()->with('status','Imagem e arquivo físico excluídos definitivamente.');
     }
-    private function validated(Request $r,bool $editing=false): array{return $r->validate(['nome'=>['required','string','max:120'],'categoria'=>['required',Rule::in(array_keys(self::CATEGORIES))],'imagem'=>[$editing?'nullable':'required','image','mimes:png,jpg,jpeg,webp','max:10240'],'ativo'=>['required','boolean']]);}
+    private function validated(Request $r,bool $editing=false): array
+    {
+        $data=$r->validate(['nome'=>['required','string','max:120'],'categoria'=>['required',Rule::in(array_keys(self::CATEGORIES))],'imagem'=>[$editing?'nullable':'required','image','mimes:png,jpg,jpeg,webp','max:10240'],'svg'=>['nullable','string','max:5242880'],'ativo'=>['required','boolean']]);
+        $data['svg']=$this->sanitizeSvg($data['svg']??null);
+        return $data;
+    }
+
+    private function sanitizeSvg(?string $svg): ?string
+    {
+        $svg=trim((string)$svg);
+        if($svg==='')return null;
+        if(!class_exists(\DOMDocument::class))throw ValidationException::withMessages(['svg'=>'A extensão DOM do PHP é necessária para validar o SVG.']);
+        $previous=libxml_use_internal_errors(true);$document=new \DOMDocument();
+        $loaded=$document->loadXML($svg,LIBXML_NONET|LIBXML_NOBLANKS);libxml_clear_errors();libxml_use_internal_errors($previous);
+        if(!$loaded||$document->documentElement?->localName!=='svg')throw ValidationException::withMessages(['svg'=>'O código SVG informado é inválido.']);
+        $allowedElements=['svg','g','path','title','desc'];$allowedAttributes=['xmlns','viewBox','width','height','fill','fill-rule','data-color'];
+        foreach(iterator_to_array($document->getElementsByTagName('*')) as $element){
+            if(!in_array($element->localName,$allowedElements,true))throw ValidationException::withMessages(['svg'=>'O SVG contém elementos não permitidos.']);
+            foreach(iterator_to_array($element->attributes??[]) as $attribute){
+                if(!in_array($attribute->name,$allowedAttributes,true)&&!($element->localName==='path'&&$attribute->name==='d'))throw ValidationException::withMessages(['svg'=>'O SVG contém atributos não permitidos.']);
+            }
+        }
+        $root=$document->documentElement;$viewBox=$root->getAttribute('viewBox');
+        if(!preg_match('/^0 0 [1-9]\d{0,3} [1-9]\d{0,3}$/',$viewBox))throw ValidationException::withMessages(['svg'=>'As dimensões do SVG são inválidas.']);
+        foreach($document->getElementsByTagName('path') as $path){
+            if(!preg_match('/^#[0-9A-Fa-f]{6}$/',$path->getAttribute('fill'))||!preg_match('/^[MZHVa-z0-9., \-]+$/',$path->getAttribute('d')))throw ValidationException::withMessages(['svg'=>'Um caminho ou uma cor do SVG é inválido.']);
+        }
+        return $document->saveXML($root);
+    }
     private function storeFile(Request $r): array{$f=$r->file('imagem');$ext=strtolower($f->getClientOriginalExtension());$name=hash('sha1',Str::uuid()->toString()).'.'.$ext;$dir=public_path('certificado/biblioteca');File::ensureDirectoryExists($dir);$f->move($dir,$name);$size=@getimagesize($dir.'/'.$name);return ['arquivo'=>$name,'mime_type'=>File::mimeType($dir.'/'.$name),'largura_px'=>$size[0]??null,'altura_px'=>$size[1]??null,'tamanho'=>File::size($dir.'/'.$name)];}
     private function usedByTemplates(BibliotecaImagem $imagem)
     {
