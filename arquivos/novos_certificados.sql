@@ -1,5 +1,5 @@
 /*
-SQLyog Community v13.3.0 (64 bit)
+SQLyog Community v13.1.7 (64 bit)
 MySQL - 8.0.46-0ubuntu0.24.04.3 : Database - novocertificados
 *********************************************************************
 */
@@ -24,14 +24,19 @@ CREATE TABLE `assinaturas_template` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `participante_id` int DEFAULT NULL,
   `template_id` int DEFAULT NULL,
-  `titulacao` varchar(20) DEFAULT NULL,
+  `titulacao` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `rubrica_id` int DEFAULT NULL,
   `ativo` int DEFAULT NULL,
-  `criado_em` datetime DEFAULT NULL,
-  `alterado_em` datetime DEFAULT NULL,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apgado_em` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`),
+  KEY `assinaturas_template_participante_id_index` (`participante_id`),
+  KEY `assinaturas_template_template_id_index` (`template_id`),
+  KEY `assinaturas_template_rubrica_id_index` (`rubrica_id`),
+  KEY `assinaturas_template_ativo_index` (`ativo`),
+  KEY `assinaturas_template_apgado_em_index` (`apgado_em`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `assinaturas_template` */
 
@@ -47,23 +52,23 @@ CREATE TABLE `atividades` (
   `periodos` varchar(100) DEFAULT NULL,
   `ativo` smallint DEFAULT '1',
   `imagemFundo` varchar(50) DEFAULT NULL,
-  `template_php` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci,
+  `template` text,
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `atualizado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apagado_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=165 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=166 DEFAULT CHARSET=utf8mb3;
 
 /*Data for the table `atividades` */
 
-insert  into `atividades`(`id`,`eventoId`,`nome`,`descricao_old`,`periodos`,`ativo`,`imagemFundo`,`template_php`,`criado_em`,`atualizado_em`,`apagado_em`) values 
+insert  into `atividades`(`id`,`eventoId`,`nome`,`descricao_old`,`periodos`,`ativo`,`imagemFundo`,`template`,`criado_em`,`atualizado_em`,`apagado_em`) values 
 (1,1,'I Jornada FCO OnLine','1ª Jornada da FCO online de 09/06 a 10/06 de 2020.\r\n\r\nProgramação:\r\n\r\n09/Jun\r\n\r\n08h00 Abertura Abertura\r\n08h20 - Professora Dra Alcely Strutz Barroso Inteligência Artificial na Saúde: Novas Habilidades e Competências Palestra\r\n08h50 Intervalo Intervalo\r\n09h00 - Professor Dr. Bruno Crozeta Inovações em Endodontia Palestra\r\n10h00 Intervalo Intervalo\r\n10h30 - Professor Dr. Guilherme Faria Moura Protocolos Clínicos para Reabilitação com Laminados Cerâmicos Palestra\r\n12h00 Intervalo Intervalo\r\n14h00 - Professor Dr. Nelson Silva, Professor Dr. Rodrigo Albuquerque Odontologia Restauradora: Mudança de Paradigma Palestra\r\n15h30 Intervalo Intervalo\r\n16h00 - Professor Dr. Leandro Hilgert Clareamento Dental Palestra\r\n17h30 Intervalo Intervalo\r\n19h00 - Professor Dr. Rogério Margonar Odontologia Digital na Reabilitação Oral Palestra\r\n20h30 Intervalo Intervalo\r\n21h00 - Professor Dr. Leonardo De Franco Cirurgia Guiada na Prática Clínica Palestra\r\n\r\n\r\n10/Jun\r\n\r\n08h00 - Professora Ms. Michelle Miqueleti Harmonização Terço Inferior: Bichectomia, Lipoplastia, Submentual, Preenchimento Labial e Lip Lift Palestra\r\n09h30 Intervalo Intervalo\r\n10h00 - Professora Dra. Sabina Pena Borges Pêgo Teleodontologia no diagnóstico de lesões da mucosa bucal Palestra\r\n12h00 Intervalo Intervalo\r\n14h00 - Professora Ms. Rejane Toigo Marketing Digital em Odontologia Palestra\r\n16h00 Apresentação de Trabalhos Apresentação\r\n19h00 Apresentação de Trabalhos Apresentação ','09 a 10 de Junho de 2020',1,'i_jornada.jpg','//código do template\r\n\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$trabalho = $certificado->titulo;\r\n		$outrosParticipantes = $certificado->outrosParticipantes;\r\n		$arquivo = \'Trabalho aprovado - III Jornada - \'.$nome;\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(65);\r\n		$pdf->SetRightMargin(35);\r\n\r\n\r\n		// Set font\r\n		$font_pequena = \"15\";	\r\n		$font_media = \'13\';\r\n		$font_grande = \'30\';\r\n\r\n		$pdf->SetX(\"50\"); \r\n		$pdf->SetY(\"70\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		//$s = \"<center>Certificamos que o trabalho intitulado  <b>\".\'\"\'.strtoupper($trabalho).\'\"\'.\"</b> com autoria de <b>\".strtoupper($outrosParticipantes).\"</b> foi aprovado e publicado durante a III Jornada Acadêmica da Faculdade de Ciências Odontológicas (FCO) que ocorreu entre os dias 21 a 22 de Novembro de 2022.	</center>\";\r\n		$s = \"Certificamos que o trabalho intitulado <b>\".\'\"\'.strtoupper($trabalho).\'\"\'.\"</b> com autoria de <b>\".strtoupper($outrosParticipantes).\"</b> foi selecionado e apresentado em formato online na 1ª Jornada Online da FCO - Faculdade de Ciências Odontológicas, realizada nos dias 09 e 10 de junho de 2020.\";\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->WriteHTML(utf8_decode(\'<p align=\"center\"><br/><br/><br/><br/>Montes Claros, 10 de junho de 2020.</p>\'));\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
 (2,2,'II Jornada FCO OnLine (Participação)','2ª Jornada da FCO Online dias 27, 28 e 29 de Maio de 2021.  ','27 a 29 de Maio de 2021',1,'ii_jornada.jpg','	//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//código do template\r\n		$pdf = new Fpdf\\FPDF();\r\n\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(65);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$pdf->SetFont(\'Arial\',\'\',18);\r\n\r\n		$nome = $certificado->participante;\r\n		$carga_horaria = $certificado->cargaHoraria.\' horas\';\r\n		$nome_arquivo = $nome.\' - \'.\'participacao na II Jornada da FCO\';\r\n		\r\n		$pdf->SetX(\"50\"); \r\n		$pdf->SetY(\"55\");\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Certificamos que: \"),0,\'C\', false);\r\n		$pdf->MultiCell(0, 10,\'\',0,\'C\', false);\r\n		$pdf->SetFont(\'Arial\',\'B\',\'16\');\r\n		$pdf->SetFont(\'Arial\',\'\',\'16\');\r\n		$pdf->SetFont(\'Arial\',\'B\',\'16\');\r\n		$pdf->MultiCell(0, 10, utf8_decode($nome),0,\'C\', false);\r\n		$pdf->SetFont(\'Arial\',\'\',\'16\');\r\n		$pdf->MultiCell(0, 10, utf8_decode(\" participou da II Jornada Online da FCO - Faculdade de Ciências Odontológicas, realizada de 27/05/2021 a 29/05/2021, contabilizando carga horária de $carga_horaria.\"),0,\'C\', false);\r\n		$pdf->MultiCell(0, 10,\'\',0,\'C\', false);\r\n		$pdf->SetFont(\'Arial\',\'\',\'16\');\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 29 de maio de 2021\"),0,\'C\', false);	\r\n\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
 (3,3,'Curso de Imersão - Aumento de Coroa Estético com Prof. Frederico Mourão','Curso de Imersão - Aumento de Coroa Estético com Prof. Frederico Mourão','11 de Setembro de 2021',1,'imersao_2022.jpg','//código do template\r\n\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$carga_horaria = $certificado->cargaHoraria;\r\n		$arquivo = $certificado->arquivo;\r\n		$nome_arquivo = $certificado->nome.\' -  curso imersao 2021\';\r\n\r\n		\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(80); // margin esquerda\r\n		$pdf->SetRightMargin(36); // margin direita\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',15);\r\n\r\n		\r\n		$pdf->SetX(\"45\"); \r\n		$pdf->SetY(\"60\");\r\n		$pdf->MultiCell(0, 10, utf8_decode($nome),0,\'J\', false);\r\n\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim \r\n		','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
 (4,4,'III Encontro de Professores do Ensino Médio - 2022','III Encontro de Professores do Ensino - 2022','28 de Junho de 2022',1,'III_encontro_prof_2022.jpg','//código do template\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = $certificado->arquivo;\r\n		$nome_arquivo = $nome.\' - III encontro do prof. do ensino medio 2022 \';\r\n\r\n		\r\n		//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(40); // margin esquerda\r\n		$pdf->SetRightMargin(40); // margin direita\r\n\r\n		$pdf->SetFont(\'Arial\',\'B\',16);\r\n\r\n\r\n		$pdf->SetX(\"50\"); \r\n		$pdf->SetY(\"94\");\r\n		$pdf->MultiCell(0, 10, utf8_decode($nome),0,\'C\', false);\r\n\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
 (5,5,'LAOP 2021 - Liga Acadêmica de Odontopediatria - COPEX ','Certificados referentes as atividades de pesquisa e extensão da LAOP - Liga Acadêmica de Odontopediatria entre as datas de 11/12/2020 a 10/12/2021.',NULL,1,'laop_2021.jpg','//código do template\r\n\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'Laop 2021 - \'.$nome;\r\n		$carga_horaria = \'60 horas\';\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n\r\n		// Set font\r\n		$font_pequena = \"22\";	\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"90\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n		\r\n		$s = \'<div style=\"align:justify\" >\'.\"Certificamos que <b>\".strtoupper($nome).\"</b> participou das atividades da Liga Acadêmica de Odontopediatria (LAOP), no período de 11 de dezembro de 2020 a 10 de dezembro de 2021, com carga horária total equivalente a <b>60 horas</b>.</div>\";\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.6);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		\r\n		//template fim ','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
 (6,1,'I Jornada FCO Online - Apresentação de Trabalhos Aprovados','Certificado de Apresentação de Trabalhos Acadêmicos durante a I Jornada Acadêmica da FCO.','09 a 10 de Junho de 2020',1,'i_jornada.jpg','//código do template - trabalho academicos aprovados jornada 1 - alterado\r\n\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$trabalho = $certificado->titulo;\r\n		$outrosParticipantes = $certificado->outrosParticipantes;\r\n		$arquivo = \'Trabalho aprovado - I Jornada - \'.$nome;\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n\r\n		// Set font\r\n		$font_pequena = \"14\";	\r\n		$font_media = \'13\';\r\n		$font_grande = \'30\';\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"70\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \"<center>Certificamos que o trabalho intitulado  <b>\".\'\"\'.strtoupper($trabalho).\'\"\'.\"</b> com autoria de <b>\".strtoupper($outrosParticipantes).\"</b> foi aprovado e publicado durante a 1ª Jornada Acadêmica Online da FCO - Faculdade de Ciências Odontológicas, realizada nos dias 09 e 10 de junho de 2020.	</center>\";\r\n		\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s));\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
-(7,6,'Apagar 6','III Jornada Acadêmica ocorrida nos dias 21 e 22 de Novembro de 2022.','21 a 22 de Novembro de 2022',1,'fundo_atividade_7.png','//código do template\r\n		$pdf = new Fpdf\\FPDF(); \r\n		/*sdd 1*/\r\n\r\n		// First page\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(40); // margem esquerda\r\n		$pdf->SetRightMargin(35); // margem direita\r\n\r\n		$nome = $certificado->nome;\r\n		$carga_horaria = $certificado->cargaHoraria;\r\n		$periodos =  $certificado->periodos;\r\n		$nome_arquivo = $certificado->nome.\' - \'.\'certificado de participacao na III Jornada FCO\';\r\n		\r\n		$font = \"16\";\r\n\r\n		$pdf->SetX(\"50\"); // posicao da esquerda\r\n		$pdf->SetY(\"60\"); // altura onde o texto começa\r\n		$pdf->SetFont(\'Arial\',\'\',$font);\r\n		\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Certificamos que \"),0,\'C\', false);\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"\"),0,\'C\', false);\r\n		$pdf->SetFont(\'Arial\',\'B\',$font);\r\n		$font = \"18\";\r\n		$pdf->MultiCell(0, 10, utf8_decode(strtoupper($nome)),0,\'C\', false);\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"\"),0,\'C\', false);\r\n		$font = \"16\";\r\n		$pdf->SetFont(\'Arial\',\'\',$font);\r\n		$pdf->MultiCell(0, 10, utf8_decode(\" participou de atividades da III Jornada Acadêmica da FCO que aconteceu no período de $periodos, com carga horária total equivalente a $carga_horaria horas.\"),0,\'C\', false);\r\n		\r\n		$pdf->Output($nome_arquivo,\'I\'); // I D F S\r\n		//template fim','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
+(7,6,'Apagar 6','III Jornada Acadêmica ocorrida nos dias 21 e 22 de Novembro de 2022.','21 a 22 de Novembro de 2022',0,'fundo_atividade_7.png','//código do template\r\n		$pdf = new Fpdf\\FPDF(); \r\n		/*sdd 1*/\r\n\r\n		// First page\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(40); // margem esquerda\r\n		$pdf->SetRightMargin(35); // margem direita\r\n\r\n		$nome = $certificado->nome;\r\n		$carga_horaria = $certificado->cargaHoraria;\r\n		$periodos =  $certificado->periodos;\r\n		$nome_arquivo = $certificado->nome.\' - \'.\'certificado de participacao na III Jornada FCO\';\r\n		\r\n		$font = \"16\";\r\n\r\n		$pdf->SetX(\"50\"); // posicao da esquerda\r\n		$pdf->SetY(\"60\"); // altura onde o texto começa\r\n		$pdf->SetFont(\'Arial\',\'\',$font);\r\n		\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Certificamos que \"),0,\'C\', false);\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"\"),0,\'C\', false);\r\n		$pdf->SetFont(\'Arial\',\'B\',$font);\r\n		$font = \"18\";\r\n		$pdf->MultiCell(0, 10, utf8_decode(strtoupper($nome)),0,\'C\', false);\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"\"),0,\'C\', false);\r\n		$font = \"16\";\r\n		$pdf->SetFont(\'Arial\',\'\',$font);\r\n		$pdf->MultiCell(0, 10, utf8_decode(\" participou de atividades da III Jornada Acadêmica da FCO que aconteceu no período de $periodos, com carga horária total equivalente a $carga_horaria horas.\"),0,\'C\', false);\r\n		\r\n		$pdf->Output($nome_arquivo,\'I\'); // I D F S\r\n		//template fim','2025-02-16 12:40:27','2026-08-28 02:07:45',NULL),
 (8,2,'II Jornada FCO OnLine - Trabalhos Acadêmicos Aprovados','2ª Jornada da FCO Online dias 27, 28 e 29 de Maio de 2021.  ','27 a 29 de Maio de 2021',1,'trabalhos_II_jornada_2021_data.jpg','//inicio codigo do template\r\n		\r\n		\r\n	$pdf = new Fpdf\\FPDF();\r\n\r\n	$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n\r\n	$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n	$pdf->SetLeftMargin(60);\r\n	$pdf->SetRightMargin(20);\r\n\r\n	// Set font\r\n	$font_pequena = \"13\";	\r\n	$font_media = \'13\';\r\n	$font_grande = \'16\';\r\n\r\n	$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n	$nome = $certificado->outrosParticipantes;\r\n	$carga_horaria = $certificado->cargaHoraria.\' horas.\';\r\n	$trabalho = $certificado->titulo;\r\n	$arquivo = $certificado->arquivo;\r\n	$periodo = $certificado->periodo_atividade;\r\n	$nome_arquivo = $certificado->nome.\' - \'.\'certificado do trabalho academico aprovado da II Jornada FCO\';\r\n\r\n	\r\n\r\n	$pdf->SetX(\"50\"); \r\n	$pdf->SetY(\"45\");\r\n	$pdf->MultiCell(0, 10, utf8_decode(\"Certificamos que o trabalho intitulado: \"),0,\'C\', false);\r\n	$pdf->SetFont(\'Arial\',\'B\',$font_media);\r\n	$pdf->MultiCell(0, 10, utf8_decode($trabalho),0,\'C\', false);\r\n	$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n	$pdf->MultiCell(0, 10, utf8_decode(\" com autoria de: \"),0,\'C\', false);\r\n	$pdf->SetFont(\'Arial\',\'B\',$font_media);\r\n	$pdf->MultiCell(0, 8, utf8_decode($nome),0,\'C\', false);\r\n	$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n	$pdf->MultiCell(0, 10, utf8_decode(\"foi aprovado e apresentado em formato online na II entre os dias 27 a 29 de Maio durante a\"),0,\'C\', false);\r\n	$pdf->MultiCell(0, 10, utf8_decode(\"II Jornada Acadêmica da FCO - Faculdade de Ciências Odontológicas.\"),0,\'C\', false);\r\n	$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n	\r\n	\r\n\r\n	$pdf->Output($nome_arquivo,\'I\'); // I D F S\r\n	// fim do código do template	','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
 (9,6,'Hands On - Endodontia mecanizada ','III Jornada Acadêmica ocorrida nos dias 21 e 22 de Novembro de 2022. Participação em Hands On','21 a 22 de Novembro de 2022',1,'hands_on_3_jornada.jpg','//código do template\r\n\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$titulo = \'Hands On - Endodontia mecanizada\';\r\n		$professores = \"Prof. Neilor Mateus Antunes Braga e Prof. Rodrigo Dantas Pereira\";\r\n		$arquivo = \'certificado_hands_on_3_jornada - \'.$nome;\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n\r\n		// Set font\r\n		$font_pequena = \"14\";	\r\n		$font_media = \'13\';\r\n		$font_grande = \'30\';\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"70\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \"<center>Certificamos que <b>\".strtoupper($nome).\"</b> participou do <b>\".strtoupper($titulo).\"</b> ministrado \";\r\n		$s .= \"por <b>\".$professores.\"</b> durante a III Jornada Acadêmica da Faculdade de Ciências Odontológica - FCO, realizada entre os dias <b>21 a 22 de Novembro de 2022</b>, com carga horária  de <b>2 horas</b>.</center>\";\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s));\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
 (10,6,'Hands On - Estética e função em dentes posteriores','III Jornada Acadêmica ocorrida nos dias 21 e 22 de Novembro de 2022. Participação em Hands On','21 a 22 de Novembro de 2022',1,'hands_on_3_jornada.jpg','//código do template\r\n\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$titulo = \'Hands On - Estética\';\r\n		$professores = \"Prof. Danilo Congussu Mendes, Prof. João Lima Rodrigues e Prof. Silvério de Almeida Souza Torres\";\r\n		$arquivo = \'certificado_hands_on_3_jornada - \'.$nome;\r\n\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n\r\n		// Set font\r\n		$font_pequena = \"14\";	\r\n		$font_media = \'13\';\r\n		$font_grande = \'30\';\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"70\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \"<center>Certificamos que <b>\".strtoupper($nome).\"</b> participou do <b>\".strtoupper($titulo).\"</b> ministrado \";\r\n		$s .= \"por <b>\".$professores.\"</b> durante a III Jornada Acadêmica da Faculdade de Ciências Odontológica - FCO, realizada entre os dias <b>21 a 22 de Novembro de 2022</b>, com carga horária  de <b>2 horas</b>.</center>\";\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s));\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2025-02-16 12:40:27','2025-02-16 13:37:02',NULL),
@@ -211,7 +216,7 @@ insert  into `atividades`(`id`,`eventoId`,`nome`,`descricao_old`,`periodos`,`ati
 (153,48,'Certificado Hands On - Imersão Estratégica em Endodontia - Instrumentação mecanizada, Ultrassom e Magnificação',NULL,'28/03/2026',1,'fundo_atividade_153.png','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$curso =  $certificado->titulo;\r\n		$arquivo = \'Hands On - Endodontia 2026 - \'.$nome;\r\n		$trabalho = $certificado->titulo;\r\n					\r\n				\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"80\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\"\'.$nome.\'\"</b> participou do Hands on - <b>\'.$curso.\'</b>, ministrado pelos docentes Dr. Gil Moreira Júnior e Lucas Moreira, com carga horária de 4 horas, realizado no dia 28 de março de 2026.</center>\';\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.5,\'J\');\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"155\");\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 28 de março de 2026.\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-03-30 19:41:32','2026-03-30 22:10:42',NULL),
 (154,48,'Hands On – Fluxo Digital no dia a dia Do escaneamento à impressão 3D',NULL,'21/03/2026 ',1,'certificado_sara__hands_on.png','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$curso =  \'Hands On - Fluxo Digital no dia a dia Do escaneamento à impressão 3D\';\r\n		$arquivo = \'Hands On - Fluxo 2026 - \'.$nome;\r\n		$trabalho = $certificado->titulo;\r\n					\r\n				\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"80\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\"\'.$nome.\'\"</b> participou do Hands on - <b>\'.$curso.\'</b>, ministrado pelos docentes Dra. Sara Katerine e Patrícia Maia, com carga horária de 4 horas, realizado no dia 21 de março de 2026.</center>\';\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.5,\'J\');\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"155\");\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 28 de março de 2026.\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-03-30 19:41:32','2026-04-29 17:10:01',NULL),
 (155,48,'Hands On em Implantodontia ',NULL,'21/03/2026',1,'certificado_manna_hands_on.png','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$curso =  $certificado->titulo;\r\n		$arquivo = \'Hands On - Implantodontia 2026 - \'.$nome;\r\n		$trabalho = $certificado->titulo;\r\n					\r\n				\r\n		$pdf->AddPage($orientation=\'L\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"80\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\"\'.$nome.\'\"</b> participou do <b>\'.$curso.\'</b>, ministrado pelo professor Dr. Luiz Manna Neto, com carga horária de 4 horas, realizado no dia 28 de março de 2026.</center>\';\r\n		\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.5,\'J\');\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"155\");\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 28 de março de 2026.\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-03-31 10:44:10','2026-04-29 17:24:03',NULL),
-(156,49,'Programa de Extensão Odonto Presente 2025',NULL,'05 de agosto de 2025 até 19 dezembro de 2025',1,'odonto_presente_sem_data_emissao.png','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'donto_presente 2025 - \'.$nome;\r\n		$cargaHoraria = $certificado->cargaHoraria;\r\n		$periodo = \'05 de agosto de 2024 até 19 de dezembro de 2025\';\r\n		$emissao = \'19 de dezembro de 2026\';\r\n		\r\n		if($cargaHoraria == 40) $cargaHoraria = \'40 (quarenta)\';\r\n		if($cargaHoraria == 60) $cargaHoraria = \'60 (sessenta)\';\r\n		if($cargaHoraria == 80) $cargaHoraria = \'33 (trinta e três)\';\r\n		if($cargaHoraria == 100) $cargaHoraria = \'100 (cem)\';\r\n\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"16\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"75\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> participou das atividades do Programa de Extensão Odonto Presente, vinculado à Faculdade de Ciências Odontológicas (FCO), realizando atendimento odontológico em pacientes oncológicos atendidos pela Associação Presente em Montes Claros, MG, no período de \'.$periodo.\', cumprindo uma carga horária total de \'.$cargaHoraria.\' horas.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"111\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, $emissao\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-04-29 14:40:34','2026-04-29 14:52:21',NULL),
+(156,49,'Programa de Extensão Odonto Presente 2025',NULL,'05 de agosto de 2025 até 19 dezembro de 2025',1,'odonto_presente_sem_data_emissao.png','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'donto_presente 2025 - \'.$nome;\r\n		$cargaHoraria = $certificado->cargaHoraria;\r\n		$periodo = \'05 de agosto de 2024 até 19 de dezembro de 2025\';\r\n		$emissao = \'19 de dezembro de 2026\';\r\n		\r\n		if($cargaHoraria == 40) $cargaHoraria = \'40 (quarenta)\';\r\n		if($cargaHoraria == 60) $cargaHoraria = \'60 (sessenta)\';\r\n		if($cargaHoraria == 80) $cargaHoraria = \'33 (trinta e três)\';\r\n		if($cargaHoraria == 100) $cargaHoraria = \'100 (cem)\';\r\n\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"16\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"75\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> participou das atividades do Programa de Extensão Odonto Presente, vinculado à Faculdade de Ciências Odontológicas (FCO), realizando atendimento odontológico em pacientes oncológicos atendidos pela Associação Presente em Montes Claros, MG, no período de \'.$periodo.\', cumprindo uma carga horária total de \'.$cargaHoraria.\' horas.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"111\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, $emissao\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim','2026-04-29 14:40:34','2026-08-30 22:03:00',NULL),
 (157,50,'Certificado de membro da Liga LAOM - 2025',NULL,'11 de abril de 2024 até 23 abril de 2025',1,'laom_fundo.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'laom 2025 membro - \'.$nome;\r\n		$periodo = \'11 de abril de 2024 até 23 abril de 2025\';//$certificado->titulo2;\r\n	\r\n		$cargaHoraria = $certificado->cargaHoraria;\r\n\r\n		if($cargaHoraria == 60) $cargaHoraria = \'60 (sessenta)\';\r\n		if($cargaHoraria == 80) $cargaHoraria = \'80 (oitenta)\';\r\n		if($cargaHoraria == 50) $cargaHoraria = \'50 (cinquenta)\';\r\n		\r\n			\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"90\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> participou das atividades da Liga Acadêmica de Odontologia Multidisciplinar (LAOM), vinculada à Faculdade de Ciências Odontológicas (FCO), no período de \'.$periodo.\', com carga horária total equivalente a \'.$cargaHoraria.\' horas.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"135\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 05 de maio de 2025\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-05-06 17:08:40','2026-05-06 17:12:23',NULL),
 (158,50,'Certificado de presidente da Liga LAOM - 2025',NULL,'11 de abril de 2024 até 23 abril de 2025',1,'laom_fundo.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'laom 2025 membro - \'.$nome;\r\n		$periodo = \'11 de abril de 2024 até 23 abril de 2025\';//$certificado->titulo2;\r\n	\r\n		$cargaHoraria = $certificado->cargaHoraria;\r\n\r\n		if($cargaHoraria == 60) $cargaHoraria = \'60 (sessenta)\';\r\n		if($cargaHoraria == 80) $cargaHoraria = \'80 (oitenta)\';\r\n		if($cargaHoraria == 50) $cargaHoraria = \'50 (cinquenta)\';\r\n		\r\n			\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"90\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> atuou como presidente da Liga Acadêmica de Odontologia Multidisciplinar (LAOM), vinculada à Faculdade de Ciências Odontológicas (FCO), no período de \'.$periodo.\', com carga horária total equivalente a \'.$cargaHoraria.\' horas.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"135\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 05 de maio de 2025\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-05-06 17:21:07','2026-05-06 19:05:01',NULL),
 (159,51,'Certificado de Membro da Liga LAOP 2024',NULL,'01/04/2024 a 18/12/2024',1,'laop_2023.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'LAOP - membro - \'.$nome;\r\n		$cargaHoraria = $certificado->cargaHoraria;\r\n		$periodo = $certificado->titulo3;\r\n\r\n		if($cargaHoraria == 60) $cargaHoraria = \'60 (sessenta)\';\r\n		if($cargaHoraria == 80) $cargaHoraria = \'80 (oitenta)\';\r\n		if($cargaHoraria == 50) $cargaHoraria = \'50 (cinquenta)\';\r\n		\r\n			\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"90\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> atuou nas atividades da Liga Acadêmica de Odontopediatria (LAOP), vinculada à Faculdade de Ciências Odontológicas (FCO), no  período de \'.$periodo.\', com carga horária total equivalente a \'.$cargaHoraria.\' horas.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"130\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 18 de dezembro de 2024\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-05-27 16:15:01','2026-05-27 16:33:39',NULL),
@@ -219,7 +224,75 @@ insert  into `atividades`(`id`,`eventoId`,`nome`,`descricao_old`,`periodos`,`ati
 (161,53,'Voluntário do Programa de Iniciação Científica de 2024',NULL,'1º de maio de 2024 a 30 de abril de 2025',1,'ic.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'ic_2024 - \'.$nome;\r\n		$professor = $certificado->outrosParticipantes;\r\n		$projeto =   $certificado->titulo3;\r\n\r\n		$sexo =   $certificado->titulo2;\r\n\r\n		if($sexo==\'m\') {\r\n			$titulosexo = \' do professor \';\r\n		} else {\r\n			$titulosexo = \' da professora \';\r\n		}\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"16\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"75\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> participou das atividades de pesquisa do Programa de Iniciação Científica, vinculado à Faculdade de Ciências Odontológicas (FCO), no projeto de pesquisa intitulado \"<b>\'.$projeto.\'</b>\", com orientação \'.$titulosexo.$professor.\', no período de 1º de maio de 2024 a 30 de abril de 2025.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"125\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 30 de abril de 2025\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-05-27 18:07:16','2026-06-15 19:13:00',NULL),
 (162,53,'Bolsista do Programa de Iniciação Científica 2024',NULL,'1º de maio de 2024 a 30 de abril de 2025',1,'ic.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'ic_2024 - \'.$nome;\r\n		$professor = $certificado->outrosParticipantes;\r\n		$projeto =   $certificado->titulo3;\r\n\r\n		$sexo =   $certificado->titulo2;\r\n\r\n		if($sexo==\'m\') {\r\n			$titulosexo = \' do professor \';\r\n		} else {\r\n			$titulosexo = \' da professora \';\r\n		}\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"16\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"75\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> participou como bolsista das atividades de pesquisa do Programa de Iniciação Científica, vinculado à Faculdade de Ciências Odontológicas (FCO), no projeto de pesquisa intitulado \"<b>\'.$projeto.\'</b>\", com orientação \'.$titulosexo.$professor.\', no período de 1º de maio de 2024 a 30 de abril de 2025.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"125\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 30 de abril de 2025\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-05-27 18:08:32','2026-06-15 19:14:02',NULL),
 (163,53,'Professor do Programa de Iniciação Científica de 2024',NULL,'1º de maio de 2024 a 30 de abril de 2025',1,'ic.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'ic_2024 - \'.$nome;\r\n		$professor = $nome;\r\n		$alunos = $certificado->outrosParticipantes;\r\n		$projeto =   $certificado->titulo3;\r\n		$sexo =   $certificado->titulo2;\r\n\r\n		if($sexo==\'m\') {\r\n			$titulosexo = \'do professor \';\r\n		} else {\r\n			$titulosexo = \'da professora \';\r\n		}\r\n						\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"16\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"75\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		\r\n		$s = \'<center>Certificamos que \'.$titulosexo.\'<b>\'.$professor.\'</b> participou das atividades de pesquisa do Programa de Iniciação Científica, vinculado à Faculdade de Ciências Odontológicas (FCO), orientando os alunos \'.$alunos.\' no projeto de pesquisa intitulado \"<b>\'.$projeto.\'</b>\", no período de 1º de maio de 2024 a 30 de abril de 2025.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"125\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 05 de junho de 2025\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-05-27 18:25:16','2026-06-15 19:12:31',NULL),
-(164,55,'Participação na Liga Acadêmica LAOP 2025',NULL,'21/11/2024 as 21/08/2025',1,'laop_2023.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'LAOP - membro - \'.$nome;\r\n		$cargaHoraria = $certificado->cargaHoraria;\r\n		$periodo =  $certificado->titulo3;\r\n\r\n		if($cargaHoraria == 60) $cargaHoraria = \'60 (sessenta)\';\r\n		if($cargaHoraria == 80) $cargaHoraria = \'80 (oitenta)\';\r\n		if($cargaHoraria == 50) $cargaHoraria = \'50 (cinquenta)\';\r\n		\r\n			\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"90\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> atuou nas atividades da Liga Acadêmica de Odontopediatria (LAOP), vinculada à Faculdade de Ciências Odontológicas (FCO), no  período de \'.$periodo.\', com carga horária total equivalente a \'.$cargaHoraria.\' horas.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"130\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 18 de dezembro de 2024\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-08-12 16:42:34','2026-08-12 16:54:19',NULL);
+(164,55,'Participação na Liga Acadêmica LAOP 2025',NULL,'21/11/2024 as 21/08/2025',1,'laop_2023.jpg','//código do template\r\n		$this->load->library(\'PDF_HTML\');\r\n		$pdf = $this->pdf = new PDF_HTML();\r\n\r\n		//variaveis\r\n		$nome = $certificado->participante;\r\n		$arquivo = \'LAOP - membro - \'.$nome;\r\n		$cargaHoraria = $certificado->cargaHoraria;\r\n		$periodo =  $certificado->titulo3;\r\n\r\n		if($cargaHoraria == 60) $cargaHoraria = \'60 (sessenta)\';\r\n		if($cargaHoraria == 80) $cargaHoraria = \'80 (oitenta)\';\r\n		if($cargaHoraria == 50) $cargaHoraria = \'50 (cinquenta)\';\r\n		\r\n			\r\n				\r\n		$pdf->AddPage($orientation=\'J\', $size=\'A4\');\r\n		$pdf->Image(FCPATH.\'/uploads/certificados/\'.$certificado->imagemFundo,0,0,297,0,\'\',\'\');\r\n		$pdf->SetLeftMargin(35);\r\n		$pdf->SetRightMargin(35);\r\n\r\n		// Set font\r\n		$font_pequena = \"18\";	\r\n		\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"90\");\r\n\r\n		$pdf->SetFont(\'Arial\',\'\',$font_pequena);\r\n\r\n		$s = \'<center>Certificamos que <b>\'.$nome.\'</b> atuou nas atividades da Liga Acadêmica de Odontopediatria (LAOP), vinculada à Faculdade de Ciências Odontológicas (FCO), no  período de \'.$periodo.\', com carga horária total equivalente a \'.$cargaHoraria.\' horas.</center>\';\r\n\r\n\r\n		$pdf->WriteHTML(utf8_decode($s),\'Arial\',1.3);\r\n\r\n		$pdf->SetX(\"40\"); \r\n		$pdf->SetY(\"130\");\r\n\r\n		$pdf->MultiCell(0, 10, utf8_decode(\"Montes Claros, 18 de dezembro de 2024\"),0,\'C\', false);\r\n\r\n		header(\'Content-Type: application/pdf\');\r\n		$pdf->SetAuthor(\'FCO\');\r\n		$pdf->Output(\'I\',$arquivo); // I D F S\r\n		//template fim ','2026-08-12 16:42:34','2026-08-12 16:54:19',NULL),
+(165,18,'teste','teste asdfasdf','21/11/2024 as 21/08/2025',1,'e68b21f3-5667-4a39-aac0-cf9836fa439c.jpg','sdfasdfasd','2026-08-28 01:58:05','2026-08-28 01:58:05',NULL);
+
+/*Table structure for table `biblioteca_imagens` */
+
+DROP TABLE IF EXISTS `biblioteca_imagens`;
+
+CREATE TABLE `biblioteca_imagens` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `nome` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `categoria` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'outro',
+  `arquivo` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mime_type` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `largura_px` int unsigned DEFAULT NULL,
+  `altura_px` int unsigned DEFAULT NULL,
+  `tamanho` bigint unsigned DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `apagado_em` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `biblioteca_imagens_categoria_index` (`categoria`),
+  KEY `biblioteca_imagens_ativo_index` (`ativo`),
+  KEY `biblioteca_imagens_apagado_em_index` (`apagado_em`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `biblioteca_imagens` */
+
+insert  into `biblioteca_imagens`(`id`,`nome`,`categoria`,`arquivo`,`mime_type`,`largura_px`,`altura_px`,`tamanho`,`ativo`,`criado_em`,`alterado_em`,`apagado_em`) values 
+(1,'Assinatura Patrícia','assinatura_institucional','2a8d9763e582629c6f7a36f481d6ae7d14746d3c.png','image/png',192,139,12451,1,'2026-08-30 03:24:23','2026-08-30 03:24:23',NULL),
+(2,'Logo FCO','logotipo','5dd7b94f327034147a87da9396d29743baf5af87.png','image/png',904,421,62684,1,'2026-08-30 03:25:50','2026-08-30 03:25:50',NULL),
+(3,'Logo LEGO','fundo','d25e5ec28ba520d5ffda6ebc3ccdce639fd8c403.png','image/png',478,514,171704,1,'2026-08-30 03:26:44','2026-08-30 03:26:44',NULL),
+(4,'Assinatura Michelle','assinatura_institucional','2104c2006e42d8a69a0025e720deb36803795c4e.png','image/png',192,139,12451,1,'2026-08-30 03:38:14','2026-08-30 03:38:14',NULL),
+(5,'Selo Mana Neto','selo','253ed86fbbb7830446a86426f92b74d34960f85c.png','image/png',324,75,13412,1,'2026-08-30 03:38:42','2026-08-30 03:38:42',NULL),
+(7,'fundo lego','fundo','b90d81a9bbe389f9d06231cdd35f41eeae924ddf.jpg','image/jpeg',3516,2484,351414,1,'2026-08-30 03:40:43','2026-08-30 03:40:43',NULL),
+(8,'Decorativo 2 - esquerda fundo','decorativo','f3f429c262bed04692d4ac43517c5eb4c7dd187b.png','image/png',333,317,40445,1,'2026-08-30 04:12:33','2026-08-30 04:12:33',NULL),
+(9,'Fundo Lei','fundo','3f210fe4b8d9c00daaf336ccfdd06f5d5d48f682.jpg','image/jpeg',1825,1299,233773,1,'2026-08-30 04:25:38','2026-08-30 04:25:38',NULL),
+(10,'Imagem 2 asdfasdfa sdasdfasdfasdfa adf','assinatura_institucional','0e5fe240bce8766e136b0ae38645da10f932c874.png','image/png',337,119,27131,1,'2026-08-30 05:05:57','2026-08-30 05:05:57',NULL),
+(11,'Imagem biblioteca 3 certificado','assinatura_institucional','534578cae13019d33bd85cd322326594a2c5341b.png','image/png',2951,390,657631,1,'2026-08-30 05:09:18','2026-08-30 05:09:18',NULL),
+(12,'Logo COPEX','logotipo','1101c5391626c8a1a939a40d5d832a7da00cc91b.png','image/png',167,117,13483,1,'2026-08-30 05:53:10','2026-08-30 05:53:17',NULL),
+(13,'Liga LEI LOGO','logotipo','1b1439c8a14155bd9d496c1328f6454a5d35fbb6.png','image/png',630,644,444250,1,'2026-08-30 13:40:13','2026-08-30 13:40:13',NULL);
+
+/*Table structure for table `cache` */
+
+DROP TABLE IF EXISTS `cache`;
+
+CREATE TABLE `cache` (
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expiration` bigint NOT NULL,
+  PRIMARY KEY (`key`),
+  KEY `cache_expiration_index` (`expiration`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `cache` */
+
+/*Table structure for table `cache_locks` */
+
+DROP TABLE IF EXISTS `cache_locks`;
+
+CREATE TABLE `cache_locks` (
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `owner` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expiration` bigint NOT NULL,
+  PRIMARY KEY (`key`),
+  KEY `cache_locks_expiration_index` (`expiration`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `cache_locks` */
 
 /*Table structure for table `certificados` */
 
@@ -1519,7 +1592,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (3327,691,'Alice Duarte Santos Veloso','8ae-e08-d2d',2,6,'Participação na II Jornada FCO On-line - Alice Duarte Santos Veloso',NULL,NULL,NULL,28,'','Certificado de Participação',1,'295-108-a73','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (3328,692,'Anna Júlia Ramos Barbosa','bd6-2be-3d7',2,6,'Participação na II Jornada FCO On-line - Anna Júlia Ramos Barbosa',NULL,NULL,NULL,28,'','Certificado de Participação',1,'b89-7b0-637','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (3329,693,'Raiany Gomes Souza','eaf-2c9-88b',2,6,'Participação na II Jornada FCO On-line - Raiany Gomes Souza',NULL,NULL,NULL,28,'','Certificado de Participação',1,'ea1-98b-dd3','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(3330,3399,'Karla Gabrielly Tertuliano','21a-472-7f9',2,6,'Participação na II Jornada FCO On-line - Karla Gabrielly Tertuliano De Souza',NULL,NULL,NULL,28,'','Certificado de Participação',1,'7ad-631-57a','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(3330,694,'Karla Gabrielly Tertuliano De Souza','21a-472-7f9',2,6,'Participação na II Jornada FCO On-line - Karla Gabrielly Tertuliano De Souza',NULL,NULL,NULL,28,'','Certificado de Participação',1,'7ad-631-57a','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (3331,695,'Aline Baleeiro Gomes','246-907-5f6',2,6,'Participação na II Jornada FCO On-line - Aline Baleeiro Gomes',NULL,NULL,NULL,28,'','Certificado de Participação',1,'bfc-c68-bd0','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (3332,696,'Shirley Jaqueline do Carmo Silva','9ed-c88-e79',2,6,'Participação na II Jornada FCO On-line - Shirley Jaqueline Do Carmo Silva',NULL,NULL,NULL,28,'','Certificado de Participação',1,'dd9-853-cce','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (3333,697,'Gustavo Durães Rosa','d85-c37-3bd',2,6,'Participação na II Jornada FCO On-line - Gustavo Durães Rosa',NULL,NULL,NULL,28,'','Certificado de Participação',1,'b92-5cc-ab4','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -2920,7 +2993,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (4728,413,'Lara Maria Farias de Castro','fcf-8a8-424',2,6,'Participação na II Jornada FCO On-line - Lara Maria Farias de Castro',NULL,NULL,NULL,28,'','Certificado de Participação',1,'b74-41f-8f8','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (4729,342,'Ligia Moreno De Moura','4bb-331-8d0',2,6,'Participação na II Jornada FCO On-line - Ligia Moreno De Moura',NULL,NULL,NULL,28,'','Certificado de Participação',1,'99f-e7b-549','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (4730,1866,'Hendyara Chaves Pereira','b63-48a-83e',2,6,'Participação na II Jornada FCO On-line - Hendyara Chaves Pereira',NULL,NULL,NULL,28,'','Certificado de Participação',1,'d79-8db-7e2','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(4731,1867,'Kamila Pereira Rocha','18c-92e-b80',2,6,'Participação na II Jornada FCO On-line - Kamila Pereira Rocha',NULL,NULL,NULL,28,'','Certificado de Participação',1,'5f4-c72-b3e','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(4731,2771,'Kamila Pereira Pereira','18c-92e-b80',2,6,'Participação na II Jornada FCO On-line - Kamila Pereira Rocha',NULL,NULL,NULL,28,'','Certificado de Participação',1,'5f4-c72-b3e','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (4732,1868,'João Vítor Vasconcelos Rocha','e03-4b1-166',2,6,'Participação na II Jornada FCO On-line - João Vítor Vasconcelos Rocha',NULL,NULL,NULL,28,'','Certificado de Participação',1,'2e0-e49-168','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (4733,1869,'João Pedro Fagundes de Morais','d84-284-352',2,6,'Participação na II Jornada FCO On-line - João Pedro Fagundes de Morais',NULL,NULL,NULL,28,'','Certificado de Participação',1,'a22-a9e-d36','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (4734,1870,'Laynara Victória Rocha Tribuzy Bandeira','593-0ce-e49',2,6,'Participação na II Jornada FCO On-line - Laynara Victória Rocha Tribuzy Bandeira',NULL,NULL,NULL,28,'','Certificado de Participação',1,'ae6-c81-bcc','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -3627,7 +3700,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (5675,1777,'Hariadney Assis Lima Silva','e61-5c0-096',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'7ed-524-26e','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5676,290,'Evellin Vitória Santos Veloso','80f-f78-db6',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'202-94c-03d','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5677,2806,'José Dirceu Ferreira','0f6-699-060',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'939-a11-4ed','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(5678,3399,'Karla Gabrielly Tertuliano','c82-4d2-091',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'cb0-1a7-be9','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(5678,694,'Karla Gabrielly Tertuliano De Souza','c82-4d2-091',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'cb0-1a7-be9','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5679,78,'Millena Leal Praes','5bc-b31-437',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'44d-ffe-908','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5680,808,'Maria Cecília Santos Damasceno','7aa-088-337',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'12d-a22-755','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5681,77,'Guilherme Leal Praes','f4e-eab-9e6',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'1bd-a03-215','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -3699,7 +3772,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (5750,372,'Paula Victória Aguiar de Oliveira Silqueira','517-184-96f',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'760-cfd-dfb','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5751,1818,'Ana clara dias silva','0f9-78a-aa3',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e70-1fd-98b','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5752,495,'Gréssia Bento De Oliveira','09a-08e-d3f',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'b71-19a-4c8','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(5753,1867,'Kamila Pereira Rocha','bd3-6c0-a45',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'d37-d09-045','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(5753,2771,'Kamila Pereira Pereira','bd3-6c0-a45',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'d37-d09-045','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (5754,2803,'João Henrique Rabelo Costa','e89-98d-3d1',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'8b7-645-96d','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5755,793,'Thamires Lopes Costa','265-3c2-c8b',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'6b0-0e7-bf6','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (5756,2384,'Jessica Lorrane Fernandes Antunes Santos','cf7-8dc-395',15,0,'Palestra online: O uso do conceito conométrico na Implantodontia: O conceito conométrico permite reabilitação oral sem parafuso e sem cimentação',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'356-0db-4be','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -4215,7 +4288,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (6438,677,'Luciano Neri Oliveira De Abreu','697-483-19a',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'517-2f3-78c','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6439,783,'Nathalya Freitas Santos','9e0-a54-9f6',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'183-bf3-00a','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6440,290,'Evellin Vitória Santos Veloso','fd0-956-a77',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'c8e-6bf-270','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(6441,3399,'Karla Gabrielly Tertuliano','725-b23-c9e',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'fcd-3a4-2c2','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(6441,694,'Karla Gabrielly Tertuliano De Souza','725-b23-c9e',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'fcd-3a4-2c2','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6442,2534,'Aretha Sabine Souza','495-d8b-24c',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'b47-27b-c43','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6443,1937,'Ingrid Shayene Andrade','d87-ad8-438',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'dcd-026-d31','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6444,2516,'Ana Clara Andrade de Araújo','b1e-ba5-bdb',16,0,'Palestra online: Colagem de fragmento em trauma dental',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'7a9-a9d-682','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -4291,7 +4364,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (6691,1432,'Êmily Ferreira Rocha','522-ca6-138',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'684-4dd-0fd','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6692,1921,'John Maycon Mendes Souza','08f-0c5-eff',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'8cc-443-f00','2025-02-16 12:35:02','2025-02-24 21:04:06',NULL),
 (6693,1129,'Ludmila Viana Veloso','7c7-51d-0e8',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'51c-a9c-050','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(6694,3399,'Karla Gabrielly Tertuliano','c19-08c-94a',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'8ff-078-038','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(6694,694,'Karla Gabrielly Tertuliano De Souza','c19-08c-94a',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'8ff-078-038','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6695,2865,'Victória Freire Carneiro Mansur','883-9a2-fd9',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'629-b67-5bb','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6696,2858,'jackson.juliano@nossafco.com.br','29a-4ef-11a',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'a1a-ac0-ce0','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6697,716,'Ana Luiza Souza Cardoso','088-560-c05',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'0c0-e63-4d8','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -4510,7 +4583,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (6911,616,'Anny Jullia Gonçalves Colares Souto','f8c-a66-442',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'054-c57-6e5','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6912,484,'Iany Stella Almeida Paraiso','543-837-1ab',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e6a-159-b89','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6913,626,'Pedro Henrique Pereira De Souza','a4d-745-f75',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e91-d04-dc3','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(6914,1867,'Kamila Pereira Rocha','e38-bc4-b48',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e1e-209-b71','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(6914,2771,'Kamila Pereira Pereira','e38-bc4-b48',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e1e-209-b71','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (6915,2821,'Luiz Guilherme Azevedo de Macêdo','604-1e8-471',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'8dd-f44-37c','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6916,1109,'Davidson Dantas Honorato','f55-093-728',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'dd4-64d-5c1','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (6917,988,'Caio Cordeiro Veloso','695-d33-c78',17,0,'Palestra online: Facetas estéticas',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e6b-494-c25','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -4774,7 +4847,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (7368,650,'Gabrielle Bernardi Gonçalves','17a-633-d63',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e89-fbf-3e2','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7369,2241,'Gabriel Gusmão Rocha Sá','e91-84f-c79',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e08-3c9-b4c','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7370,1841,'Ivo Alves Rocha','f9f-6ea-a8a',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'fab-b50-621','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(7371,3399,'Karla Gabrielly Tertuliano','583-0c1-bbd',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'2fc-8e4-6dc','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(7371,694,'Karla Gabrielly Tertuliano De Souza','583-0c1-bbd',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'2fc-8e4-6dc','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7372,2530,'Milleny Pereira Rodrigues','002-f4f-b05',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'93f-671-668','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7373,77,'Guilherme Leal Praes','7af-e3e-66b',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'a0d-b2c-d58','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7374,1816,'Reurisson Ranuff De Almeida Fagundes','9f0-96b-663',18,0,'Palestra online: Antibióticos na Odontologia: uma abordagem com foco na doença periodontal',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'b69-551-42c','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -5095,7 +5168,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (7896,447,'Raiane Francielle Alencar','b5b-95f-6f1',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'d39-782-a90','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7897,2374,'Markus Yuri Martins Ribeiro','774-462-7ca',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'bdc-e9e-69b','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7898,2320,'Mariana câmara collares','e42-d9b-59f',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'bf1-c7b-84a','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(7899,1867,'Kamila Pereira Rocha','584-021-ff4',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'612-d5b-130','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(7899,2771,'Kamila Pereira Pereira','584-021-ff4',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'612-d5b-130','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (7900,404,'Maria Clara Crispim Fonseca','522-c32-8fa',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'252-565-951','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7901,2085,'Nayara Antunes Santos','d28-5d8-f46',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'dae-f90-887','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7902,420,'Vanessa Cristiane Araújo Oliveira','032-baf-8b3',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'290-cbc-c6b','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -5142,7 +5215,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (7943,801,'PAULO SANTOS DA MATA','bb0-1ed-455',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'897-91f-aef','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7944,1818,'Ana clara dias silva','215-ba1-b22',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'f93-3ff-0d8','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7945,2483,'Raíssa Cardoso Soares','b3b-3be-4a7',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'149-470-917','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(7946,3399,'Karla Gabrielly Tertuliano','cc4-f9a-32c',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'709-ce3-06c','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(7946,694,'Karla Gabrielly Tertuliano De Souza','cc4-f9a-32c',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'709-ce3-06c','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7947,730,'Sarah Bergman Rodrigues Galvão','c36-90f-4f5',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'bf7-354-af3','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7948,2247,'Kevyn Borges Ramos Velho','8fc-512-19d',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'223-a9c-753','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (7949,2274,'Sérgio Henrique','1be-35a-6c7',19,0,'Palestra online: Dentifrícios - O que precisamos conhecer para prescrever?',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'dc2-88c-0d1','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -5419,7 +5492,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (8414,2957,'Luiz Gabriel Mendes Lopes','9bd-0ba-fcd',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'669-351-164','2025-02-16 12:35:02','2025-02-23 23:09:13',NULL),
 (8415,1886,'Amanda Alves Cardoso','d91-de0-b1a',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'de4-b3d-0e1','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8416,2862,'Angell Souza Fagundes dos Reis','eee-796-390',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'846-e58-4d5','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(8417,3399,'Karla Gabrielly Tertuliano','eda-5b1-cb1',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'fd5-e6e-193','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(8417,694,'Karla Gabrielly Tertuliano De Souza','eda-5b1-cb1',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'fd5-e6e-193','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8418,497,'Maria Eduarda Santos Veloso','e7b-7b0-afd',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e6b-560-ed0','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8419,646,'Lázaro Talles Henrique Santos','b79-090-b17',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'723-ac6-10b','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8420,168,'Igor Vinicius Araújo Veloso','353-fdd-9f5',20,0,'Palestra online: Odontologia hospitalar - uma realidade atual e necessária',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'4dd-f2f-8de','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -5521,7 +5594,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (8745,2795,'Vinícius Lopes Leão','3da-608-8e1',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'a8e-0f2-a26','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8746,1779,'Ana Etelvina Silva','128-05f-2fe',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'028-061-b0a','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8747,2411,'Ianne cristina alves batista','b63-29d-cd5',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'a27-703-5ac','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(8748,3399,'Karla Gabrielly Tertuliano','2b0-335-096',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'c29-6b8-5e0','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(8748,694,'Karla Gabrielly Tertuliano De Souza','2b0-335-096',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'c29-6b8-5e0','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8749,2534,'Aretha Sabine Souza','fac-fc5-b1b',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'637-1d2-2d0','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8750,894,'Fernanda Lorrany Moraes Rabelo','ede-5d5-c0e',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'76c-f5a-f4d','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (8751,899,'Sophia Batista Santos','73e-448-691',21,0,'Palestra online: Tecnologias a favor da endodontia',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'8fe-132-370','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -5799,7 +5872,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (9257,1145,'Stheycie Brito de Oliva Mota','249-542-5f4',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'891-75a-353','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9258,981,'Milena Dos Santos Silva','f99-af7-e93',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'f0e-1c8-095','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9259,623,'Isabel Nery de Souza','3c2-cc2-f55',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'10f-bc4-f40','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(9260,3399,'Karla Gabrielly Tertuliano','39d-aa8-3a6',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'105-8cd-26d','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(9260,694,'Karla Gabrielly Tertuliano De Souza','39d-aa8-3a6',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'105-8cd-26d','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9261,1779,'Ana Etelvina Silva','471-35d-c58',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'12e-ab4-9c3','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9262,447,'Raiane Francielle Alencar','756-986-8fa',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'670-789-3e3','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9263,870,'Amanda Franciele Soares Dias','8d3-d20-08e',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'d87-eb9-cd6','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -5905,7 +5978,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (9363,2513,'Maxwell Rodrigues Lima Prado','4af-348-6b3',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'33b-6b1-14b','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9364,1417,'Ariany Azevedo Souza','89c-a38-bd3',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'562-157-2ad','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9365,290,'Evellin Vitória Santos Veloso','c4f-959-8f7',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'fe7-306-3f1','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(9366,1867,'Kamila Pereira Rocha','2dd-ce5-d48',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'1d0-544-81b','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(9366,2771,'Kamila Pereira Pereira','2dd-ce5-d48',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'1d0-544-81b','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (9367,2270,'Evellyn Cristine Porto de Carvalho','22f-924-ef3',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'ea3-e57-2df','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9368,2854,'Anna ester vieira de freitas martins ','e1b-bff-205',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'02a-81f-9e2','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9369,2272,'Amanda Francine Silva','311-51b-858',22,0,'Palestra online: Prevenção, manutenção e opções de tratamento em pacientes com HMI',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'db3-ca0-898','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -6090,7 +6163,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (9770,2447,'Maria Luiza Santiago Durães','879-a05-69f',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'f41-bfd-6b3','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9771,401,'Yasmin Oliveira','c78-a5f-0cd',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'be4-d7c-db4','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9772,79,'Thalyta Gabrielle Vieira Lima','6c1-4aa-1cd',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'2f0-d5b-6d2','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(9773,3399,'Karla Gabrielly Tertuliano','32e-154-71a',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e98-798-f31','2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(9773,694,'Karla Gabrielly Tertuliano De Souza','32e-154-71a',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e98-798-f31','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9774,730,'Sarah Bergman Rodrigues Galvão','1c5-069-f1c',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'32f-0f7-9f2','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9775,930,'Eduardo Dias Braz Correa','02f-0ed-b1b',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'729-df5-999','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9776,2858,'jackson.juliano@nossafco.com.br','7b6-11d-c2e',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'08b-7ff-f5c','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -6302,7 +6375,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (9982,2823,'Rodrigo  caldeira dos santos','216-817-c26',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'556-787-2ea','2025-02-16 12:35:02','2025-02-23 23:30:40',NULL),
 (9983,545,'Roberta Victoria Santos Nascimento','462-48e-8c8',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'e00-d62-6f0','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9984,3561,'Maria Clara Mendes Aguiar','59e-780-4a1',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'de4-868-426','2025-02-16 12:35:02','2025-02-24 20:56:28',NULL),
-(9985,1867,'Kamila Pereira Rocha','a72-02e-e37',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'95c-008-9a7','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(9985,2771,'Kamila Pereira Pereira','a72-02e-e37',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'95c-008-9a7','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (9986,2159,'Marcelo Lins Corrêa Machado','169-374-726',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'d50-b9a-bad','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9987,1820,'Layla Maria Teixeira Pinheiro','e6c-5d7-681',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'b0b-fbe-521','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (9988,1118,'Marian Mar Rodrigues Araújo','1a5-eb8-5cc',23,0,'Palestra online: Carreira de dentista nos EUA',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Palestra',1,'9ca-08c-ee8','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -6396,7 +6469,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (10371,1068,'Caren Marinho De Caires Evangelista','730-ab1-f80',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'dc4-ede-5de','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10372,2087,'luca lopes lobo','5c0-fed-1ee',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'9af-ba9-527','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10373,399,'Gustavo Lopes Fernandes','c75-a3b-b73',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'d2c-0fc-8bf','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(10374,2771,'Kamila Pereira Pereira','952-a4b-89d',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'6a7-00f-51d','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(10374,2771,'Kamila Pereira Pereira','952-a4b-89d',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'6a7-00f-51d','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (10375,681,'Bruna Laís Santos Lopes','e14-0c2-a20',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'589-69c-ee6','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10376,622,'MATEUS HENRIQUE SANTOS SOBRAL','804-5e0-0c8',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'318-9fd-b65','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10377,1103,'Bruna Santana Ferreira','476-d32-d5a',10,0,'Hands On: Estética',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'bd9-f9d-e93','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -6563,7 +6636,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (10626,2969,'Gabriela Maria R. Eleutério','400-7f6-10c',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'975-ccc-be4','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10627,2970,'Gabriela Fonseca Almeida','434-d95-1ea',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'64d-eb9-9cf','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10628,2971,'João Henrique R','d23-ad2-7e6',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'3a9-533-fbe','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(10629,1867,'Kamila Pereira Rocha','0bb-f07-b94',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'351-23e-7b9','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(10629,2771,'Kamila Pereira Pereira','0bb-f07-b94',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'351-23e-7b9','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (10630,3557,'Monique Batista Furtado Amparado','b8f-0c2-968',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'2a6-c8b-2dc','2025-02-16 12:35:02','2025-02-23 23:24:59',NULL),
 (10631,660,'Tâmara Laís Leal e Silva','cc8-9b5-132',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'391-848-5af','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10632,626,'Pedro Henrique Pereira De Souza','f34-85e-c4b',12,0,'Hands On: Pinos de Fibra',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'565-ed9-e7d','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -6640,7 +6713,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (10711,53,'Júlia Oliveira Fiche','c00-078-525',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'674-c22-32b','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10712,513,'Juliana Amorim Oliveira','a55-744-3b2',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'bfb-a7d-918','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10713,2727,'Kaio Silvano Rodrigues da Silva','e76-e62-ca2',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'43f-7bd-cab','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(10714,1867,'Kamila Pereira Rocha','ac6-e5b-af3',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'51d-dfe-34c','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(10714,2771,'Kamila Pereira Pereira','ac6-e5b-af3',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'51d-dfe-34c','2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (10715,402,'Kamilla Balisa Nunes Marques','ada-385-a00',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'5ec-9c2-180','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10716,409,'Laiane Alves Gama Vieira','1d0-d49-413',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'f0b-239-a55','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (10717,2434,'Lais Ribeiro Narciso','b63-bae-c08',13,0,'Mesa Rendonda - Palestras Presenciais',NULL,NULL,NULL,2,NULL,'Certificado de Participação em Hands On',1,'008-0eb-04d','2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -7409,7 +7482,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (12029,53,'Júlia Oliveira Fiche','719-5ab-ccd',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12030,513,'Juliana Amorim Oliveira','fa2-f40-c48',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12031,2727,'Kaio Silvano Rodrigues da Silva','b79-2ec-a79',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(12032,1867,'Kamila Pereira Rocha','858-547-255',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(12032,2771,'Kamila Pereira Pereira','858-547-255',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (12033,402,'Kamilla Balisa Nunes Marques','a2a-8b9-e51',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12034,409,'Laiane Alves Gama Vieira','dcd-47a-769',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12035,2434,'Lais Ribeiro Narciso','445-047-4e2',28,0,'Palestra Presencial - III Jornada Acadêmica FCO',NULL,NULL,NULL,2,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -8000,9 +8073,9 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (12740,402,'kamilla Balisa Nunes Marques','3dc-765-cfb',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO COMO ESTRATÉGIA DE DIAGNÓSTICO SITUACIONAL NA ESF LOURDES II','Alany Danniella Rodrigues','f',NULL,'Ana Luiza Silva Lima, Maria Cecília Lima Tavares, Caren Marinho de Caires Evangelista, Kamilla Balisa Nunes Marques, Gustavo Lopes Fernandes',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12741,399,'Gustavo Lopes Fernandes','708-a68-176',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO COMO ESTRATÉGIA DE DIAGNÓSTICO SITUACIONAL NA ESF LOURDES II','Alany Danniella Rodrigues','f',NULL,'Ana Luiza Silva Lima, Maria Cecília Lima Tavares, Caren Marinho de Caires Evangelista, Kamilla Balisa Nunes Marques, Gustavo Lopes Fernandes',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12742,1886,'Amanda Alves Cardoso','be3-fbf-cac',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO NA ESTRATÉGIA SAÚDE DA FAMÍLIA TOPÁZIO','José Geraldo Rocha Júnior','m',NULL,'Amanda Alves Cardoso, Kamila Pereira Rocha, Nathalya Freitas Santos, Karla Gabrielly Tertuliano de Souza, Emilly Alves Maia',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(12743,1867,'Kamila Pereira Rocha','5c4-8c6-493',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO NA ESTRATÉGIA SAÚDE DA FAMÍLIA TOPÁZIO','José Geraldo Rocha Júnior','m',NULL,'Amanda Alves Cardoso, Kamila Pereira Rocha, Nathalya Freitas Santos, Karla Gabrielly Tertuliano de Souza, Emilly Alves Maia',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(12743,2771,'Kamila Pereira Pereira','5c4-8c6-493',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO NA ESTRATÉGIA SAÚDE DA FAMÍLIA TOPÁZIO','José Geraldo Rocha Júnior','m',NULL,'Amanda Alves Cardoso, Kamila Pereira Rocha, Nathalya Freitas Santos, Karla Gabrielly Tertuliano de Souza, Emilly Alves Maia',NULL,1,NULL,'2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (12744,783,'Nathalya Freitas Santos','18d-047-639',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO NA ESTRATÉGIA SAÚDE DA FAMÍLIA TOPÁZIO','José Geraldo Rocha Júnior','m',NULL,'Amanda Alves Cardoso, Kamila Pereira Rocha, Nathalya Freitas Santos, Karla Gabrielly Tertuliano de Souza, Emilly Alves Maia',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(12745,3399,'Karla Gabrielly Tertuliano','c6c-893-c77',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO NA ESTRATÉGIA SAÚDE DA FAMÍLIA TOPÁZIO','José Geraldo Rocha Júnior','m',NULL,'Amanda Alves Cardoso, Kamila Pereira Rocha, Nathalya Freitas Santos, Karla Gabrielly Tertuliano de Souza, Emilly Alves Maia',NULL,1,NULL,'2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(12745,694,'Karla Gabrielly Tertuliano de Souza','c6c-893-c77',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO NA ESTRATÉGIA SAÚDE DA FAMÍLIA TOPÁZIO','José Geraldo Rocha Júnior','m',NULL,'Amanda Alves Cardoso, Kamila Pereira Rocha, Nathalya Freitas Santos, Karla Gabrielly Tertuliano de Souza, Emilly Alves Maia',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12746,833,'Emilly Alves Maia','eb3-86d-93f',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO NA ESTRATÉGIA SAÚDE DA FAMÍLIA TOPÁZIO','José Geraldo Rocha Júnior','m',NULL,'Amanda Alves Cardoso, Kamila Pereira Rocha, Nathalya Freitas Santos, Karla Gabrielly Tertuliano de Souza, Emilly Alves Maia',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12747,1938,'Camila Fonseca da Silva','69d-809-a74',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO DA ESTRATÉGIA SAÚDE DA FAMÍLIA ESPLANADA III','Jéssica Camila Santos Silveira','f',NULL,'Camila Fonseca da Silva, Yasmim Jamile Barbosa Mendes, Carla Danielly Murta Alves, Marcel Mota Oliveira, Caio Cordeiro Veloso',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (12748,2044,'Yasmim Jamile Barbosa Mendes','6d9-607-3fe',72,NULL,'Certificado de apresentação de Trabalho no MIES 1/2023','TERRITORIALIZAÇÃO DA ESTRATÉGIA SAÚDE DA FAMÍLIA ESPLANADA III','Jéssica Camila Santos Silveira','f',NULL,'Camila Fonseca da Silva, Yasmim Jamile Barbosa Mendes, Carla Danielly Murta Alves, Marcel Mota Oliveira, Caio Cordeiro Veloso',NULL,1,NULL,'2025-02-16 12:35:02','2025-02-23 22:58:01',NULL),
@@ -8289,8 +8362,8 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (13030,2304,'Marcela Eduarda Veloso','6aa-b79-8ad',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13031,3209,'Ellen Gonçalves Aquino','35f-663-649',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13032,3210,'Victoria Mendes Santos','09e-95f-e2a',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(13033,1867,'Kamila Pereira Rocha','3f1-cc1-4bb',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(13034,3399,'Karla Gabrielly Tertuliano','7cb-113-446',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(13033,2771,'Kamila Pereira Pereira','3f1-cc1-4bb',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
+(13034,694,'Karla Gabrielly Tertuliano','7cb-113-446',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13035,3211,'Bernado Amaral Mota Carneiro','f18-227-856',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13036,636,'Isabella Fonseca Rodrigues','262-a83-ee8',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13037,2055,'Larissa Luiza Rezende','e20-1f7-2d1',90,NULL,'Certificado de Participação na Semana do Estudante','Oratória para Apresentação de Trabalhos Científicos','06 de agosto de 2024',NULL,NULL,NULL,NULL,1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -8798,7 +8871,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (13668,1501,'Júlia Lika Degawa Yamamoto','b4f-30d-b85',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13669,1557,'Maria Júlia Manoela Aguiar','d9f-7ad-7f5',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13670,3561,'Maria Clara Mendes Aguiar','6e5-b6d-9a5',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2025-02-24 20:56:28',NULL),
-(13671,1867,'Kamila Pereira Rocha','cf1-9ec-ecb',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(13671,2771,'Kamila Pereira Pereira','cf1-9ec-ecb',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (13672,2248,'Rafael Mansur','aaa-dac-176',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13673,2298,'Danilo Moura de Souza','516-5e7-ba2',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13674,2304,'Marcela Eduarda Veloso Santos','ec2-592-d5a',109,NULL,'Certificado de Participação em Hand On durante a IV Jornada Acadêmica da FCO','','','',3,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -8893,7 +8966,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (13767,1843,'Gustavo Gonçalves Farias de Oliveira','2f1-23f-119',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13768,1853,'Rafaella Mariane Oliveira de Souza','a1d-810-21e',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13769,3561,'Maria Clara Mendes Aguiar','132-18b-9ce',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-24 20:56:28',NULL),
-(13770,1867,'Kamila Pereira Rocha','eb8-85f-a34',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
+(13770,2771,'Kamila Pereira Pereira','eb8-85f-a34',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2026-08-28 03:15:47',NULL),
 (13771,1876,'Marcel Mota Oliveira','fc5-ed7-35b',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13772,1909,'Andriele vitória Araújo Moreira','bf2-8d2-142',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13773,1936,'Maria Cecilia Lima Tavares','fa5-c91-3b6',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -9041,7 +9114,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (13924,3396,'Gabriel silva Santana','5b2-411-3c5',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13925,3397,'ISLY ANDRESSA RAINHA DIAS','d46-aad-1cf',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13926,3398,'Yasmin Kerolly Mendes Lima','7e1-234-321',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
-(13927,3399,'Karla Gabrielly Tertuliano','f02-527-b01',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2026-08-28 11:28:10',NULL),
+(13927,3399,'Karla Gabrielly Tertuliano','f02-527-b01',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13928,3400,'Júlio Gabriel Guedes Lima','a8b-cf5-1dc',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13929,3401,'LENIS KAROLINE CARDOSO GONCALVES','7d2-038-f72',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
 (13930,3402,'Callebe Carneiro de Melo','4a0-285-e55',95,NULL,'Certificado de Participação em Palestra online durante a IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 12:35:02','2025-02-16 13:30:28',NULL),
@@ -9091,7 +9164,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (13978,1133,'Kristian Junielly Pereira Fonseca','4af-97b-376',118,NULL,'SÍNDROME DE KELLY OU DA COMBINAÇÃO: UMA REVISÃO DE LITERATURA','','','',0,'','',1,NULL,'2025-02-16 17:19:47','2025-02-16 17:19:47',NULL),
 (13979,1501,'Júlia Lika Degawa Yamamoto','ecf-d45-6b8',118,NULL,'RETENTORES INTRARRADICULARES E ABORDAGEM BIOMIMÉTICA NA RESTAURAÇÃO DE DENTES TRATADOS ENDODONTICAMENTE','','','',0,'','',1,NULL,'2025-02-16 17:19:47','2025-02-16 17:19:47',NULL),
 (13980,1840,'Maria Fróes Barbosa','d0f-aeb-fd9',118,NULL,'CONHECIMENTO DOS ACADÊMICOS DE ODONTOLOGIA SOBRE O USO DA TOXINA BOTULÍNICA NO TRATAMENTO TERAPÊUTICO NA ODONTOLOGIA','','','',0,'','',1,NULL,'2025-02-16 17:19:47','2025-02-16 17:19:47',NULL),
-(13981,1867,'Kamila Pereira Rocha','455-e69-87a',118,NULL,'Associação entre o Aleitamento Materno e a Cárie Dentária em Clínica de Bebês','','','',0,'','',1,NULL,'2025-02-16 17:19:48','2025-02-16 17:19:48',NULL),
+(13981,2771,'Kamila Pereira Pereira','455-e69-87a',118,NULL,'Associação entre o Aleitamento Materno e a Cárie Dentária em Clínica de Bebês','','','',0,'','',1,NULL,'2025-02-16 17:19:48','2026-08-28 03:15:47',NULL),
 (13982,1943,'Carla Danielly Murta Alves','1f4-624-071',118,NULL,'Displasia Ectodérmica: relato de caso','','','',0,'','',1,NULL,'2025-02-16 17:19:48','2025-02-16 17:19:48',NULL),
 (13983,1976,'Sheila Valdenice Pereira de Souza','29d-759-ee2',118,NULL,'TRATAMENTO DE HIPERSENSIBILIDADE ASSOCIADA AO HMI: UMA REVISÃO INTEGRATIVA','','','',0,'','',1,NULL,'2025-02-16 17:19:48','2025-02-16 17:19:48',NULL),
 (13984,2243,'Ana Clara de Pinho Celestino','e38-620-c90',118,NULL,'PROCRASTINAÇÃO E FATORES ASSOCIADOS EM ESTUDANTES UNIVERSITÁRIOS','','','',0,'','',1,NULL,'2025-02-16 17:19:48','2025-02-16 17:19:48',NULL),
@@ -9205,7 +9278,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (14102,1853,'Rafaella Mariane Oliveira de Souza','c27-a0c-429',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:57','2025-02-16 18:53:57',NULL),
 (14103,3561,'Maria Clara Mendes Aguiar','58c-149-be0',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:57','2025-02-24 20:56:28',NULL),
 (14104,1863,'IATA ANDERSON MILANI','a09-3bd-df8',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:58','2025-02-16 18:53:58',NULL),
-(14105,1867,'Kamila Pereira Rocha','068-fac-22d',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:58','2025-02-16 18:53:58',NULL),
+(14105,2771,'Kamila Pereira Pereira','068-fac-22d',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:58','2026-08-28 03:15:47',NULL),
 (14106,1886,'Amanda Alves Cardoso','780-3f4-8af',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:58','2025-02-16 18:53:58',NULL),
 (14107,1909,'Andriele vitória Araújo Moreira','b0d-7c1-838',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:58','2025-02-16 18:53:58',NULL),
 (14108,1936,'Maria Cecilia Lima Tavares','62b-a08-0b4',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:53:58','2025-02-16 18:53:58',NULL),
@@ -9348,7 +9421,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (14257,3396,'Gabriel Silva Santana','033-ea3-815',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:20','2025-02-16 18:54:20',NULL),
 (14258,3397,'ISLY ANDRESSA RAINHA DIAS','7ca-3a0-d51',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:20','2025-02-16 18:54:20',NULL),
 (14259,3398,'Yasmin Kerolly Mendes Lima','2b7-e76-40d',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:20','2025-02-16 18:54:20',NULL),
-(14260,3399,'Karla Gabrielly Tertuliano','2e7-bb1-bc1',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:21','2026-08-28 11:28:10',NULL),
+(14260,3399,'Karla Gabrielly Tertuliano','2e7-bb1-bc1',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:21','2025-02-16 18:54:21',NULL),
 (14261,3400,'Júlio Gabriel Guedes Lima','d4c-6e6-33a',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:21','2025-02-16 18:54:21',NULL),
 (14262,3401,'LENIS KAROLINE CARDOSO GONCALVES','35f-95b-3d1',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:21','2025-02-16 18:54:21',NULL),
 (14263,3403,'Maria Fernanda Fiuza Cruz','33a-cc0-781',96,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 18:54:21','2025-02-16 18:54:21',NULL),
@@ -9586,7 +9659,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (14496,3396,'Gabriel silva Santana','075-c27-15c',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:25','2025-02-16 19:26:25',NULL),
 (14497,3397,'ISLY ANDRESSA RAINHA DIAS','e53-9d6-306',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:25','2025-02-16 19:26:25',NULL),
 (14498,3398,'Yasmin Kerolly Mendes Lima','43a-edc-d61',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:25','2025-02-16 19:26:25',NULL),
-(14499,3399,'Karla Gabrielly Tertuliano','970-836-061',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:25','2026-08-28 11:28:10',NULL),
+(14499,3399,'Karla Gabrielly Tertuliano','970-836-061',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:25','2025-02-16 19:26:25',NULL),
 (14500,3400,'Júlio Gabriel Guedes Lima','34b-14d-c27',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:25','2025-02-16 19:26:25',NULL),
 (14501,3401,'LENIS KAROLINE CARDOSO GONCALVES','07c-ad7-b7f',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:25','2025-02-16 19:26:25',NULL),
 (14502,3402,'Callebe Carneiro de Melo','559-292-1d1',97,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:26:26','2025-02-16 19:26:26',NULL),
@@ -9683,7 +9756,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (14593,1853,'Rafaella Mariane Oliveira de Souza','084-9b1-64c',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:51','2025-02-16 19:53:51',NULL),
 (14594,3561,'Maria Clara Mendes Aguiar','7c9-5e7-6e3',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:51','2025-02-24 20:56:28',NULL),
 (14595,1863,'Iata Anderson milani','991-603-c71',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:51','2025-02-16 19:53:51',NULL),
-(14596,1867,'Kamila Pereira Rocha','199-61d-35b',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:52','2025-02-16 19:53:52',NULL),
+(14596,2771,'Kamila Pereira Pereira','199-61d-35b',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:52','2026-08-28 03:15:47',NULL),
 (14597,1876,'Marcel Mota Oliveira','a28-dc3-03c',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:52','2025-02-16 19:53:52',NULL),
 (14598,1936,'Maria Cecilia Lima Tavares','625-1ea-176',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:52','2025-02-16 19:53:52',NULL),
 (14599,1937,'Ingrid Shayene Andrade','c54-34b-518',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:53:52','2025-02-16 19:53:52',NULL),
@@ -9743,7 +9816,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (14653,2755,'Yasmin Gabrielle Santos Oliveira','fd1-431-739',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:00','2025-02-16 19:54:00',NULL),
 (14654,2769,'Ingrid Shayene Andrade','df7-964-95e',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:01','2025-02-16 19:54:01',NULL),
 (14655,2044,'Yasmim Jamile Barbosa Mendes','fc3-3d4-260',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:01','2025-02-23 22:58:01',NULL),
-(14656,2771,'Kamila Pereira Rocha','734-150-85a',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:01','2025-02-16 19:54:01',NULL),
+(14656,2771,'Kamila Pereira Pereira','734-150-85a',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:01','2026-08-28 03:15:47',NULL),
 (14657,603,'Mariana Isabelle Bispo De Morais','e20-d09-799',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:01','2025-02-23 23:12:20',NULL),
 (14658,2784,'Paula Maria Moreira','17f-9cf-b01',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:01','2025-02-16 19:54:01',NULL),
 (14659,2794,'Daniele Santos Oliveira','0ac-ce7-51e',98,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 19:54:01','2025-02-16 19:54:01',NULL),
@@ -10128,7 +10201,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15038,1853,'Rafaella Mariane Oliveira de Souza','3d4-a24-2ca',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:57','2025-02-16 20:11:57',NULL),
 (15039,3561,'Maria Clara Mendes Aguiar','f3b-73e-1dc',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:57','2025-02-24 20:56:28',NULL),
 (15040,1863,'Iata Anderson Milani','887-1eb-b85',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:57','2025-02-16 20:11:57',NULL),
-(15041,1867,'Kamila Pereira Rocha','c2a-d42-f13',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:57','2025-02-16 20:11:57',NULL),
+(15041,2771,'Kamila Pereira Pereira','c2a-d42-f13',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:57','2026-08-28 03:15:47',NULL),
 (15042,1876,'Marcel Mota Oliveira','800-69f-f26',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:57','2025-02-16 20:11:57',NULL),
 (15043,1909,'Andriele vitória Araújo Moreira','d90-b29-ac2',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:58','2025-02-16 20:11:58',NULL),
 (15044,1928,'Júlia Patrícia Rodrigues Antunes','e71-1d7-2fd',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:11:58','2025-02-16 20:11:58',NULL),
@@ -10190,7 +10263,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15100,2727,'Kaio Silvano Rodrigues da Silva','158-66e-5e8',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:06','2025-02-16 20:12:06',NULL),
 (15101,2755,'Yasmin Gabrielle Santos Oliveira','e2f-4c4-757',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:06','2025-02-16 20:12:06',NULL),
 (15102,2769,'Ingrid Shayene Andrade','2b4-e7b-d55',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:06','2025-02-16 20:12:06',NULL),
-(15103,2771,'Kamila Pereira Rocha','ce6-bbd-dc1',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:06','2025-02-16 20:12:06',NULL),
+(15103,2771,'Kamila Pereira Pereira','ce6-bbd-dc1',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:06','2026-08-28 03:15:47',NULL),
 (15104,2784,'Paula Maria Moreira Oliveira','3a9-dc7-4e4',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:07','2025-02-16 20:12:07',NULL),
 (15105,2794,'Daniele Santos Oliveira','357-822-9d8',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:07','2025-02-16 20:12:07',NULL),
 (15106,2798,'Laura itabaiana','2ce-e40-d3e',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:07','2025-02-23 23:05:26',NULL),
@@ -10268,7 +10341,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15178,3392,'Clara Tarcia Ruas Costa','e8c-9ac-968',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:17','2025-02-16 20:12:17',NULL),
 (15179,3394,'Henrique Costa dos Santos','8c5-f74-9be',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:17','2025-02-16 20:12:17',NULL),
 (15180,3395,'Anna Paula Silva Dias Marcondes','f46-fda-3bd',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:17','2025-02-16 20:12:17',NULL),
-(15181,3399,'Karla Gabrielly Tertuliano','189-918-b7d',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:18','2026-08-28 11:28:10',NULL),
+(15181,3399,'Karla Gabrielly Tertuliano','189-918-b7d',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:18','2025-02-16 20:12:18',NULL),
 (15182,3400,'Júlio Gabriel Guedes Lima','16e-33f-7b5',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:18','2025-02-16 20:12:18',NULL),
 (15183,3401,'LENIS KAROLINE CARDOSO GONCALVES','491-2e3-859',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:18','2025-02-16 20:12:18',NULL),
 (15184,3403,'Maria Fernanda Fiuza Cruz','ece-2c6-d14',100,NULL,'Certificado de Participação em palestra online na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:12:18','2025-02-16 20:12:18',NULL),
@@ -10336,7 +10409,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15246,1815,'Maria Vitória Cardoso Sobral','c77-101-c60',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:26','2025-02-16 20:37:26',NULL),
 (15247,1853,'Rafaella Mariane Oliveira de Souza','966-634-8fb',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:26','2025-02-16 20:37:26',NULL),
 (15248,3561,'Maria Clara Mendes Aguiar','c68-5ca-5f1',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:26','2025-02-24 20:56:28',NULL),
-(15249,1867,'Kamila Pereira Rocha','8f3-e7c-c05',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:27','2025-02-16 20:37:27',NULL),
+(15249,2771,'Kamila Pereira Pereira','8f3-e7c-c05',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:27','2026-08-28 03:15:47',NULL),
 (15250,1886,'Amanda Alves Cardoso','172-001-37b',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:27','2025-02-16 20:37:27',NULL),
 (15251,1936,'Maria Cecilia Lima Tavares','f85-1a2-31d',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:27','2025-02-16 20:37:27',NULL),
 (15252,1938,'Camila Fonseca da Silva','d02-07e-5ea',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:27','2025-02-16 20:37:27',NULL),
@@ -10414,7 +10487,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15334,3384,'Brenda Luana Silva De Siqueira','62f-99b-8a3',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:40','2025-02-16 20:37:40',NULL),
 (15335,3387,'Geovanna Rafaelly Damasceno Alves','71a-f93-479',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:40','2025-02-16 20:37:40',NULL),
 (15336,3392,'Clara Tarcia Ruas Costa','09b-9f0-ec4',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:40','2025-02-16 20:37:40',NULL),
-(15337,3399,'Karla Gabrielly Tertuliano','dc3-4f4-d37',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:40','2026-08-28 11:28:10',NULL),
+(15337,3399,'Karla Tertuliano','dc3-4f4-d37',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:40','2025-02-16 20:37:40',NULL),
 (15338,3400,'Julio Gabriel Guedes Lima','01e-305-ba4',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:40','2025-02-16 20:37:40',NULL),
 (15340,3407,'Thauany vitoria Almeida silva','708-af5-c9a',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:41','2025-02-16 20:37:41',NULL),
 (15341,3412,'Melissa Nunes Silva','e7b-94f-cd8',101,NULL,'Certificado de Participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 20:37:41','2025-02-16 20:37:41',NULL),
@@ -10460,7 +10533,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15384,1501,'Júlia Lika Degawa Yamamoto','a2c-ee4-863',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:51','2025-02-16 21:15:51',NULL),
 (15385,1794,'Núbia Juliana Miranda Souza','080-ec0-d1f',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:51','2025-02-16 21:15:51',NULL),
 (15386,1817,'Maria Eliza Fernandes Nunes','35b-9ca-2a1',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:51','2025-02-16 21:15:51',NULL),
-(15387,1867,'Kamila Pereira Rocha','7c7-46c-a93',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:51','2025-02-16 21:15:51',NULL),
+(15387,2771,'Kamila Pereira Pereira','7c7-46c-a93',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:51','2026-08-28 03:15:47',NULL),
 (15388,1886,'Amanda Alves Cardoso','aaf-84d-de1',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:51','2025-02-16 21:15:51',NULL),
 (15389,1928,'Júlia Patrícia Rodrigues Antunes','f82-690-b17',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:51','2025-02-16 21:15:51',NULL),
 (15390,1936,'Maria Cecilia Lima Tavares','0ce-248-fa1',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:52','2025-02-16 21:15:52',NULL),
@@ -10487,7 +10560,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15411,2493,'Rafael Souza Brito','ead-48c-924',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:55','2025-02-16 21:15:55',NULL),
 (15412,2500,'Maria Fernanda Leite Pereira','a51-260-5b8',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:55','2025-02-16 21:15:55',NULL),
 (15413,2507,'Thainá Nery Sarmento','a85-29a-c76',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:55','2025-02-16 21:15:55',NULL),
-(15414,2771,'Kamila Pereira Rocha','e73-49a-9d9',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:55','2025-02-16 21:15:55',NULL),
+(15414,2771,'Kamila Pereira Pereira','e73-49a-9d9',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:55','2026-08-28 03:15:47',NULL),
 (15415,2798,'Laura itabaiana','40e-454-4a3',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:56','2025-02-23 23:05:26',NULL),
 (15416,2859,'Wanny Cavalcante de Almeida','91f-3fe-7b9',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:56','2025-02-16 21:15:56',NULL),
 (15417,2864,'Anna Luiza Pereira Rodrigues','b2c-3b6-29c',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:15:56','2025-02-16 21:15:56',NULL),
@@ -10521,7 +10594,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15445,3396,'Gabriel Silva Santana','144-9a2-4ad',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:00','2025-02-16 21:16:00',NULL),
 (15446,3397,'Isly Andressa Rainha Dias','962-1ce-a3c',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:00','2025-02-16 21:16:00',NULL),
 (15447,3398,'Yasmin Kerolly Mendes Lima','772-1a7-068',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:01','2025-02-16 21:16:01',NULL),
-(15448,3399,'Karla Gabrielly Tertuliano','a96-252-a91',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:01','2026-08-28 11:28:10',NULL),
+(15448,3399,'Karla Tertuliano','a96-252-a91',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:01','2025-02-16 21:16:01',NULL),
 (15449,3401,'Lenis Karoline Cardoso Gonçalves','10c-cfe-d1b',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:01','2025-02-16 21:16:01',NULL),
 (15450,3403,'Maria Fernanda Fiuza Cruz','f34-648-9f8',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:01','2025-02-16 21:16:01',NULL),
 (15451,3410,'Gyovanna Soares Carvalho','8fb-84a-895',105,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 21:16:01','2025-02-16 21:16:01',NULL),
@@ -10578,7 +10651,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15502,1794,'Núbia Juliana Miranda Souza','419-b24-e3e',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:55','2025-02-16 22:10:55',NULL),
 (15503,1839,'vitória cristiny valadares soares','40f-f12-b2b',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:55','2025-02-16 22:10:55',NULL),
 (15504,1843,'Gustavo Gonçalves Farias de Oliveira','459-7c1-256',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:56','2025-02-16 22:10:56',NULL),
-(15505,1867,'Kamila Pereira Rocha','a48-d6a-a04',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:56','2025-02-16 22:10:56',NULL),
+(15505,2771,'Kamila Pereira Pereira','a48-d6a-a04',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:56','2026-08-28 03:15:47',NULL),
 (15506,1928,'Júlia Patrícia Rodrigues Antunes','13f-a3c-19f',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:56','2025-02-16 22:10:56',NULL),
 (15507,1936,'Maria Cecilia Lima Tavares','03a-3cc-5dc',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:56','2025-02-16 22:10:56',NULL),
 (15508,1965,'Wendy Renata Barros e Carvalho','7e1-b04-724',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:10:56','2025-02-16 22:10:56',NULL),
@@ -10605,7 +10678,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15529,2493,'Rafael Souza Brito','434-804-a3a',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2025-02-16 22:11:00',NULL),
 (15530,2500,'Maria Fernanda Leite Pereira','0a5-ad7-7a0',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2025-02-16 22:11:00',NULL),
 (15531,2507,'Thainá Nery Sarmento','339-f01-02a',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2025-02-16 22:11:00',NULL),
-(15532,2771,'Kamila Pereira Rocha','767-715-1ad',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2025-02-16 22:11:00',NULL),
+(15532,2771,'Kamila Pereira Pereira','767-715-1ad',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2026-08-28 03:15:47',NULL),
 (15533,2784,'Paula Maria Moreira','d69-c42-d62',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2025-02-16 22:11:00',NULL),
 (15534,2798,'Laura itabaiana','152-147-8cf',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2025-02-23 23:05:26',NULL),
 (15535,2859,'Wanny Cavalcante de Almeida','a3b-cf3-f0c',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:00','2025-02-16 22:11:00',NULL),
@@ -10643,7 +10716,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15567,3381,'FLAVIA EMANUELLY TEIXEIRA LOPES','f99-b8d-f8b',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:05','2025-02-16 22:11:05',NULL),
 (15568,3396,'Gabriel Silva Santana','5df-211-e86',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:06','2025-02-16 22:11:06',NULL),
 (15569,3397,'Isly Andressa Rainha Dias','4e3-fd8-86c',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:06','2025-02-16 22:11:06',NULL),
-(15570,3399,'Karla Gabrielly Tertuliano','66e-bc3-8ea',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:06','2026-08-28 11:28:10',NULL),
+(15570,3399,'Karla Tertuliano','66e-bc3-8ea',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:06','2025-02-16 22:11:06',NULL),
 (15571,3401,'Lenis Karoline Cardoso Gonçalves','bbd-6bd-8b9',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:06','2025-02-16 22:11:06',NULL),
 (15572,3403,'Maria Fernanda Fiuza Cruz','764-9d1-b2b',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:06','2025-02-16 22:11:06',NULL),
 (15573,3410,'Gyovanna Soares Carvalho','ab5-741-6a2',106,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:11:06','2025-02-16 22:11:06',NULL),
@@ -10720,7 +10793,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15644,1807,'Victor Gabriel Dias Antunes','116-825-927',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:44','2025-02-16 22:18:44',NULL),
 (15645,1815,'Maria Vitoria Cardoso Sobral','9fc-4ba-efa',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:44','2025-02-16 22:18:44',NULL),
 (15646,1840,'Maria Fróes Barbosa','198-c20-250',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:45','2025-02-16 22:18:45',NULL),
-(15647,1867,'Kamila Pereira Rocha','684-9ec-e65',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:45','2025-02-16 22:18:45',NULL),
+(15647,2771,'Kamila Pereira Pereira','684-9ec-e65',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:45','2026-08-28 03:15:47',NULL),
 (15648,1886,'Amanda Alves Cardoso','d5a-64f-ef4',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:45','2025-02-16 22:18:45',NULL),
 (15649,1909,'Andriele Vitória Araújo Moreira','286-59f-606',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:45','2025-02-16 22:18:45',NULL),
 (15650,1928,'Júlia Patrícia Rodrigues Antunes','d5e-f3b-617',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:45','2025-02-16 22:18:45',NULL),
@@ -10765,7 +10838,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15689,2727,'Kaio Silvano Rodrigues da Silva','7d0-86e-aa2',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:51','2025-02-16 22:18:51',NULL),
 (15690,2754,'Geovana Gabriela de Oliveira','03c-c6b-077',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:51','2025-02-16 22:18:51',NULL),
 (15691,2044,'Yasmim Jamile Barbosa Mendes','a52-c90-b4d',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:51','2025-02-23 22:58:01',NULL),
-(15692,2771,'Kamila Pereira Rocha','441-ab3-2e9',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:51','2025-02-16 22:18:51',NULL),
+(15692,2771,'Kamila Pereira Pereira','441-ab3-2e9',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:51','2026-08-28 03:15:47',NULL),
 (15693,2786,'JHOYCE SILVA PEREIRA','51e-055-fb8',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:52','2025-02-16 22:18:52',NULL),
 (15694,2794,'Daniele Santos Oliveira','1f4-b16-3a5',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:52','2025-02-16 22:18:52',NULL),
 (15695,2798,'Laura itabaiana','f48-799-adc',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:52','2025-02-23 23:05:26',NULL),
@@ -10803,7 +10876,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15727,3384,'Brenda Luana Silva De Siqueira','6da-66c-35e',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2025-02-16 22:18:57',NULL),
 (15728,3387,'Geovanna Rafaelly Damasceno Alves','eed-21a-561',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2025-02-16 22:18:57',NULL),
 (15729,3392,'Clara Tarcia Ruas Costa','45b-65b-83a',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2025-02-16 22:18:57',NULL),
-(15730,3399,'Karla Gabrielly Tertuliano','b3e-81c-60a',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2026-08-28 11:28:10',NULL),
+(15730,3399,'Karla Tertuliano','b3e-81c-60a',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2025-02-16 22:18:57',NULL),
 (15731,3400,'Júlio Gabriel Guedes Lima','f2c-13a-1b0',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2025-02-16 22:18:57',NULL),
 (15732,3403,'Maria Fernanda Fiuza Cruz','0c5-402-3ce',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2025-02-16 22:18:57',NULL),
 (15733,3405,'Isabella Mota Pereira Veloso','4b5-b37-f38',104,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:18:57','2025-02-16 22:18:57',NULL),
@@ -10863,7 +10936,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15787,1815,'Maria Vitoria Cardoso Sobral','910-185-907',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:03','2025-02-16 22:24:03',NULL),
 (15788,1843,'Gustavo Gonçalves Farias de oliveira','748-bc6-e83',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:03','2025-02-16 22:24:03',NULL),
 (15789,3561,'Maria Clara Mendes Aguiar','5cb-dbf-af3',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:03','2025-02-24 20:56:28',NULL),
-(15790,1867,'Kamila Pereira Rocha','43d-c7d-3f4',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:03','2025-02-16 22:24:03',NULL),
+(15790,2771,'Kamila Pereira Pereira','43d-c7d-3f4',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:03','2026-08-28 03:15:47',NULL),
 (15791,1886,'Amanda Alves Cardoso','b10-da8-62b',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:03','2025-02-16 22:24:03',NULL),
 (15792,1936,'Maria Cecilia Lima Tavares','636-e95-1b0',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:04','2025-02-16 22:24:04',NULL),
 (15793,1938,'Camila Fonseca da Silva','41d-5a6-829',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:04','2025-02-16 22:24:04',NULL),
@@ -10907,7 +10980,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15831,2727,'Kaio Silvano Rodrigues da Silva','017-2e4-522',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:10','2025-02-16 22:24:10',NULL),
 (15832,2754,'Geovana Gabriela de Oliveira','0f3-96b-cb7',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:10','2025-02-16 22:24:10',NULL),
 (15833,2044,'Yasmim Jamile Barbosa Mendes','136-26e-652',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:10','2025-02-23 22:58:01',NULL),
-(15834,2771,'Kamila Pereira Rocha','13e-a18-4f5',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:10','2025-02-16 22:24:10',NULL),
+(15834,2771,'Kamila Pereira Pereira','13e-a18-4f5',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:10','2026-08-28 03:15:47',NULL),
 (15835,2794,'Daniele Santos Oliveira','cc1-eb9-847',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:10','2025-02-16 22:24:10',NULL),
 (15836,2798,'Laura itabaiana','a60-d89-d6f',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:11','2025-02-23 23:05:26',NULL),
 (15837,2806,'José Dirceu Ferreira','2c6-51c-f62',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:11','2025-02-16 22:24:11',NULL),
@@ -10956,7 +11029,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15881,3382,'gabriela ribeiro lopes','e83-993-ca4',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:18','2025-02-16 22:24:18',NULL),
 (15882,3384,'Brenda Luana Silva de Siqueira','480-932-e0c',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:18','2025-02-16 22:24:18',NULL),
 (15883,3387,'Geovanna Rafaelly Damasceno Alves','388-f39-7b0',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:18','2025-02-16 22:24:18',NULL),
-(15884,3399,'Karla Gabrielly Tertuliano','986-aab-787',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:18','2026-08-28 11:28:10',NULL),
+(15884,3399,'Karla Tertuliano','986-aab-787',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:18','2025-02-16 22:24:18',NULL),
 (15885,3403,'Maria Fernanda Fiuza Cruz','7c0-cc3-773',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:18','2025-02-16 22:24:18',NULL),
 (15886,3405,'Isabella Mota Pereira Veloso','2c0-cd2-2d9',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:18','2025-02-16 22:24:18',NULL),
 (15887,3412,'Melissa Nunes Silva','2bf-484-fd0',103,NULL,'Certificado de participação em palestra presencial na IV Jornada Acadêmica da FCO','','','',2,'','',1,NULL,'2025-02-16 22:24:19','2025-02-16 22:24:19',NULL),
@@ -10990,7 +11063,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15917,695,'Aline Baleeiro Gomes','4a1-23d-102',118,NULL,'Rugosidade palatina como uma das formas de identificação humana: revisão de literatura','','','',0,'','',1,NULL,'2025-02-16 22:31:32','2025-02-16 22:31:32',NULL),
 (15918,2375,'Luis Rafael Mangueira Ribeiro','038-72f-2c5',118,NULL,'USO DE SUBSTÂNCIAS PSICOATIVAS ENTRE ACADÊMICOS DE ODONTOLOGIA EM UMA FACULDADE PRIVADA NO NORTE DE MINAS','','','',0,'','',1,NULL,'2025-02-16 22:31:33','2025-02-16 22:31:33',NULL),
 (15919,2375,'Luis Rafael Mangueira Ribeiro','172-d4b-04a',118,NULL,'USO DA MATRIZ COLÁGENA NO TRATAMENTO DE RECESSÕES GENGIVAIS: REVISÃO DA LITERATURA PELA LIGA ACADÊMICA DE PERIODONTIA','','','',0,'','',1,NULL,'2025-02-16 22:31:33','2025-02-16 22:31:33',NULL),
-(15920,2771,'Kamila Pereira Rocha','7a4-d9c-d38',118,NULL,'Associação entre o Aleitamento Materno e a Cárie Dentária em Clínica de Bebês','','','',0,'','',1,NULL,'2025-02-16 22:31:33','2025-02-16 22:31:33',NULL),
+(15920,2771,'Kamila Pereira Pereira','7a4-d9c-d38',118,NULL,'Associação entre o Aleitamento Materno e a Cárie Dentária em Clínica de Bebês','','','',0,'','',1,NULL,'2025-02-16 22:31:33','2026-08-28 03:15:47',NULL),
 (15921,3398,'Yasmin Kerolly Mendes Lima','7d7-99c-b17',118,NULL,'EFICÁCIA DA LASERTERAPIA EM PACIENTES COM DISFUNÇÃO DA ARTICULAÇÃO TEMPOROMANDIBULAR: REVISÃO DE LITERATURA','','','',0,'','',1,NULL,'2025-02-16 22:31:33','2025-02-16 22:31:33',NULL),
 (15922,3398,'Yasmin Kerolly Mendes Lima','fba-175-b81',118,NULL,'Efeito antimicrobiano do extrato vegetal da folha de Schinus terebinthifolius em um agente etiológico da periodontite, Porphyromonas gingivalis','','','',0,'','',1,NULL,'2025-02-16 22:31:33','2025-02-16 22:31:33',NULL),
 (15923,3448,'Camille Fonseca Tostes','872-531-f42',118,NULL,'EFEITOS DESTRUTIVOS DA COCAÍNA NO COMPLEXO MAXILOFACIAL: RELATO DE CASO','','','',0,'','',1,NULL,'2025-02-16 22:31:33','2025-02-24 20:52:22',NULL),
@@ -11027,7 +11100,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (15968,1843,'Gustavo Gonçalves Farias de Oliveira','0b0-ef3-00f',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:34','2025-02-17 15:31:34',NULL),
 (15969,1853,'Rafaella Mariane Oliveira de Souza','703-53d-03a',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:34','2025-02-17 15:31:34',NULL),
 (15970,3561,'Maria Clara Mendes Aguiar','a4d-f79-f01',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:34','2025-02-24 20:56:28',NULL),
-(15971,1867,'Kamila Pereira Rocha','4f3-442-0b4',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:34','2025-02-17 15:31:34',NULL),
+(15971,2771,'Kamila Pereira Pereira','4f3-442-0b4',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:34','2026-08-28 03:15:47',NULL),
 (15972,1936,'Maria Cecilia Lima Tavares','5b4-9b4-0a0',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:34','2025-02-17 15:31:34',NULL),
 (15973,1938,'Camila Fonseca da Silva','9fd-408-15d',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:35','2025-02-17 15:31:35',NULL),
 (15974,1943,'Carla Danielly Murta Alves','48c-b68-51b',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:35','2025-02-17 15:31:35',NULL),
@@ -11071,7 +11144,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (16012,2727,'Kaio Silvano Rodrigues da Silva','fcc-aee-c35',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:41','2025-02-17 15:31:41',NULL),
 (16013,2754,'Geovana Gabriela de Oliveira','423-360-e8e',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:41','2025-02-17 15:31:41',NULL),
 (16014,2044,'Yasmim Jamile Barbosa Mendes','8c0-a90-593',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:41','2025-02-23 22:58:01',NULL),
-(16015,2771,'Kamila Pereira Rocha','b5d-ab0-ace',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:41','2025-02-17 15:31:41',NULL),
+(16015,2771,'Kamila Pereira Pereira','b5d-ab0-ace',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:41','2026-08-28 03:15:47',NULL),
 (16016,2784,'Paula Maria Moreira','6b5-413-0dc',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:41','2025-02-17 15:31:41',NULL),
 (16017,2798,'Laura itabaiana','c69-bca-362',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:41','2025-02-23 23:05:26',NULL),
 (16019,3504,'Josielly Rocha Baleeiro','eb6-b93-8f9',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:42','2026-03-31 15:09:33',NULL),
@@ -11117,7 +11190,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (16059,3384,'Brenda Luana Silva De Siqueira','491-492-382',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:49','2025-02-17 15:31:49',NULL),
 (16060,3387,'Geovanna Rafaelly Damasceno Alves','926-651-34a',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:49','2025-02-17 15:31:49',NULL),
 (16061,3392,'Clara Tarcia Ruas Costa','072-bde-df9',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:50','2025-02-17 15:31:50',NULL),
-(16062,3399,'Karla Gabrielly Tertuliano','774-1b0-a71',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:50','2026-08-28 11:28:10',NULL),
+(16062,3399,'Karla Tertuliano','774-1b0-a71',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:50','2025-02-17 15:31:50',NULL),
 (16063,3400,'Júlio Gabriel Guedes Lima','2f9-30c-b47',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:50','2025-02-17 15:31:50',NULL),
 (16064,3403,'Maria Fernanda Fiuza Cruz','43b-a1f-809',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:50','2025-02-17 15:31:50',NULL),
 (16065,3405,'Isabella Mota Pereira Veloso','14c-94b-fa8',102,NULL,'','','','',2,'','',1,NULL,'2025-02-17 15:31:50','2025-02-17 15:31:50',NULL),
@@ -11172,7 +11245,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (16114,1807,'Victor Gabriel Dias Antunes','bbd-309-126',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Odontologia Laboratorial Articulada II','Odontologia Laboratorial Articulada II','Silvério de Almeida Souza Torres','2º semestre/2022',50,'','',1,NULL,'2025-02-18 19:56:23','2025-02-18 19:56:23',NULL),
 (16115,1821,'Isadora Guimarães Antunes','4c7-c3e-502',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Clínica Articulada II','Clínica Articulada II','Luma Fabiane Almeida','1º semestre/2022',50,'','',1,NULL,'2025-02-18 19:56:23','2025-02-18 19:56:23',NULL),
 (16116,1822,'Sidney Carlos Dias Júnior','68b-652-bff',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Clínica Integrada I','Clínica Integrada I','Edmilson Martins de Freitas','1º semestre/2022',50,'','',1,NULL,'2025-02-18 19:56:23','2025-02-18 19:56:23',NULL),
-(16117,1867,'Kamila Pereira Rocha','8c5-f8c-266',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Ciências Morfológicas Articuladas I','Ciências Morfológicas Articuladas I','Ludmilla Regina de Souza David','2º semestre/2022',50,'','',1,NULL,'2025-02-18 19:56:24','2025-02-18 19:56:24',NULL),
+(16117,2771,'Kamila Pereira Pereira','8c5-f8c-266',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Ciências Morfológicas Articuladas I','Ciências Morfológicas Articuladas I','Ludmilla Regina de Souza David','2º semestre/2022',50,'','',1,NULL,'2025-02-18 19:56:24','2026-08-28 03:15:47',NULL),
 (16118,2278,'Vinícius Souza Guedes','255-2c6-f76',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Odontologia Laboratorial Articulada IV','Odontologia Laboratorial Articulada IV','Sara Katerine Vieira','1º semestre/2022',50,'','',1,NULL,'2025-02-18 19:56:24','2025-02-18 19:56:24',NULL),
 (16119,2307,'Kelly Janine Salomão Ferreira','de6-c76-58d',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Odontologia Laboratorial Articulada I','Odontologia Laboratorial Articulada I','Michelle Pimenta Oliveira','2º semestre/2022',50,'','',1,NULL,'2025-02-18 19:56:24','2025-02-18 19:56:24',NULL),
 (16120,2324,'Karen Renata Oliveira Santos de Oliva','953-bb8-e46',120,NULL,'Certificado de Monitoria Voluntária de 2022 - Clínica Articulada II','Clínica Articulada II','Luma Fabiane Almeida','1º e 2º semestre/2022',120,'','',1,NULL,'2025-02-18 19:56:24','2025-02-18 19:56:24',NULL),
@@ -12126,7 +12199,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (17071,2469,'Lara Estefani Santos Nery','81c-4e0-bb4',131,NULL,'Palestra Online: Fluxo digital na confecção de próteses removíveis','','','',1,'','Certificado de Participação',1,NULL,'2025-11-21 11:38:48','2025-11-21 11:38:48',NULL),
 (17072,3605,'Fabrício Fernandes Lopes','49a-8da-43d',131,NULL,'Palestra Online: Fluxo digital na confecção de próteses removíveis','','','',1,'','Certificado de Participação',1,NULL,'2025-11-21 11:38:48','2025-11-21 11:38:48',NULL),
 (17073,1068,'Caren Marinho de Caires Evangelista','ff0-25b-807',131,NULL,'Palestra Online: Fluxo digital na confecção de próteses removíveis','','','',1,'','Certificado de Participação',1,NULL,'2025-11-21 11:38:48','2025-11-21 11:38:48',NULL),
-(17074,1867,'Kamila Pereira Rocha','1a9-179-2f9',131,NULL,'Palestra Online: Fluxo digital na confecção de próteses removíveis','','','',1,'','Certificado de Participação',1,NULL,'2025-11-21 11:38:48','2025-11-21 11:38:48',NULL),
+(17074,2771,'Kamila Pereira Pereira','1a9-179-2f9',131,NULL,'Palestra Online: Fluxo digital na confecção de próteses removíveis','','','',1,'','Certificado de Participação',1,NULL,'2025-11-21 11:38:48','2026-08-28 03:15:47',NULL),
 (17075,3715,'Vanessa Simões','da9-7b0-519',131,NULL,'Palestra Online: Fluxo digital na confecção de próteses removíveis','','','',1,'','Certificado de Participação',1,NULL,'2025-11-21 11:38:48','2025-11-21 11:38:48',NULL),
 (17076,3224,'Guilherme Miguel Soares','be4-c9b-14f',131,NULL,'Palestra Online: Fluxo digital na confecção de próteses removíveis','','','',1,'','Certificado de Participação',1,NULL,'2025-11-21 11:38:48','2025-11-21 11:38:48',NULL),
 (17077,3234,'Raissa Faustino Durães','cb8-532-b88',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
@@ -12321,7 +12394,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (17266,3517,'Kévia Rayane','4aa-c04-55d',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17267,3611,'George Maicon Lima Saraiva','49e-f48-bee',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17268,3719,'Camyla Palma Parrela','a33-097-29c',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
-(17269,1867,'Kamila Pereira Rocha','3c0-958-d7c',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
+(17269,2771,'Kamila Pereira Pereira','3c0-958-d7c',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2026-08-28 03:15:47',NULL),
 (17270,2727,'Kaio Silvano Rodrigues da Silva','188-f45-123',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17271,3575,'Amanda dias Santos','7ec-3df-687',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17272,1886,'Amanda Alves Cardoso','69d-943-17a',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
@@ -12366,7 +12439,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (17311,1842,'Carolina Soares Aguiar','8b3-196-aaa',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17312,3218,'Maria Clara Lemos Ferreira Dos Santos','d07-787-4b9',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17313,636,'Isabella Fonseca Rodrigues','35e-7be-8be',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
-(17314,3399,'Karla Gabrielly Tertuliano','ba1-ef5-fc0',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2026-08-28 11:28:10',NULL),
+(17314,3399,'Karla Gabrielly Tertuliano','ba1-ef5-fc0',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17315,767,'Sthefanie Caroline Souza Marques','8f6-fd2-f8c',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17316,3539,'Mariana Teixeira Lugon de Barros','696-024-cf8',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
 (17317,3721,'Caroline Ferreira Santos','a7b-cbe-014',132,NULL,'Evolução da prótese bucomaxilofacial_ do manual ao digital','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:17:36','2025-11-27 15:17:36',NULL),
@@ -12571,7 +12644,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (17516,3363,'Gabriela Gonçalves Freitas','945-fe5-a1c',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2025-11-27 15:55:10',NULL),
 (17517,3717,'Sara Milene de Barros Silva','9a0-52a-2c1',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2025-11-27 15:55:10',NULL),
 (17518,2957,'Luiz Gabriel Mendes Lopes','789-37a-eca',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2025-11-27 15:55:10',NULL),
-(17519,1867,'Kamila Pereira Rocha','550-ba7-f2b',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2025-11-27 15:55:10',NULL),
+(17519,2771,'Kamila Pereira Pereira','550-ba7-f2b',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2026-08-28 03:15:47',NULL),
 (17520,3479,'Andressa Karoline de Assis Barbosa','973-a42-9e5',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2025-11-27 15:55:10',NULL),
 (17521,3723,'Ana Clara Mendes da Cruz','6dd-926-324',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2025-11-27 15:55:10',NULL),
 (17522,3166,'Moises Silva Gaia','766-ccd-a1d',133,NULL,'Palestra Online: Uso de Inteligência Artificial aplicada ao Microbioma Periodontal','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 15:55:10','2025-11-27 15:55:10',NULL),
@@ -12921,7 +12994,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (17866,3694,'Adrielle Pereira Rocha','4d7-1ab-9ad',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17867,3653,'Maria Eduarda Moura de Oliveira','043-fcc-c77',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17868,3373,'Maria Clara Chaves Muniz','8cf-7ec-5c8',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
-(17869,3399,'Karla Gabrielly Tertuliano','1b1-6a9-d6c',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2026-08-28 11:28:10',NULL),
+(17869,3399,'Karla Gabrielly Tertuliano','1b1-6a9-d6c',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17870,3669,'Patricia Soares Batista','1a3-088-a2c',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17871,3709,'Nubia Juliana Miranda Souza David','4a4-346-24b',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17872,2121,'Ana Clara Mendes Lopes','5e5-f1d-be2',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
@@ -12930,7 +13003,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (17875,3265,'Maria Fernanda Mendes Rodrigues','833-42d-083',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17876,2413,'Maria Luiza Souza Pinto','17a-6fe-42a',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17877,2727,'Kaio Silvano Rodrigues da Silva','42f-523-070',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
-(17878,1867,'Kamila Pereira Rocha','271-f17-d22',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
+(17878,2771,'Kamila Pereira Pereira','271-f17-d22',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2026-08-28 03:15:47',NULL),
 (17879,1886,'Amanda Alves Cardoso','2e4-b49-698',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17880,3584,'Ana Luiza Gomes dos Santos','92a-86e-3f4',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
 (17881,3678,'Savya Santos Nobre','8a0-ffa-797',134,NULL,'Palestra Online: Manejo Clínico de Lesões de Cárie em Odontopediatria','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 16:18:17','2025-11-27 16:18:17',NULL),
@@ -13229,7 +13302,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (18174,1886,'Amanda Alves Cardoso','067-4c4-afc',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2025-11-27 17:16:03',NULL),
 (18175,3737,'Lauro Gabriel Ferreira Nunes','0a7-979-041',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2025-11-27 17:16:03',NULL),
 (18176,3446,'Danielle de Melo Cavalcanti','e01-6ee-37f',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2025-11-27 17:16:03',NULL),
-(18177,1867,'Kamila Pereira Rocha','e4b-dda-0b8',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2025-11-27 17:16:03',NULL),
+(18177,2771,'Kamila Pereira Pereira','e4b-dda-0b8',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2026-08-28 03:15:47',NULL),
 (18178,3753,'Ícaro Caciquinho Ferreira Dantas Guimarães','1c6-29b-aac',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2026-05-27 17:47:16',NULL),
 (18179,3459,'Lara Vitoria Freitas Dias','85e-3a3-21d',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2025-11-27 17:16:03',NULL),
 (18180,3386,'Marcela Oliveira de Almeida','dcc-d43-6df',136,NULL,'','','','',1,'','Certificado de Participação',1,NULL,'2025-11-27 17:16:03','2025-11-27 17:16:03',NULL),
@@ -13418,7 +13491,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (18364,1842,'Carolina Soares Aguiar','27c-adb-603',159,NULL,'Certificado de Participação como membro da Liga LAOP em 2024','',' 01 de abril a 18 de dezembro de 2024','',60,'','Certificado de Participação',1,NULL,'2026-05-27 16:31:36','2026-05-27 16:31:36',NULL),
 (18365,2141,'Gabriel Natã Alves Caldeira Souza','ba3-5c2-727',159,NULL,'Certificado de Participação como membro da Liga LAOP em 2025','',' 01 de abril a 18 de dezembro de 2024','',60,'','Certificado de Participação',1,NULL,'2026-05-27 16:31:36','2026-05-27 16:31:36',NULL),
 (18366,3754,'Geovanna Karen Mendes Brito ','4f2-37d-6c3',159,NULL,'Certificado de Participação como membro da Liga LAOP em 2026','',' 01 de abril a 18 de dezembro de 2024','',60,'','Certificado de Participação',1,NULL,'2026-05-27 16:31:36','2026-06-15 16:44:45',NULL),
-(18367,1867,'Kamila Pereira Rocha','74e-eaa-41a',159,NULL,'Certificado de Participação como membro da Liga LAOP em 2027','',' 01 de abril a 18 de dezembro de 2024','',60,'','Certificado de Participação',1,NULL,'2026-05-27 16:31:36','2026-05-27 16:31:36',NULL),
+(18367,2771,'Kamila Pereira Pereira','74e-eaa-41a',159,NULL,'Certificado de Participação como membro da Liga LAOP em 2027','',' 01 de abril a 18 de dezembro de 2024','',60,'','Certificado de Participação',1,NULL,'2026-05-27 16:31:36','2026-08-28 03:15:47',NULL),
 (18368,3167,'Samyle Lucas Marques','90a-43c-a16',159,NULL,'Certificado de Participação como membro da Liga LAOP em 2028','',' 01 de abril a 18 de dezembro de 2024','',60,'','Certificado de Participação',1,NULL,'2026-05-27 16:31:36','2026-05-27 16:31:36',NULL),
 (18369,3159,'Ana Karlla Martins Silva','704-ac5-b1d',160,NULL,'Certificado de Membro da Liga LAHOF 2024','','11 de abril de 2024 até 23 abril de 2025','',40,'','Certificado de Participação',1,NULL,'2026-05-27 17:51:29','2026-05-27 17:51:29',NULL),
 (18370,3753,'Ícaro Cacinho Ferreira Dantas Guimarães','8c8-7e6-d52',160,NULL,'Certificado de Membro da Liga LAHOF 2024','','11 de abril de 2024 até 23 abril de 2025','',40,'','Certificado de Participação',1,NULL,'2026-05-27 17:51:29','2026-05-27 17:51:29',NULL),
@@ -13428,7 +13501,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (18374,2243,'Ana clara de pinho celestino','8dc-0b5-d88',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','PROCRASTINAÇÃO E FATORES ASSOCIADOS EM ESTUDANTES UNIVERSITÁRIOS','',0,'MARCOS VINÍCIUS MACEDO  DE OLIVEIRA','Certificado de Participação',1,NULL,'2026-06-15 17:11:34','2026-06-15 17:11:34',NULL),
 (18375,3754,'Geovanna karen mendes brito','419-fd3-533',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','DEFEITOS DE DESENVOLVIMENTO DE ESMALTE  NA DENTIÇÃO PERMANENTE EM ESCOLARES DE  MONTES CLAROS - MG','',0,'MICHELLE PIMENTA  OLIVEIRA','Certificado de Participação',1,NULL,'2026-06-15 17:11:34','2026-06-15 17:11:34',NULL),
 (18376,3398,'Yasmin kerolly mendes lima','2ee-fea-fa3',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','EFEITO ANTIMICROBIANO DO EXTRATO VEGETAL DA  FOLHA DE SCHINUS TEREBINTHIFOLIUS EM UM  AGENTE ETIOLÓGICO DA PERIODONTITE,  PORPHYROMONAS GINGIVALIS.','',0,'OTÁVIO CARDOSO FILHO','Certificado de Participação',1,NULL,'2026-06-15 17:11:34','2026-06-15 17:11:34',NULL),
-(18377,1867,'Kamila pereira rocha','37d-fbb-800',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','ASSOCIAÇÃO ENTRE ALEITAMENTO MATERNO E  CÁRIE DENTÁRIA EM CLÍNICA DE BEBÊS','',0,'STÉPHANY KETLLIN  MENDES OLIVEIRA  TEIXEIRA','Certificado de Participação',1,NULL,'2026-06-15 17:11:34','2026-06-15 17:11:34',NULL),
+(18377,2771,'Kamila Pereira Pereira','37d-fbb-800',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','ASSOCIAÇÃO ENTRE ALEITAMENTO MATERNO E  CÁRIE DENTÁRIA EM CLÍNICA DE BEBÊS','',0,'STÉPHANY KETLLIN  MENDES OLIVEIRA  TEIXEIRA','Certificado de Participação',1,NULL,'2026-06-15 17:11:34','2026-08-28 03:15:47',NULL),
 (18378,493,'Jhony veloso santos','44b-6db-896',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','ANSIEDADE ODONTOLÓGICA DE PAIS E CRIANÇAS E  CONHECIMENTO DOS CIRURGIÕES-DENTISTAS DA  ATENÇÃO PRIMÁRIA SOBRE AS TÉCNICAS N.O  FARMACOLÓGICAS DE MANEJO COMPORTAMENTAL.','',0,'TAIANE OLIVEIRA SOUZA','Certificado de Participação',1,NULL,'2026-06-15 17:11:35','2026-06-15 17:11:35',NULL),
 (18379,2458,'Lucas calixto amorim','dab-e56-cbc',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','AVALIAÇÃO MICROBIOLÓGICA SALIVAR E PERFIL  EPIDEMIOLÓGICO DE PACIENTES COM CÂNCER EM  SÍTIOS DISTANTES','',0,'JOÃO GABRIEL SILVA  SOUZA','Certificado de Participação',1,NULL,'2026-06-15 17:11:35','2026-06-15 17:11:35',NULL),
 (18380,754,'Waner sanches lopes azevedo','25f-df0-831',162,NULL,'Certificado de Bolsista do Programa de Iniciação Científica 2024','','LEVANTAMENTO DAS MODALIDADES TERAPÊUTICAS  UTILIZADAS NO TRATAMENTO DO CANCÊR DE BOCA  EM PACIENTES DO HOSPITAL ONCOVIDA','',0,'TALITA ANTUNES  GUIMARAES','Certificado de Participação',1,NULL,'2026-06-15 17:11:35','2026-06-15 17:11:35',NULL),
@@ -13471,7 +13544,7 @@ insert  into `certificados`(`id`,`participanteId`,`nome`,`arquivo`,`atividadeId`
 (18417,2411,'Ianne Cristina Alves Batista','421-7a1-ab9',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-12 17:17:14',NULL),
 (18418,3379,'João Marcos Sena Figueiredo','85c-247-57f',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-12 17:17:14',NULL),
 (18419,1957,'José Gabriel Brito Veloso Bitencourt','7fc-26f-6c5',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-12 17:17:14',NULL),
-(18420,1867,'Kamila Pereira Rocha','4c2-e56-368',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-12 17:17:14',NULL),
+(18420,2771,'Kamila Pereira Pereira','4c2-e56-368',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-28 03:15:47',NULL),
 (18421,2458,'Lucas Calixto Amorim','b5f-aa5-6f5',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-12 17:17:14',NULL),
 (18422,2375,'Luis Rafael Mangueira Ribeiro','7d5-d1c-bfa',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-12 17:17:14',NULL),
 (18423,2122,'Maria Clara Silva dos Santos','419-155-057',124,NULL,'','','28 de novembro de 2025 a 21 de agosto de 2025','membro',60,'','Certificado de Participação',1,NULL,'2026-08-12 17:17:14','2026-08-12 17:17:14',NULL),
@@ -13487,18 +13560,18 @@ DROP TABLE IF EXISTS `certificados_a1`;
 
 CREATE TABLE `certificados_a1` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `nome` varchar(50) DEFAULT NULL,
-  `criado_em` datetime DEFAULT NULL,
-  `alterado_em` datetime DEFAULT NULL,
+  `nome` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apagado_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `certificados_a1_apgado_em_index` (`apagado_em`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `certificados_a1_apagado_em_index` (`apagado_em`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `certificados_a1` */
 
 insert  into `certificados_a1`(`id`,`nome`,`criado_em`,`alterado_em`,`apagado_em`) values 
-(1,'Certificado teste Marcelo','2026-08-28 14:46:07','2026-08-28 14:46:07',NULL);
+(1,'Certificado A1 Marcelo','2026-08-28 17:12:05','2026-08-28 17:12:05',NULL);
 
 /*Table structure for table `eventos` */
 
@@ -13573,22 +13646,145 @@ insert  into `eventos`(`id`,`nome`,`periodos`,`ativo`,`descricao`,`criado_em`,`a
 (52,'Liga Acadêmica de Harmonização Orofacial (LAHOF) - 2024','15 de agosto de 2024 a 07 de junho 2025',1,'','2026-05-27 17:01:05','2026-05-27 17:01:26',NULL),
 (53,'Progama de Iniciação Científica 2024','1º de maio de 2024 a 30 de abril de 2025',1,'','2026-05-27 18:03:49','2026-05-27 18:04:19',NULL),
 (54,'Liga Acadêmica LAP 2025','28/11/2024 a 21/08/2025',1,'Liga Acadêmica de Periodontia 2024','2026-08-12 15:31:42','2026-08-12 15:31:42',NULL),
-(55,'Liga Acadêmica LAOP 2025','21/11/2024 as 21/08/2025',1,'','2026-08-12 16:41:43','2026-08-12 16:41:43',NULL);
+(55,'Liga Acadêmica LAOP 2025','21/11/2024 as 21/08/2025',1,'','2026-08-12 16:41:43','2026-08-28 01:42:22',NULL);
+
+/*Table structure for table `failed_jobs` */
+
+DROP TABLE IF EXISTS `failed_jobs`;
+
+CREATE TABLE `failed_jobs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `connection` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `queue` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `exception` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`),
+  KEY `failed_jobs_connection_queue_failed_at_index` (`connection`,`queue`,`failed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `failed_jobs` */
+
+/*Table structure for table `fontes_layout` */
+
+DROP TABLE IF EXISTS `fontes_layout`;
+
+CREATE TABLE `fontes_layout` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `nome` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `arquivo` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nome_original` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `fontes_layout_arquivo_unique` (`arquivo`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `fontes_layout` */
+
+insert  into `fontes_layout`(`id`,`nome`,`arquivo`,`nome_original`,`criado_em`,`alterado_em`) values 
+(1,'DauxLavande','81522a3fdd852bb6bcfa283db3041f56ee83acf6.woff','DauxLavande.woff','2026-08-28 18:01:58','2026-08-28 18:01:58');
+
+/*Table structure for table `grupos_categorias` */
+
+DROP TABLE IF EXISTS `grupos_categorias`;
+
+CREATE TABLE `grupos_categorias` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `grupo` varchar(250) DEFAULT NULL,
+  `ativo` smallint DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3;
+
+/*Data for the table `grupos_categorias` */
+
+insert  into `grupos_categorias`(`id`,`grupo`,`ativo`) values 
+(1,'Tipos de Certificados',1);
+
+/*Table structure for table `job_batches` */
+
+DROP TABLE IF EXISTS `job_batches`;
+
+CREATE TABLE `job_batches` (
+  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `total_jobs` int NOT NULL,
+  `pending_jobs` int NOT NULL,
+  `failed_jobs` int NOT NULL,
+  `failed_job_ids` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `options` mediumtext COLLATE utf8mb4_unicode_ci,
+  `cancelled_at` int DEFAULT NULL,
+  `created_at` int NOT NULL,
+  `finished_at` int DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `job_batches` */
+
+/*Table structure for table `jobs` */
+
+DROP TABLE IF EXISTS `jobs`;
+
+CREATE TABLE `jobs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `queue` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attempts` smallint unsigned NOT NULL,
+  `reserved_at` int unsigned DEFAULT NULL,
+  `available_at` int unsigned NOT NULL,
+  `created_at` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `jobs_queue_index` (`queue`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `jobs` */
 
 /*Table structure for table `lista_participantes` */
 
 DROP TABLE IF EXISTS `lista_participantes`;
 
 CREATE TABLE `lista_participantes` (
-  `id` int unsigned NOT NULL,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `participante_id` int DEFAULT NULL,
   `novo_certificado_id` int DEFAULT NULL,
-  `criado_em` datetime DEFAULT NULL,
-  `alterado_em` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `codigo` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `arquivo_pdf` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `dados_personalizados` json DEFAULT NULL,
+  `snapshot_dados` json DEFAULT NULL,
+  `snapshot_template` json DEFAULT NULL,
+  `gerado_em` datetime DEFAULT NULL,
+  `erro_geracao` text COLLATE utf8mb4_unicode_ci,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `lista_participantes_certificado_participante_unique` (`novo_certificado_id`,`participante_id`),
+  UNIQUE KEY `lista_participantes_codigo_unique` (`codigo`),
+  KEY `lista_participantes_participante_id_index` (`participante_id`),
+  KEY `lista_participantes_novo_certificado_id_index` (`novo_certificado_id`),
+  KEY `lista_participantes_ativo_index` (`ativo`)
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `lista_participantes` */
+
+insert  into `lista_participantes`(`id`,`participante_id`,`novo_certificado_id`,`ativo`,`codigo`,`arquivo_pdf`,`dados_personalizados`,`snapshot_dados`,`snapshot_template`,`gerado_em`,`erro_geracao`,`criado_em`,`alterado_em`) values 
+(22,1,3,1,'2HG67BQXQKWQCKXB','certificado-22-2HG67BQXQKWQCKXB.pdf',NULL,'{\"evento\": {\"nome\": \"Liga Acadêmica LEGO\", \"descricao\": null}, \"emissao\": {\"data\": \"30/08/2026\", \"nome\": \"asdfasdf\"}, \"atividade\": {\"nome\": \" Certificado de Membro da Liga LEGO 2024\", \"carga_horaria\": \"60\"}, \"certificado\": {\"codigo\": \"2HG67BQXQKWQCKXB\"}, \"responsavel\": {\"nome\": \"Marcelo Ribeiro da Silva 7\", \"cargo\": \"Instrutor\", \"titulacao\": null, \"rubrica_path\": \"/var/www/novocertificados/public/certificado/rubricas_participantes/8008b098bcc2cef61225d464450e702864a98842.png\"}, \"participante\": {\"cpf\": \"05741902600\", \"nome\": \"Marcelo Ribeiro da Silva 7\", \"email\": \"marcelo@nossafco.com.br\"}}','[{\"x\": 101.8, \"y\": 112.1, \"uid\": \"1788067297013-710deaea600ab8\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 3, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}, {\"x\": 227.5, \"y\": 69.7, \"uid\": \"1788067322133-7208b256748288\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 2, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}, {\"x\": 66.6, \"y\": 66.9, \"uid\": \"1788067349780-6ac3e04f7d14c\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 1, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}]','2026-08-30 23:09:25',NULL,'2026-08-30 05:42:11','2026-08-30 23:09:25'),
+(23,81,4,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 12:15:26','2026-08-30 12:15:26'),
+(24,3755,4,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 12:15:26','2026-08-30 12:15:26'),
+(25,2348,4,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 12:15:26','2026-08-30 12:15:26'),
+(26,3573,4,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 12:15:26','2026-08-30 12:15:26'),
+(27,3053,4,1,'91AI4OMZ5YHIJZPU','certificado-27-91AI4OMZ5YHIJZPU.pdf',NULL,'{\"evento\": {\"nome\": \"Liga Acadêmica LEGO\", \"descricao\": null}, \"emissao\": {\"data\": \"30/08/2026\", \"nome\": \"Copex  emissao 2\"}, \"atividade\": {\"nome\": \"Certificado da Liga LEGO 2021\", \"carga_horaria\": null}, \"certificado\": {\"codigo\": \"91AI4OMZ5YHIJZPU\"}, \"responsavel\": {\"nome\": \"Rodrigo Dantas Pereira\", \"cargo\": \"Mestre\", \"titulacao\": \"Ms.\", \"rubrica_path\": \"/var/www/novocertificados/public/certificado/rubricas_participantes/70f6a4cf9ac24b7d6c9aab9e037b6d13fe34aefd.png\"}, \"participante\": {\"cpf\": null, \"nome\": \"Edimilson Freitas Martins\", \"email\": \"edimilson.freitas.martins@sistema0\"}}','[{\"x\": 19.7, \"y\": 78.8, \"uid\": \"1788067825133-8f23325b37e0f\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 1}, {\"x\": 237.2, \"y\": 76.6, \"uid\": \"1788067844475-340248b45223d\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 3, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}]','2026-08-30 12:33:58',NULL,'2026-08-30 12:15:26','2026-08-30 12:33:58'),
+(28,1115,5,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 12:17:08','2026-08-30 12:17:08'),
+(29,3517,5,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 12:17:08','2026-08-30 12:17:08'),
+(30,318,5,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 12:17:08','2026-08-30 12:17:08'),
+(31,1863,5,1,'QFOK2RMOYVNPB1WZ','certificado-31-QFOK2RMOYVNPB1WZ.pdf',NULL,'{\"evento\": {\"nome\": \"Liga Acadêmica LAED\", \"descricao\": null}, \"emissao\": {\"data\": \"30/08/2026\", \"nome\": \"Copex - restantes 5\"}, \"atividade\": {\"nome\": \"Certificado de Fundação e Presidência da Liga\", \"carga_horaria\": \"40\"}, \"certificado\": {\"codigo\": \"QFOK2RMOYVNPB1WZ\"}, \"responsavel\": {\"nome\": null, \"cargo\": null, \"titulacao\": null, \"rubrica_path\": null}, \"participante\": {\"cpf\": null, \"nome\": \"Iata Anderson Milani\", \"email\": \"iata.anderson.milani@sistema0\"}}','[{\"x\": 252.7, \"y\": 0.8, \"uid\": \"1788069314777-bc2ab8448f8658\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 12}, {\"x\": 10, \"y\": 10, \"uid\": \"1788069326079-5853320db7d1\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 51.6, \"height\": 23.9, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 2}]','2026-08-30 12:33:42',NULL,'2026-08-30 12:17:08','2026-08-30 12:33:42'),
+(32,81,6,1,'KOR4T6ZJJJSODCJS','certificado-32-KOR4T6ZJJJSODCJS.pdf',NULL,'{\"evento\": {\"nome\": \"Hands On Profissional 2026\", \"descricao\": \"\"}, \"emissao\": {\"data\": \"30/08/2026\", \"nome\": \"# 30/08\"}, \"atividade\": {\"nome\": \"Hands On em Implantodontia \", \"carga_horaria\": \"54\"}, \"certificado\": {\"codigo\": \"KOR4T6ZJJJSODCJS\"}, \"responsavel\": {\"nome\": \"Marcelo Ribeiro da Silva 7\", \"cargo\": \"Instrutor\", \"titulacao\": null, \"rubrica_path\": \"/var/www/novocertificados/public/certificado/rubricas_participantes/8008b098bcc2cef61225d464450e702864a98842.png\"}, \"participante\": {\"cpf\": \"\", \"nome\": \"Patrícia Helena Costa Mendes\", \"email\": \"patricia.helena@nossafco.com.br\"}}','[{\"x\": 18.1, \"y\": 83.8, \"uid\": \"1788107544919-318787dbf21758\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 260.6, \"height\": 41.1, \"italic\": false, \"content\": \"Certificamos que <strong>{{ participante.nome }}</strong> participou do <strong>{{ atividades.nome }} </strong>, ministrador pelo professor Dr. Luiz Manna Neto, com carga horária de 4 horas, realizado no dia 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 139.2, \"uid\": \"1788107692288-d6c3a3905b1098\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 10.6, \"italic\": false, \"content\": \"Montes Claros, 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}]','2026-08-30 16:57:58',NULL,'2026-08-30 16:52:36','2026-08-30 16:57:58'),
+(33,1863,6,1,'U05SPYZ2WJM8LYXG','certificado-33-U05SPYZ2WJM8LYXG.pdf',NULL,'{\"evento\": {\"nome\": \"Hands On Profissional 2026\", \"descricao\": \"\"}, \"emissao\": {\"data\": \"30/08/2026\", \"nome\": \"# 30/08\"}, \"atividade\": {\"nome\": \"Hands On em Implantodontia \", \"carga_horaria\": \"54\"}, \"certificado\": {\"codigo\": \"U05SPYZ2WJM8LYXG\"}, \"responsavel\": {\"nome\": \"Marcelo Ribeiro da Silva 7\", \"cargo\": \"Instrutor\", \"titulacao\": null, \"rubrica_path\": \"/var/www/novocertificados/public/certificado/rubricas_participantes/8008b098bcc2cef61225d464450e702864a98842.png\"}, \"participante\": {\"cpf\": null, \"nome\": \"Iata Anderson Milani\", \"email\": \"iata.anderson.milani@sistema0\"}}','[{\"x\": 18.1, \"y\": 83.8, \"uid\": \"1788107544919-318787dbf21758\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 260.6, \"height\": 41.1, \"italic\": false, \"content\": \"Certificamos que <strong>{{ participante.nome }}</strong> participou do <strong>{{ atividades.nome }} </strong>, ministrador pelo professor Dr. Luiz Manna Neto, com carga horária de 4 horas, realizado no dia 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 139.2, \"uid\": \"1788107692288-d6c3a3905b1098\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 10.6, \"italic\": false, \"content\": \"Montes Claros, 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}]','2026-08-30 16:53:36',NULL,'2026-08-30 16:52:36','2026-08-30 16:53:36'),
+(34,1474,6,1,'CTSNUSCUNRFVTIFE','certificado-34-CTSNUSCUNRFVTIFE.pdf',NULL,'{\"evento\": {\"nome\": \"Hands On Profissional 2026\", \"descricao\": \"\"}, \"emissao\": {\"data\": \"30/08/2026\", \"nome\": \"# 30/08\"}, \"atividade\": {\"nome\": \"Hands On em Implantodontia \", \"carga_horaria\": \"54\"}, \"certificado\": {\"codigo\": \"CTSNUSCUNRFVTIFE\"}, \"responsavel\": {\"nome\": \"Marcelo Ribeiro da Silva 7\", \"cargo\": \"Instrutor\", \"titulacao\": null, \"rubrica_path\": \"/var/www/novocertificados/public/certificado/rubricas_participantes/8008b098bcc2cef61225d464450e702864a98842.png\"}, \"participante\": {\"cpf\": null, \"nome\": \"Ana Clara Damaso Ferreira\", \"email\": \"ana.clara.damaso.ferreira@sistema0\"}}','[{\"x\": 18.1, \"y\": 83.8, \"uid\": \"1788107544919-318787dbf21758\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 260.6, \"height\": 41.1, \"italic\": false, \"content\": \"Certificamos que <strong>{{ participante.nome }}</strong> participou do <strong>{{ atividades.nome }} </strong>, ministrador pelo professor Dr. Luiz Manna Neto, com carga horária de 4 horas, realizado no dia 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 139.2, \"uid\": \"1788107692288-d6c3a3905b1098\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 10.6, \"italic\": false, \"content\": \"Montes Claros, 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}]','2026-08-30 16:53:35',NULL,'2026-08-30 16:52:36','2026-08-30 16:53:35'),
+(35,2087,6,1,'MKN51FTBVKRRYQR0','certificado-35-MKN51FTBVKRRYQR0.pdf',NULL,'{\"evento\": {\"nome\": \"Hands On Profissional 2026\", \"descricao\": \"\"}, \"emissao\": {\"data\": \"30/08/2026\", \"nome\": \"# 30/08\"}, \"atividade\": {\"nome\": \"Hands On em Implantodontia \", \"carga_horaria\": \"54\"}, \"certificado\": {\"codigo\": \"MKN51FTBVKRRYQR0\"}, \"responsavel\": {\"nome\": \"Marcelo Ribeiro da Silva 7\", \"cargo\": \"Instrutor\", \"titulacao\": null, \"rubrica_path\": \"/var/www/novocertificados/public/certificado/rubricas_participantes/8008b098bcc2cef61225d464450e702864a98842.png\"}, \"participante\": {\"cpf\": \"\", \"nome\": \"luca lopes lobo\", \"email\": \"luca.lopes.lobo@sistema0\"}}','[{\"x\": 18.1, \"y\": 83.8, \"uid\": \"1788107544919-318787dbf21758\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 260.6, \"height\": 41.1, \"italic\": false, \"content\": \"Certificamos que <strong>{{ participante.nome }}</strong> participou do <strong>{{ atividades.nome }} </strong>, ministrador pelo professor Dr. Luiz Manna Neto, com carga horária de 4 horas, realizado no dia 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 139.2, \"uid\": \"1788107692288-d6c3a3905b1098\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 10.6, \"italic\": false, \"content\": \"Montes Claros, 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}]','2026-08-30 16:53:37',NULL,'2026-08-30 16:52:36','2026-08-30 16:53:37'),
+(36,695,6,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-30 16:54:21','2026-08-30 16:54:21');
 
 /*Table structure for table `migrations` */
 
@@ -13599,7 +13795,7 @@ CREATE TABLE `migrations` (
   `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `migrations` */
 
@@ -13607,14 +13803,32 @@ insert  into `migrations`(`id`,`migration`,`batch`) values
 (1,'2026_08_26_000000_create_pessoas_table',1),
 (2,'2026_08_27_000000_add_ultimo_acesso_to_pessoas_table',2),
 (3,'2026_08_27_010000_add_excluido_em_to_participantes_table',3),
-(4,'2026_08_27_020000_create_eventos_table_if_missing',3),
-(5,'2026_08_27_030000_create_atividades_table_if_missing',3),
-(6,'2026_08_27_040000_prepare_certificados_table',3),
-(7,'2026_08_28_000000_prepare_novos_certificados_table',4),
-(8,'2026_08_28_010000_prepare_certificados_a1_table',4),
-(9,'2026_08_28_020000_prepare_variaveis_table',4),
-(10,'2026_08_28_030000_prepare_rubricas_participantes_table',5),
-(11,'2026_08_28_040000_prepare_participantes_de_teste_table',5);
+(4,'2026_08_27_020000_create_eventos_table_if_missing',4),
+(5,'2026_08_27_030000_create_atividades_table_if_missing',5),
+(6,'2026_08_27_040000_prepare_certificados_table',6),
+(7,'2026_08_28_000000_prepare_novos_certificados_table',7),
+(8,'2026_08_28_010000_prepare_certificados_a1_table',7),
+(9,'2026_08_28_020000_prepare_variaveis_table',7),
+(10,'2026_08_28_030000_prepare_rubricas_participantes_table',7),
+(11,'2026_08_28_040000_prepare_participantes_de_teste_table',7),
+(12,'2026_08_28_050000_prepare_templates_table',7),
+(13,'2026_08_28_060000_prepare_assinaturas_template_table',7),
+(14,'2026_08_28_070000_prepare_lista_participantes_table',7),
+(15,'2026_08_28_080000_add_elementos_layout_to_templates_table',8),
+(16,'2026_08_28_090000_create_fontes_layout_table',9),
+(17,'2026_08_28_100000_add_nome_to_variaveis_table',10),
+(18,'2026_08_28_110000_add_colored_background_to_templates_table',11),
+(19,'2026_08_28_120000_add_gradient_background_to_templates_table',12),
+(20,'2026_08_28_130000_add_gradient_direction_to_templates_table',13),
+(21,'2026_08_29_000000_add_perfis_to_pessoas_table',14),
+(22,'2026_08_29_235500_expand_gradient_direction_on_templates_table',15),
+(23,'2026_08_30_000000_create_responsaveis_table',16),
+(24,'2026_08_30_010000_create_biblioteca_imagens_table',17),
+(25,'2026_08_30_020000_evolve_novos_certificados_into_emissoes',17),
+(26,'2026_08_30_030000_add_ativo_to_lista_participantes',18),
+(27,'0001_01_01_000000_create_users_table',19),
+(28,'0001_01_01_000001_create_cache_table',19),
+(29,'0001_01_01_000002_create_jobs_table',19);
 
 /*Table structure for table `novos_certificados` */
 
@@ -13622,22 +13836,40 @@ DROP TABLE IF EXISTS `novos_certificados`;
 
 CREATE TABLE `novos_certificados` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `nome` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `certificado_antigo_id` int DEFAULT NULL,
   `lista_participantes_id` int DEFAULT NULL,
   `template_id` int DEFAULT NULL,
+  `evento_id` int DEFAULT NULL,
+  `atividade_id` int DEFAULT NULL,
+  `responsavel_id` int unsigned DEFAULT NULL,
+  `rubrica_id` int unsigned DEFAULT NULL,
+  `data_emissao` date DEFAULT NULL,
+  `campos_personalizados` json DEFAULT NULL,
   `ativo` smallint DEFAULT NULL,
-  `criado_em` datetime DEFAULT NULL,
-  `alterado_em` datetime DEFAULT NULL,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apagado_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `novos_certificados_certificado_antigo_id_index` (`certificado_antigo_id`),
   KEY `novos_certificados_lista_participantes_id_index` (`lista_participantes_id`),
   KEY `novos_certificados_template_id_index` (`template_id`),
   KEY `novos_certificados_ativo_index` (`ativo`),
-  KEY `novos_certificados_apagado_em_index` (`apagado_em`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `novos_certificados_apagado_em_index` (`apagado_em`),
+  KEY `novos_certificados_evento_id_index` (`evento_id`),
+  KEY `novos_certificados_atividade_id_index` (`atividade_id`),
+  KEY `novos_certificados_responsavel_id_index` (`responsavel_id`),
+  KEY `novos_certificados_rubrica_id_index` (`rubrica_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `novos_certificados` */
+
+insert  into `novos_certificados`(`id`,`nome`,`certificado_antigo_id`,`lista_participantes_id`,`template_id`,`evento_id`,`atividade_id`,`responsavel_id`,`rubrica_id`,`data_emissao`,`campos_personalizados`,`ativo`,`criado_em`,`alterado_em`,`apagado_em`) values 
+(3,'asdfasdf',NULL,22,5,3,151,2,NULL,'2026-08-30','{\"carga_horaria\": \"60\"}',1,'2026-08-30 05:39:29','2026-08-30 05:42:21','2026-08-30 05:42:21'),
+(4,'Copex  emissao 2',NULL,23,6,4,41,3,2,'2026-08-30','{\"carga_horaria\": null}',1,'2026-08-30 05:45:53','2026-08-30 12:27:11',NULL),
+(5,'Copex - restantes 5',NULL,28,7,29,63,NULL,NULL,'2026-08-30','{\"carga_horaria\": \"40\"}',1,'2026-08-30 12:16:31','2026-08-30 12:17:08',NULL),
+(6,'# 30/08',NULL,32,9,48,155,2,NULL,'2026-08-30','{\"carga_horaria\": \"54\"}',1,'2026-08-30 16:52:04','2026-08-30 16:52:36',NULL),
+(7,'antigo 1',1,NULL,NULL,3,151,NULL,NULL,NULL,NULL,1,'2026-08-30 14:01:41','2026-08-30 14:01:41',NULL);
 
 /*Table structure for table `participantes` */
 
@@ -13657,7 +13889,7 @@ CREATE TABLE `participantes` (
   `email_ficticio` int DEFAULT '0',
   PRIMARY KEY (`id`,`nome`),
   KEY `participantes_excluido_em_index` (`excluido_em`)
-) ENGINE=InnoDB AUTO_INCREMENT=3758 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=3759 DEFAULT CHARSET=utf8mb3;
 
 /*Data for the table `participantes` */
 
@@ -14326,6 +14558,7 @@ insert  into `participantes`(`id`,`nome`,`email`,`sexo`,`grupo`,`ativo`,`cpf`,`c
 (691,'Alice Duarte Santos Veloso','alice.duarte.santos.veloso@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
 (692,'Anna Júlia Ramos Barbosa','anna.júlia.ramos.barbosa@sistema0','f',NULL,1,'','2025-02-16 12:34:15','2025-08-27 16:20:58',NULL,0),
 (693,'Raiany Gomes Souza','raiany.gomes.souza@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
+(694,'Karla Gabrielly Tertuliano De Souza','karla.gabrielly.tertuliano.de.souza@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
 (695,'Aline Baleeiro Gomes','aline.baleeiro.gomes@sistema0','F',NULL,1,'','2025-02-16 12:34:15','2026-06-15 17:42:05',NULL,0),
 (696,'Shirley Jaqueline do Carmo Silva','shirley.jaqueline.do.carmo.silva@sistema0','F',NULL,1,'','2025-02-16 12:34:15','2026-03-30 21:45:08',NULL,1),
 (697,'Gustavo Durães Rosa','gustavo.durães.rosa@sistema0','m',NULL,1,'','2025-02-16 12:34:15','2026-05-05 15:41:14',NULL,1),
@@ -15486,7 +15719,6 @@ insert  into `participantes`(`id`,`nome`,`email`,`sexo`,`grupo`,`ativo`,`cpf`,`c
 (1864,'Daniele Rabelo Moreira','daniele.rabelo.moreira@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
 (1865,'victoria mansur','victoria.mansur@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
 (1866,'Hendyara Chaves Pereira','hendyara.chaves.pereira@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
-(1867,'Kamila Pereira Rocha','kamila.pereira.rocha@sistema0','F',NULL,1,'','2025-02-16 12:34:15','2026-08-12 17:17:14',NULL,1),
 (1868,'João Vítor Vasconcelos Rocha','joão.vítor.vasconcelos.rocha@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
 (1869,'João Pedro Fagundes de Morais','joão.pedro.fagundes.de.morais@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
 (1870,'Laynara Victória Rocha Tribuzy Bandeira','laynara.victória.rocha.tribuzy.bandeira@sistema0',NULL,NULL,1,NULL,'2025-02-16 12:34:15','2025-02-16 12:46:03',NULL,1),
@@ -16870,7 +17102,8 @@ insert  into `participantes`(`id`,`nome`,`email`,`sexo`,`grupo`,`ativo`,`cpf`,`c
 (3754,'Geovanna Karen Mendes Brito ','geovana.brito@nossafco.com.br','F',NULL,1,'','2026-06-15 16:44:45','2026-06-15 17:11:34',NULL,0),
 (3755,'Michelle Pimenta Oliveira','michelle@nossafco.com.br',NULL,NULL,1,'','2026-06-15 18:25:12','2026-06-15 18:25:12',NULL,0),
 (3756,'João Gabriel Silva Souza','joaogabriel@nossafco.com.br',NULL,NULL,1,'','2026-06-15 18:28:23','2026-06-15 18:28:23',NULL,0),
-(3757,'Maria Clara Silva dos Santos','maria.clara.silva.dos.santos@sistema0','f','a',1,NULL,'2026-08-12 17:08:02','2026-08-12 17:08:02',NULL,0);
+(3757,'Maria Clara Silva dos Santos','maria.clara.silva.dos.santos@sistema0','f','a',1,NULL,'2026-08-12 17:08:02','2026-08-12 17:08:02',NULL,0),
+(3758,'teste','teste@testenossafco.com.br','m',NULL,1,NULL,'2026-08-28 01:32:42','2026-08-28 01:33:37',NULL,0);
 
 /*Table structure for table `participantes_de_teste` */
 
@@ -16883,14 +17116,28 @@ CREATE TABLE `participantes_de_teste` (
   `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apagado_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `participante_id` (`participante_id`),
+  UNIQUE KEY `participantes_de_teste_participante_id_unique` (`participante_id`),
   KEY `participantes_de_teste_apagado_em_index` (`apagado_em`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `participantes_de_teste` */
 
 insert  into `participantes_de_teste`(`id`,`participante_id`,`criado_em`,`alterado_em`,`apagado_em`) values 
-(1,1,'2026-08-28 14:21:30','2026-08-28 14:21:30',NULL);
+(1,1,'2026-08-30 01:18:18','2026-08-30 01:18:18',NULL),
+(2,276,'2026-08-30 01:18:43','2026-08-30 01:18:43',NULL);
+
+/*Table structure for table `password_reset_tokens` */
+
+DROP TABLE IF EXISTS `password_reset_tokens`;
+
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `password_reset_tokens` */
 
 /*Table structure for table `pessoas` */
 
@@ -16903,6 +17150,7 @@ CREATE TABLE `pessoas` (
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `perfil` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `perfil_id` bigint unsigned DEFAULT NULL,
+  `perfis` json DEFAULT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `ultimo_acesso` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -16916,15 +17164,35 @@ CREATE TABLE `pessoas` (
 
 /*Data for the table `pessoas` */
 
-insert  into `pessoas`(`id`,`usuario`,`nome`,`email`,`perfil`,`perfil_id`,`ativo`,`ultimo_acesso`,`created_at`,`updated_at`) values 
-(2,NULL,'Marcelo Ribeiro da Silva 3','marcelo@nossafco.com.br','TI',38,1,'2026-08-28 11:17:28','2026-08-26 13:31:48','2026-08-28 15:45:15'),
-(5,'chatgpt','Chat GPT CO','chatgpt@nossafco.com.br','Participante',36,1,NULL,'2026-08-26 14:07:19','2026-08-28 15:45:15'),
-(6,'claudia.gusmao','Cláudia Dias dos Santos Gusmão','claudia.gusmao@nossafco.com.br','Participante',36,1,NULL,'2026-08-26 14:07:19','2026-08-28 15:45:15'),
-(7,'guilherme.pinheiro','Guilherme Simoes Pinheiro','guilherme.pinheiro@nossafco.com.br','Participante',36,1,NULL,'2026-08-26 14:07:19','2026-08-28 15:45:15'),
-(8,'lucas.ramos','Lucas Diego de Jesus Ramos','lucas.ramos@nossafco.com.br','Participante',36,1,NULL,'2026-08-26 14:07:19','2026-08-28 15:45:15'),
-(9,'marcela.santos','Marcela Soares Santos 3','marcela.santos@nossafco.com.br','Participante',36,1,NULL,'2026-08-26 14:07:19','2026-08-28 15:45:15'),
-(10,'talita','Talita Antunes Guimarães','talita@nossafco.com.br','Participante',36,1,NULL,'2026-08-26 14:07:19','2026-08-28 15:45:15'),
-(11,'thuany','Thuany Adelice Simplicio Souza 2','thuany@nossafco.com.br','Participante',36,1,NULL,'2026-08-26 14:07:19','2026-08-28 15:45:15');
+insert  into `pessoas`(`id`,`usuario`,`nome`,`email`,`perfil`,`perfil_id`,`perfis`,`ativo`,`ultimo_acesso`,`created_at`,`updated_at`) values 
+(2,NULL,'Marcelo Ribeiro da Silva','marcelo@nossafco.com.br','TI',117,'[{\"id\": 117, \"nome\": \"TI\", \"ultimo_login_em\": \"2026-08-30T21:20:43.000000Z\"}, {\"id\": 116, \"nome\": \"Elaborador\", \"ultimo_login_em\": null}, {\"id\": 115, \"nome\": \"Participante\", \"ultimo_login_em\": null}]',1,'2026-08-30 21:20:43','2026-08-28 00:12:02','2026-08-31 01:33:05'),
+(4,'marcelo.ribeiro','Marcelo Ribeiro Aluno','marcelo.ribeiro@nossafco.com.br','Elaborador',116,'[{\"id\": 116, \"nome\": \"Elaborador\", \"ultimo_login_em\": null}, {\"id\": 115, \"nome\": \"Participante\", \"ultimo_login_em\": null}, {\"id\": 117, \"nome\": \"TI\", \"ultimo_login_em\": null}]',1,NULL,'2026-08-28 00:55:12','2026-08-31 01:33:05');
+
+/*Table structure for table `responsaveis` */
+
+DROP TABLE IF EXISTS `responsaveis`;
+
+CREATE TABLE `responsaveis` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `participante_id` int NOT NULL,
+  `cargo` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `titulacao` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `apagado_em` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `responsaveis_participante_id_unique` (`participante_id`),
+  KEY `responsaveis_ativo_index` (`ativo`),
+  KEY `responsaveis_apagado_em_index` (`apagado_em`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `responsaveis` */
+
+insert  into `responsaveis`(`id`,`participante_id`,`cargo`,`titulacao`,`ativo`,`criado_em`,`alterado_em`,`apagado_em`) values 
+(1,81,'Professor','Dr.a',1,'2026-08-30 01:02:01','2026-08-30 01:02:01',NULL),
+(2,1,'Instrutor',NULL,1,'2026-08-30 01:04:37','2026-08-30 01:04:37',NULL),
+(3,276,'Mestre','Ms.',1,'2026-08-30 01:05:24','2026-08-30 01:05:24',NULL);
 
 /*Table structure for table `rubricas_participantes` */
 
@@ -16932,22 +17200,45 @@ DROP TABLE IF EXISTS `rubricas_participantes`;
 
 CREATE TABLE `rubricas_participantes` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `rubrica` varchar(50) DEFAULT NULL,
+  `rubrica` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `participante_id` int DEFAULT NULL,
-  `ativo` smallint DEFAULT '1',
-  `criado_em` datetime DEFAULT NULL,
-  `alterado_em` datetime DEFAULT NULL,
+  `ativo` smallint DEFAULT NULL,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apagado_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `rubricas_participantes_participante_id_index` (`participante_id`),
   KEY `rubricas_participantes_ativo_index` (`ativo`),
   KEY `rubricas_participantes_apagado_em_index` (`apagado_em`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `rubricas_participantes` */
 
 insert  into `rubricas_participantes`(`id`,`rubrica`,`participante_id`,`ativo`,`criado_em`,`alterado_em`,`apagado_em`) values 
-(1,'c269b9e521fcb183a1bc87e8e5d8011529046584.png',1,1,'2026-08-28 14:10:23','2026-08-28 14:10:23',NULL);
+(1,'8008b098bcc2cef61225d464450e702864a98842.png',1,1,'2026-08-28 17:15:56','2026-08-28 17:15:56',NULL),
+(2,'70f6a4cf9ac24b7d6c9aab9e037b6d13fe34aefd.png',81,1,'2026-08-28 19:30:05','2026-08-28 19:30:05',NULL),
+(3,'e398b892206ef5667d7576a1e5bd4396a4e02a21.png',276,1,'2026-08-28 19:40:12','2026-08-30 13:44:56',NULL);
+
+/*Table structure for table `sessions` */
+
+DROP TABLE IF EXISTS `sessions`;
+
+CREATE TABLE `sessions` (
+  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_activity` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `sessions_user_id_index` (`user_id`),
+  KEY `sessions_last_activity_index` (`last_activity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `sessions` */
+
+insert  into `sessions`(`id`,`user_id`,`ip_address`,`user_agent`,`payload`,`last_activity`) values 
+('ZMsf29ECBw97yTVuDVoziJOdT9rijoANoK1Vre36',NULL,'127.0.0.1','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:154.0) Gecko/20100101 Firefox/154.0','eyJfdG9rZW4iOiJGM1F3Z0RHODUwZ0J5VXYzSU5BY0JWYjdDNUt4NFR3Z0QyZnBDaWRkIiwiX3ByZXZpb3VzIjp7InVybCI6Imh0dHA6XC9cL2xvY2FsaG9zdDo4MDA2XC8/YnVzY2E9bHVjYSZwYXJ0aWNpcGFudGU9bHVjYSUyMGxvcGVzJTIwbG9ibyIsInJvdXRlIjoiY2VydGlmaWNhZG9zLmluZGV4In0sIl9mbGFzaCI6eyJvbGQiOltdLCJuZXciOltdfX0=',1788141837);
 
 /*Table structure for table `templates` */
 
@@ -16955,24 +17246,62 @@ DROP TABLE IF EXISTS `templates`;
 
 CREATE TABLE `templates` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `nome` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `fundo` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `ativo` smallint DEFAULT '1',
+  `nome` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fundo` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `biblioteca_imagem_id` int unsigned DEFAULT NULL,
+  `fundo_colorido` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cor_fundo` varchar(7) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fundo_colorido_ativo` tinyint(1) NOT NULL DEFAULT '0',
+  `tipo_fundo` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'imagem',
+  `fundo_degrade` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cor_degrade_inicio` varchar(7) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cor_degrade_fim` varchar(7) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `direcao_degrade` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cima_baixo',
+  `ativo` smallint DEFAULT NULL,
   `certificado_a1` int DEFAULT NULL,
   `largura` int DEFAULT NULL,
   `altura` int DEFAULT NULL,
-  `pagina` enum('A4','Carta','Oficio','Personalizado') COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `layout_pagina` enum('Retrato','Paisagem') COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `crido_em` datetime DEFAULT NULL,
-  `alterado_em` datetime DEFAULT NULL,
+  `pagina` enum('A4','Carta','Oficio','Personalizado') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `layout_pagina` enum('Retrato','Paisagem') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `elementos_layout` json DEFAULT NULL,
+  `crido_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apagado_em` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  PRIMARY KEY (`id`),
+  KEY `templates_ativo_index` (`ativo`),
+  KEY `templates_certificado_a1_index` (`certificado_a1`),
+  KEY `templates_apagado_em_index` (`apagado_em`),
+  KEY `templates_biblioteca_imagem_id_index` (`biblioteca_imagem_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `templates` */
 
-insert  into `templates`(`id`,`nome`,`fundo`,`ativo`,`certificado_a1`,`largura`,`altura`,`pagina`,`layout_pagina`,`crido_em`,`alterado_em`,`apagado_em`) values 
-(1,'Template 01','b2bf829aca8b24b5696764238f3f76bf07b6b125.png',1,1,210,297,'Personalizado','Retrato','2026-08-28 14:49:48','2026-08-28 14:53:06',NULL);
+insert  into `templates`(`id`,`nome`,`fundo`,`biblioteca_imagem_id`,`fundo_colorido`,`cor_fundo`,`fundo_colorido_ativo`,`tipo_fundo`,`fundo_degrade`,`cor_degrade_inicio`,`cor_degrade_fim`,`direcao_degrade`,`ativo`,`certificado_a1`,`largura`,`altura`,`pagina`,`layout_pagina`,`elementos_layout`,`crido_em`,`alterado_em`,`apagado_em`) values 
+(1,'template 1','fc719a99f56003fb4f24153daf73046afd3a1e48.png',NULL,'4e767ef8f90ba3cca75c5e085460fe628d97614b.png','#8fd3cb',0,'imagem',NULL,'#ffffff','#000000','cima_baixo',1,1,297,210,'A4','Paisagem','[{\"x\": 127.5, \"y\": 126.9, \"uid\": \"1787938367367-97c2018e1e85f8\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 35.7, \"height\": 21.4, \"italic\": false, \"content\": \"\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 1}, {\"x\": 113.4, \"y\": 136.9, \"uid\": \"1787938372135-1f484c76e542e8\", \"bold\": false, \"type\": \"text\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 70, \"height\": 12, \"italic\": false, \"content\": \"________________________\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 121.4, \"y\": 142.1, \"uid\": \"1787938391071-c4a2b13494f48\", \"bold\": false, \"type\": \"text\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 70, \"height\": 12, \"italic\": false, \"content\": \"Marcelo Ribeiro da Silva\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 44, \"y\": 83.5, \"uid\": \"1787938407840-dc3b38ff7f9f88\", \"bold\": false, \"type\": \"text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 210.7, \"height\": 26.7, \"italic\": false, \"content\": \"Certificamos que Marcelo Ribeiro da Silva concluiu o estágio  asdfasdfasdf asdfasdfasdfasdfasdfasdf asdfasdfasd asdfas dfasdfasd fasdfasdf asdfasdfa asdfa sdfasd fasdfasdf asdfas\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 11.2, \"y\": 56.4, \"uid\": \"1788062458968-2b8993906a7a38\", \"bold\": false, \"type\": \"text\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 70, \"height\": 12, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"source_key\": \"certificado.codigo\", \"font_family\": \"Arial\", \"source_type\": \"dynamic\", \"library_image_id\": null}]','2026-08-28 17:18:47','2026-08-30 05:11:34','2026-08-30 05:11:34'),
+(5,'Liga LEGO 2026','b9b0d8aa12c39205cf8221966d7846e22669bae9.png',NULL,NULL,'#ffffff',0,'imagem',NULL,'#ffffff','#000000','cima_baixo',1,NULL,297,210,'A4','Paisagem','[{\"x\": 101.8, \"y\": 112.1, \"uid\": \"1788067297013-710deaea600ab8\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 3, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}, {\"x\": 227.5, \"y\": 69.7, \"uid\": \"1788067322133-7208b256748288\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 2, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}, {\"x\": 66.6, \"y\": 66.9, \"uid\": \"1788067349780-6ac3e04f7d14c\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 1, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}]','2026-08-30 05:17:30','2026-08-30 05:22:53',NULL),
+(6,'Liga lei',NULL,9,NULL,'#ffffff',0,'biblioteca',NULL,'#ffffff','#000000','cima_baixo',1,NULL,297,210,'A4','Paisagem','[{\"x\": 19.7, \"y\": 78.8, \"uid\": \"1788067825133-8f23325b37e0f\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 1}, {\"x\": 237.2, \"y\": 76.6, \"uid\": \"1788067844475-340248b45223d\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": 3, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"responsible_signature\", \"library_image_id\": null}]','2026-08-30 05:27:57','2026-08-30 05:30:58',NULL),
+(7,'Copex',NULL,NULL,'be8979f8f4f5cc12a65f256ea1bc3dbd8ff89ddb.png','#ffffff',1,'colorido',NULL,'#ffffff','#000000','cima_baixo',1,NULL,297,210,'A4','Paisagem','[{\"x\": 252.1, \"y\": 4.7, \"uid\": \"1788069314777-bc2ab8448f8658\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 12}, {\"x\": 10, \"y\": 10, \"uid\": \"1788069326079-5853320db7d1\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 51.6, \"height\": 23.9, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 2}, {\"x\": 0, \"y\": 9.7, \"uid\": \"1788094893244-42485678210a68\", \"bold\": true, \"type\": \"text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 7.7, \"italic\": false, \"content\": \"FACULDADE DE CIÊNCIAS ODONTOLÓGICAS\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 16.2, \"uid\": \"1788094982918-f5cf17385982d8\", \"bold\": true, \"type\": \"text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 7.7, \"italic\": false, \"content\": \"COORDENADOR DE PESQUISA E EXTENSÃO\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 22.9, \"uid\": \"1788095023627-ccfe766c91f99\", \"bold\": true, \"type\": \"text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 7.7, \"italic\": false, \"content\": \"LIGAS ACADÊMICAS\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 11.6, \"y\": 150.4, \"uid\": \"1788097292085-171cc329381958\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 43.3, \"height\": 42.3, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 13}]','2026-08-30 05:47:29','2026-08-30 13:52:17',NULL),
+(8,'Copex # cópia',NULL,NULL,'fd9732c1a5580f6251196bfde3e49960a9ecbfcf.png','#ffffff',1,'colorido',NULL,'#ffffff','#000000','cima_baixo',1,NULL,297,210,'A4','Paisagem','[{\"x\": 252.1, \"y\": 4.7, \"uid\": \"1788069314777-bc2ab8448f8658\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 40, \"height\": 30, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 12}, {\"x\": 10, \"y\": 10, \"uid\": \"1788069326079-5853320db7d1\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 51.6, \"height\": 23.9, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 2}, {\"x\": 0, \"y\": 9.7, \"uid\": \"1788094893244-42485678210a68\", \"bold\": true, \"type\": \"text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 7.7, \"italic\": false, \"content\": \"FACULDADE DE CIÊNCIAS ODONTOLÓGICAS\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 16.2, \"uid\": \"1788094982918-f5cf17385982d8\", \"bold\": true, \"type\": \"text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 7.7, \"italic\": false, \"content\": \"COORDENADOR DE PESQUISA E EXTENSÃO\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 22.9, \"uid\": \"1788095023627-ccfe766c91f99\", \"bold\": true, \"type\": \"text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 7.7, \"italic\": false, \"content\": \"LIGAS ACADÊMICAS\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 11.6, \"y\": 150.4, \"uid\": \"1788097292085-171cc329381958\", \"bold\": false, \"type\": \"image\", \"align\": \"esquerda\", \"color\": \"#111827\", \"width\": 43.3, \"height\": 42.3, \"italic\": false, \"content\": \"Novo texto\", \"rotation\": 0, \"font_size\": 12, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Arial\", \"source_type\": \"library\", \"library_image_id\": 13}]','2026-08-30 13:53:37','2026-08-30 13:53:37',NULL),
+(9,'Hands On 2026','da34fbdabcaaf6dd94d41e31a8aa1f741bb35bd5.png',NULL,NULL,'#ffffff',0,'imagem',NULL,'#ffffff','#000000','cima_baixo',1,NULL,297,210,'A4','Paisagem','[{\"x\": 18.1, \"y\": 83.8, \"uid\": \"1788107544919-318787dbf21758\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 260.6, \"height\": 41.1, \"italic\": false, \"content\": \"Certificamos que <strong>{{ participante.nome }}</strong> participou do <strong>{{ atividades.nome }} </strong>, ministrador pelo professor Dr. Luiz Manna Neto, com carga horária de 4 horas, realizado no dia 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}, {\"x\": 0, \"y\": 139.2, \"uid\": \"1788107692288-d6c3a3905b1098\", \"bold\": false, \"type\": \"rich_text\", \"align\": \"centralizado\", \"color\": \"#111827\", \"width\": 297, \"height\": 10.6, \"italic\": false, \"content\": \"Montes Claros, 28 de março de 2026.\", \"rotation\": 0, \"font_size\": 20, \"underline\": false, \"rubrica_id\": null, \"source_key\": \"participante.nome\", \"font_family\": \"Verdana\", \"source_type\": \"fixed\", \"library_image_id\": null}]','2026-08-30 16:31:36','2026-08-30 16:38:08',NULL);
+
+/*Table structure for table `users` */
+
+DROP TABLE IF EXISTS `users`;
+
+CREATE TABLE `users` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email_verified_at` timestamp NULL DEFAULT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `remember_token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_email_unique` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/*Data for the table `users` */
 
 /*Table structure for table `variaveis` */
 
@@ -16980,31 +17309,38 @@ DROP TABLE IF EXISTS `variaveis`;
 
 CREATE TABLE `variaveis` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `tipo` enum('imagem','texto') DEFAULT NULL,
-  `imagem` varchar(50) DEFAULT NULL,
-  `texto` text,
+  `nome` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tipo` enum('imagem','texto') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `imagem` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `texto` text COLLATE utf8mb4_unicode_ci,
   `ativo` smallint DEFAULT NULL,
   `pos_x` int DEFAULT NULL,
   `pox_y` int DEFAULT NULL,
   `altura` int DEFAULT NULL,
   `largura` int DEFAULT NULL,
-  `alinhamento` enum('esquerda','direita','centralizado','justificado') DEFAULT NULL,
-  `cor` varchar(15) DEFAULT NULL,
+  `alinhamento` enum('esquerda','direita','centralizado','justificado') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cor` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `centro_x` int DEFAULT NULL,
   `centro_y` int DEFAULT NULL,
-  `criado_em` datetime DEFAULT NULL,
-  `alterado_em` datetime DEFAULT NULL,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `alterado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `apagado_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `variaveis_tipo_index` (`tipo`),
   KEY `variaveis_ativo_index` (`ativo`),
   KEY `variaveis_apagado_em_index` (`apagado_em`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*Data for the table `variaveis` */
 
-insert  into `variaveis`(`id`,`tipo`,`imagem`,`texto`,`ativo`,`pos_x`,`pox_y`,`altura`,`largura`,`alinhamento`,`cor`,`centro_x`,`centro_y`,`criado_em`,`alterado_em`,`apagado_em`) values 
-(1,'imagem',NULL,NULL,1,1,1,1,1,NULL,NULL,1,1,'2026-08-28 13:55:47','2026-08-28 13:58:19',NULL);
+insert  into `variaveis`(`id`,`nome`,`tipo`,`imagem`,`texto`,`ativo`,`pos_x`,`pox_y`,`altura`,`largura`,`alinhamento`,`cor`,`centro_x`,`centro_y`,`criado_em`,`alterado_em`,`apagado_em`) values 
+(1,NULL,'texto',NULL,'Nome da Pessoa',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-28 17:20:39','2026-08-28 17:20:39',NULL),
+(2,NULL,'imagem','7a7250910d141c88ddf08d2c43a0485ccf6ea828.png',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-28 17:26:29','2026-08-28 17:26:29',NULL),
+(3,'Rubrica 2','imagem','f654ffeb01bed89d7c50eca08d369a503fd8e728.png',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-28 18:37:42','2026-08-28 18:41:13',NULL),
+(4,'Logo FCO','imagem','a093bd299dbb7f4292258b977efa2b40be2275ac.png',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-28 19:48:58','2026-08-28 19:48:58',NULL),
+(5,'Logo LEGO','imagem','f60a3345e261ff759af865ed0f7e9d18c3d6db39.png',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-28 19:50:39','2026-08-28 19:50:39',NULL),
+(6,'Título FCO','imagem','fb0eb5d71b9db860cc2b7bcb79e76871a88e6927.png',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-28 19:53:40','2026-08-28 19:53:40',NULL),
+(7,'Assinatura Patrícia','imagem','7c58bdd616e84558d8aaf4f57b780505b5d33ab6.png',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-28 19:57:51','2026-08-28 19:58:11',NULL);
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
