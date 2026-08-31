@@ -9,9 +9,18 @@ use App\Models\RubricaParticipante;
 use App\Models\Template;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Endroid\QrCode\Color\Color;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 
 class TemplateLayoutRenderer
 {
+    public const QR_STYLES = [
+        'classic' => 'Clássico preto',
+        'blue' => 'Azul institucional',
+        'green' => 'Verde',
+    ];
     public const FALLBACK_FONTS = [
         'Arial' => 'DejaVuSans.ttf', 'Helvetica' => 'DejaVuSans.ttf',
         'Verdana' => 'DejaVuSans.ttf', 'Trebuchet MS' => 'DejaVuSans.ttf', 'Tahoma' => 'DejaVuSans.ttf',
@@ -44,7 +53,7 @@ class TemplateLayoutRenderer
                 'font_size'=>min(max((float)($item['font_size']??12),1),300), 'bold'=>(bool)($item['bold']??false),
                 'italic'=>(bool)($item['italic']??false), 'underline'=>(bool)($item['underline']??false),
                 'rotation'=>in_array((int)($item['rotation']??0),[0,90,180,270],true)?(int)($item['rotation']??0):0,
-                'image'=>null, 'text'=>'', 'html'=>'',
+                'image'=>null, 'link'=>null, 'text'=>'', 'html'=>'',
             ];
             if ($type === 'image') {
                 $path = null;
@@ -53,6 +62,13 @@ class TemplateLayoutRenderer
                 if (($item['source_type']??'') === 'responsible_signature') {
                     $signature = $signatures->get((int)($item['rubrica_id']??0));
                     $path = $signature?->signatureExists() ? public_path('certificado/rubricas_participantes/'.$signature->rubrica) : ($context['responsavel']['rubrica_path'] ?? null);
+                }
+                if (($item['source_type']??'') === 'validation_qr') {
+                    $validationUrl = (string) ($context['link_validacao'] ?? '');
+                    if (preg_match('#^https?://[^\s<>]+$#i', $validationUrl)) {
+                        $element['image'] = $this->validationQrDataUri($validationUrl, (string) ($item['qr_style'] ?? 'classic'));
+                        $element['link'] = $validationUrl;
+                    }
                 }
                 if(!$element['image'])$element['image'] = $this->fileDataUri($path);
             } else {
@@ -116,6 +132,22 @@ class TemplateLayoutRenderer
     public function rubricaPath(?RubricaParticipante $rubrica): ?string
     {
         return $rubrica?->signatureExists() ? public_path('certificado/rubricas_participantes/'.$rubrica->rubrica) : null;
+    }
+
+    public function validationQrDataUri(string $url, string $style = 'classic'): string
+    {
+        $colors = [
+            'classic' => new Color(0, 0, 0),
+            'blue' => new Color(13, 71, 161),
+            'green' => new Color(20, 105, 65),
+        ];
+        $qrCode = QrCode::create($url)
+            ->setSize(360)
+            ->setMargin(16)
+            ->setErrorCorrectionLevel(ErrorCorrectionLevel::High)
+            ->setForegroundColor($colors[$style] ?? $colors['classic']);
+
+        return (new PngWriter())->write($qrCode)->getDataUri();
     }
 
     private function fileDataUri(?string $path): ?string

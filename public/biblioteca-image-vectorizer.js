@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
  const code=document.getElementById('svgCode'),preview=document.getElementById('vectorPreview'),panel=document.getElementById('vectorColorPanel'),undoDelete=document.getElementById('undoVectorDelete'),alertBox=document.getElementById('vectorAlert'),colors=document.getElementById('vectorColors'),detail=document.getElementById('vectorDetail'),smoothing=document.getElementById('vectorSmoothing'),smoothingValue=document.getElementById('vectorSmoothingValue'),ns='http://www.w3.org/2000/svg';
  if(!code||!preview)return;
+ if(colors&&!Array.from(colors.options).some(option=>option.value==='1'))colors.insertBefore(new Option('1','1'),colors.firstChild);
  let svg=null,selected=null,scale=1,offsetX=0,offsetY=0,zoomDrag=null,panDrag=null,suppressClick=false,deletedParts=[];
  const showError=message=>{alertBox.textContent=message;alertBox.classList.remove('d-none')},clearError=()=>alertBox.classList.add('d-none');
  const applyTransform=()=>{if(svg)svg.style.transform=`translate(${offsetX}px,${offsetY}px) scale(${scale})`};

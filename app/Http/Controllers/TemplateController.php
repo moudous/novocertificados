@@ -114,7 +114,7 @@ class TemplateController extends Controller
 
         return redirect()->route('templates.edit', $copy)->with('status', 'Template duplicado. Revise o nome e salve as alterações.');
     }
-    public function builder(Request $request, Template $template): View
+    public function builder(Request $request, Template $template, TemplateLayoutRenderer $renderer): View
     {
         $uploadedFonts = FonteLayout::query()->orderBy('nome')->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'url' => $font->url()]);
         $fallbackFonts = collect(TemplateLayoutRenderer::FALLBACK_FONTS)->map(fn (string $file, string $name): array => [
@@ -138,6 +138,7 @@ class TemplateController extends Controller
             'previewUrl'=>route('templates.builder.preview',$template),'fontUploadUrl'=>route('templates.builder.fonts.store',$template),
             'imageStoreUrl'=>route('templates.builder.images.store',$template),'imageDeleteUrl'=>route('templates.builder.images.destroy',[$template,'__IMAGE__']),
             'validationPreviewUrl'=>route('certificadosnovos.public.pdf','TESTE-000001'),
+            'qrPreviews'=>collect(TemplateLayoutRenderer::QR_STYLES)->mapWithKeys(fn(string $label,string $style):array=>[$style=>$renderer->validationQrDataUri(route('certificadosnovos.public.pdf','TESTE-000001'),$style)])->all(),
         ];
         return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'templateImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures', 'builderConfig'));
     }
@@ -160,7 +161,8 @@ class TemplateController extends Controller
             'elementos' => ['present', 'array', 'max:200'],
             'elementos.*.uid' => ['required', 'string', 'max:80'],
             'elementos.*.type' => ['required', Rule::in(['text', 'rich_text', 'image'])],
-            'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'validation_link', 'library', 'responsible_signature', 'template_image'])],
+            'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'validation_link', 'validation_qr', 'library', 'responsible_signature', 'template_image'])],
+            'elementos.*.qr_style' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::QR_STYLES))],
             'elementos.*.source_key' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::SOURCES))],
             'elementos.*.library_image_id' => ['nullable', 'integer', Rule::exists('biblioteca_imagens', 'id')->whereNull('apagado_em')],
             'elementos.*.template_image_id' => ['nullable', 'integer', Rule::exists('imagens_template', 'id')->where(fn($query)=>$query->where('template_id',$template->id))],
