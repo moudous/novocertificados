@@ -72,6 +72,7 @@ class CertificadoA1Controller extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data=$this->validated($request);unset($data['arquivo_certificado'],$data['senha_certificado']);$data=array_merge($data,$this->storeCertificate($request));
+        $data['criado_por'] = $this->sessionUserId($request);
         $certificado = CertificadoA1::query()->create($data);
 
         return redirect()->route('certificados_a1.show', $certificado)
@@ -139,5 +140,11 @@ class CertificadoA1Controller extends Controller
         if(!$valid||empty($certificates['cert']))throw ValidationException::withMessages(['arquivo_certificado'=>'Não foi possível abrir o certificado. Verifique o arquivo e a senha informada.']);
         $details=openssl_x509_parse($certificates['cert'])?:[];$subject=(array)($details['subject']??[]);$holder=$subject['CN']??$subject['O']??null;
         return ['titular'=>$holder,'impressao_digital'=>openssl_x509_fingerprint($certificates['cert'],'sha256')?:null,'valido_de'=>isset($details['validFrom_time_t'])?date('Y-m-d H:i:s',$details['validFrom_time_t']):null,'valido_ate'=>isset($details['validTo_time_t'])?date('Y-m-d H:i:s',$details['validTo_time_t']):null];
+    }
+
+    private function sessionUserId(Request $request): ?int
+    {
+        $id = (int) $request->session()->get('gi_context.usuario.id', 0);
+        return $id > 0 ? $id : null;
     }
 }

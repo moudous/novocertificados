@@ -204,6 +204,7 @@ class ParticipanteController extends Controller
                     'cpf' => data_get($data, 'novo.cpf'),
                     'ativo' => 1,
                     'email_ficticio' => 0,
+                    'criado_por' => $this->sessionUserId($request),
                     'criado_em' => $now,
                     'atualizado_em' => $now,
                 ]);
@@ -342,7 +343,9 @@ class ParticipanteController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $participante = Participante::query()->create($this->validated($request));
+        $data = $this->validated($request);
+        $data['criado_por'] = $this->sessionUserId($request);
+        $participante = Participante::query()->create($data);
 
         return redirect()->route('participantes.show', $this->routeParameters($participante))
             ->with('status', 'Participante cadastrado com sucesso.');
@@ -419,6 +422,12 @@ class ParticipanteController extends Controller
     private function routeParameters(Participante $participante): array
     {
         return ['id' => $participante->id, 'nome' => $participante->nome];
+    }
+
+    private function sessionUserId(Request $request): ?int
+    {
+        $id = (int) $request->session()->get('gi_context.usuario.id', 0);
+        return $id > 0 ? $id : null;
     }
 
     private function selectedIds(Request $request): array

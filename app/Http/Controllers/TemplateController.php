@@ -63,17 +63,30 @@ class TemplateController extends Controller
     public function certificadosA1(Request $request): JsonResponse
     {
         $permissions = (array) $request->session()->get('gi_context.permissoes', []);
-        abort_unless(in_array('template.criar', $permissions, true) || in_array('template.editar', $permissions, true), 403);
+        $editing = $request->integer('template_id') > 0;
+        $ownOnly = $editing
+            && ! in_array('templates.certificado_a1.editar', $permissions, true)
+            && in_array('templates.certificado_a1.editar_proprio', $permissions, true);
+        abort_unless(
+            $editing
+                ? in_array('templates.certificado_a1.editar', $permissions, true) || $ownOnly
+                : in_array('templates.certificado_a1.inserir', $permissions, true),
+            403,
+        );
         $search = trim((string) $request->input('q', ''));
-        $items = CertificadoA1::query()->when($search !== '', fn (Builder $query): Builder => $query->where(fn (Builder $filter): Builder => $filter->where('nome', 'like', "%{$search}%")->orWhere('id', 'like', "%{$search}%")))
+        $items = CertificadoA1::query()
+            ->when($ownOnly, fn (Builder $query): Builder => $query->where('criado_por', $this->sessionUserId($request)))
+            ->when($search !== '', fn (Builder $query): Builder => $query->where(fn (Builder $filter): Builder => $filter->where('nome', 'like', "%{$search}%")->orWhere('id', 'like', "%{$search}%")))
             ->orderBy('nome')->paginate(20, ['id', 'nome'], 'page', max((int) $request->input('page', 1), 1));
         return response()->json(['results' => collect($items->items())->map(fn (CertificadoA1 $item): array => ['id' => $item->id, 'text' => "#{$item->id} · ".($item->nome ?: 'Sem nome')])->values(), 'pagination' => ['more' => $items->hasMorePages()]]);
     }
 
-    public function create(): View { return view('templates.form', ['template' => new Template()]); }
+    public function create(Request $request): View { return view('templates.form', ['template' => new Template(), 'canManageCertificate' => $this->hasPermission($request, 'templates.certificado_a1.inserir')]); }
     public function store(Request $request): RedirectResponse
     {
         $data = $this->normalizePage($this->validated($request));
+        if (filled($data['certificado_a1'] ?? null)) abort_unless($this->hasPermission($request, 'templates.certificado_a1.inserir'), 403);
+        $data['criado_por'] = $this->sessionUserId($request);
         if ($request->hasFile('fundo')) $data['fundo'] = $this->storeBackground($request);
         $data['fundo_colorido_ativo'] = ($data['tipo_fundo'] ?? 'imagem') === 'colorido';
         if (($data['tipo_fundo'] ?? 'imagem') === 'colorido') {
@@ -89,13 +102,15 @@ class TemplateController extends Controller
         return redirect()->route('templates.show', $template)->with('status', 'Template cadastrado com sucesso.');
     }
     public function show(Template $template): View { $template->load('certificadoA1'); return view('templates.show', compact('template')); }
-    public function edit(Template $template): View { $template->load(['certificadoA1','imagemBiblioteca']); return view('templates.form', compact('template')); }
-    public function duplicate(Template $template): RedirectResponse
+    public function edit(Request $request, Template $template): View { $template->load(['certificadoA1','imagemBiblioteca']); $canManageCertificate=$this->canEditCertificate($request,$template->certificadoA1); return view('templates.form', compact('template','canManageCertificate')); }
+    public function duplicate(Request $request, Template $template): RedirectResponse
     {
+        abort_unless($this->hasPermission($request, 'templates.duplicar') || ($this->hasPermission($request, 'templates._duplicar_proprio') && $template->criado_por === $this->sessionUserId($request)), 403);
         $createdFiles = [];
         try {
-            $copy = DB::transaction(function () use ($template, &$createdFiles): Template {
+            $copy = DB::transaction(function () use ($template, $request, &$createdFiles): Template {
                 $copy = $template->replicate();
+                $copy->criado_por = $this->sessionUserId($request);
                 $baseName = filled($template->nome) ? (string) $template->nome : 'Template';
                 $copy->nome = Str::limit($baseName, 90, '').' # cópia';
                 foreach (['fundo', 'fundo_colorido', 'fundo_degrade'] as $attribute) {
@@ -249,6 +264,13 @@ class TemplateController extends Controller
     public function update(Request $request, Template $template): RedirectResponse
     {
         $data = $this->normalizePage($this->validated($request)); $old = $template->fundo; $oldColored = $template->fundo_colorido; $oldGradient = $template->fundo_degrade;
+        if (! $this->canEditCertificate($request, $template->certificadoA1)) $data['certificado_a1'] = $template->certificado_a1;
+        $newCertificateId = filled($data['certificado_a1'] ?? null) ? (int) $data['certificado_a1'] : null;
+        if ($newCertificateId !== $template->certificado_a1) {
+            $oldCertificate = $template->certificadoA1;
+            $newCertificate = $newCertificateId ? CertificadoA1::findOrFail($newCertificateId) : null;
+            abort_unless($this->canEditCertificate($request, $oldCertificate) && $this->canEditCertificate($request, $newCertificate), 403);
+        }
         $type = $data['tipo_fundo'] ?? 'imagem'; $data['fundo_colorido_ativo'] = $type === 'colorido';
         if ($request->hasFile('fundo')) { $data['fundo'] = $this->storeBackground($request); $this->removeBackground($old); }
         elseif ($request->boolean('remover_fundo')) { $this->removeBackground($old); $data['fundo'] = null; }
@@ -284,6 +306,21 @@ class TemplateController extends Controller
             'ativo' => ['required','boolean'], 'certificado_a1' => ['nullable','integer',Rule::exists('certificados_a1','id')->whereNull('apagado_em')],
             'largura' => ['nullable','integer','min:1'], 'altura' => ['nullable','integer','min:1'], 'pagina' => ['nullable',Rule::in(['A4','Carta','Oficio','Personalizado'])], 'layout_pagina' => ['nullable',Rule::in(['Retrato','Paisagem'])],
         ]);
+    }
+    private function hasPermission(Request $request, string $permission): bool
+    {
+        return in_array($permission, (array) $request->session()->get('gi_context.permissoes', []), true);
+    }
+    private function canEditCertificate(Request $request, ?CertificadoA1 $certificate): bool
+    {
+        if ($this->hasPermission($request, 'templates.certificado_a1.editar')) return true;
+        return $this->hasPermission($request, 'templates.certificado_a1.editar_proprio')
+            && ($certificate === null || $certificate->criado_por === $this->sessionUserId($request));
+    }
+    private function sessionUserId(Request $request): ?int
+    {
+        $id = (int) $request->session()->get('gi_context.usuario.id', 0);
+        return $id > 0 ? $id : null;
     }
     private function normalizePage(array $data): array
     {

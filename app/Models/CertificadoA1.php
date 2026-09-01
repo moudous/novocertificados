@@ -16,12 +16,13 @@ class CertificadoA1 extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome','arquivo','nome_arquivo_original','senha','titular','impressao_digital','valido_de','valido_ate'];
+    protected $fillable = ['nome','criado_por','arquivo','nome_arquivo_original','senha','titular','impressao_digital','valido_de','valido_ate'];
 
     protected function casts(): array
     {
         return [
             'id' => 'integer',
+            'criado_por' => 'integer',
             'senha' => 'encrypted',
             'valido_de' => 'datetime',
             'valido_ate' => 'datetime',

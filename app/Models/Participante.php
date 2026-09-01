@@ -18,7 +18,7 @@ class Participante extends Model
     public const UPDATED_AT = 'atualizado_em';
     public const DELETED_AT = 'excluido_em';
 
-    protected $fillable = ['nome', 'email', 'sexo', 'grupo', 'ativo', 'cpf'];
+    protected $fillable = ['nome', 'email', 'sexo', 'grupo', 'ativo', 'cpf', 'criado_por'];
 
     protected $hidden = ['email_ficticio'];
 
@@ -26,6 +26,7 @@ class Participante extends Model
     {
         return [
             'id' => 'integer',
+            'criado_por' => 'integer',
             'ativo' => 'boolean',
             'criado_em' => 'datetime',
             'atualizado_em' => 'datetime',

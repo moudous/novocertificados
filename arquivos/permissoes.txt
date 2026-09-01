@@ -76,6 +76,11 @@ template.listar
 template.visualizar
 template.criar
 template.editar
+templates.duplicar
+templates._duplicar_proprio
+templates.certificado_a1.inserir
+templates.certificado_a1.editar
+templates.certificado_a1.editar_proprio
 template.excluir
 template.excluir_definitivamente
 
@@ -85,6 +90,10 @@ assinaturas.criar
 assinaturas.editar
 assinaturas.excluir
 assinaturas.excluir_definitivamente
+
+emissoes.participantes
+emissoes.inserir_participantes
+emissoes.inserir_participantes_proprios
 
 novos_certificados.listar
 novos_certificados.participantes

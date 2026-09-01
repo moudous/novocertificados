@@ -222,7 +222,7 @@ Route::prefix('templates')->name('templates.')->group(function (): void {
     Route::get('/fontes-padrao/{family}', [TemplateController::class, 'fallbackFont'])->middleware('gi.permission:template.editar')->name('fallback-font');
     Route::get('/criar', [TemplateController::class, 'create'])->middleware('gi.permission:template.criar')->name('create');
     Route::post('/', [TemplateController::class, 'store'])->middleware('gi.permission:template.criar')->name('store');
-    Route::post('/{template}/duplicar', [TemplateController::class, 'duplicate'])->whereNumber('template')->middleware(['gi.permission:template.criar', 'gi.permission:template.editar'])->name('duplicate');
+    Route::post('/{template}/duplicar', [TemplateController::class, 'duplicate'])->whereNumber('template')->name('duplicate');
     Route::get('/{template}/construtor', [TemplateController::class, 'builder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder');
     Route::put('/{template}/construtor', [TemplateController::class, 'saveBuilder'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.save');
     Route::post('/{template}/construtor/preview-pdf', [TemplateController::class, 'previewPdf'])->whereNumber('template')->middleware('gi.permission:template.editar')->name('builder.preview');
@@ -276,9 +276,9 @@ Route::prefix('emissoes')->name('emissoes.')->group(function (): void {
     Route::post('/',[NovoCertificadoController::class,'store'])->middleware('gi.permission:emissoes.criar')->name('store');
     Route::get('/{certificado}/participantes/opcoes',[NovoCertificadoController::class,'participantOptions'])->whereNumber('certificado')->name('participantes.opcoes');
     Route::get('/{certificado}/participantes',[NovoCertificadoController::class,'participants'])->whereNumber('certificado')->middleware('gi.permission:emissoes.participantes')->name('participantes');
-    Route::post('/{certificado}/participantes',[NovoCertificadoController::class,'addParticipants'])->whereNumber('certificado')->middleware('gi.permission:emissoes.inserir_participantes')->name('participantes.store');
-    Route::post('/{certificado}/participantes/analisar-planilha',[NovoCertificadoController::class,'analyzeParticipantSpreadsheet'])->whereNumber('certificado')->middleware('gi.permission:emissoes.inserir_participantes')->name('participantes.spreadsheet.analyze');
-    Route::post('/{certificado}/participantes/importar-planilha',[NovoCertificadoController::class,'importParticipantSpreadsheet'])->whereNumber('certificado')->middleware('gi.permission:emissoes.inserir_participantes')->name('participantes.spreadsheet.import');
+    Route::post('/{certificado}/participantes',[NovoCertificadoController::class,'addParticipants'])->whereNumber('certificado')->name('participantes.store');
+    Route::post('/{certificado}/participantes/analisar-planilha',[NovoCertificadoController::class,'analyzeParticipantSpreadsheet'])->whereNumber('certificado')->name('participantes.spreadsheet.analyze');
+    Route::post('/{certificado}/participantes/importar-planilha',[NovoCertificadoController::class,'importParticipantSpreadsheet'])->whereNumber('certificado')->name('participantes.spreadsheet.import');
     Route::post('/{certificado}/gerar',[NovoCertificadoController::class,'generate'])->whereNumber('certificado')->middleware('gi.permission:emissoes.gerar_pdfs')->name('generate');
     Route::post('/{certificado}/participantes/{item}/gerar',[NovoCertificadoController::class,'generateParticipant'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.gerar_pdfs')->name('participantes.generate');
     Route::post('/{certificado}/participantes/{item}/gerar-img',[NovoCertificadoController::class,'generateParticipantImage'])->whereNumber(['certificado','item'])->middleware('gi.permission:emissoes.gerar_pdfs')->name('participantes.generate-image');
