@@ -65,7 +65,16 @@ class NovoCertificadoController extends Controller
             ->orderBy('nome')->paginate(20, ['id', 'nome'], 'page', max((int) $request->input('page', 1), 1));
         return response()->json(['results' => collect($items->items())->map(fn (Atividade $atividade): array => ['id' => $atividade->id, 'text' => $atividade->nome])->values(), 'pagination' => ['more' => $items->hasMorePages()]]);
     }
-    public function create(Request $request): View { $certificado=new NovoCertificado(['template_id'=>$request->integer('template_id')?:null]);if($certificado->template_id)$certificado->setRelation('template',Template::find($certificado->template_id));return view('emissoes.form',$this->formData($certificado)); }
+    public function create(Request $request): View
+    {
+        $templateId = $request->integer('template_id') ?: null;
+        $certificado = new NovoCertificado([
+            'template_id' => $templateId,
+            'nome' => $templateId ? $this->suggestedEmissionName($templateId) : null,
+        ]);
+        if ($templateId) $certificado->setRelation('template', Template::find($templateId));
+        return view('emissoes.form', $this->formData($certificado));
+    }
     public function store(Request $request): RedirectResponse { $certificado=NovoCertificado::query()->create($this->validated($request)); return redirect()->route('emissoes.show',$certificado)->with('status','Novo certificado cadastrado com sucesso.'); }
     public function show(NovoCertificado $certificado): View { $certificado->load(['certificadoAntigo.atividade','template'])->loadCount('participantes'); return view('emissoes.show',compact('certificado')); }
     public function edit(NovoCertificado $certificado): View { $certificado->load(['certificadoAntigo.atividade','template','atividade']); return view('emissoes.form',$this->formData($certificado)); }
@@ -185,7 +194,14 @@ class NovoCertificadoController extends Controller
             'atividade_id.exists' => 'A atividade selecionada não pertence ao evento informado.',
         ]);
     }
-    private function formData(NovoCertificado $certificado): array { return compact('certificado')+['events'=>Evento::where('ativo',true)->orderBy('nome')->get(),'responsibles'=>Responsavel::with('participante')->where('ativo',true)->orderBy('id')->get(),'signatures'=>RubricaParticipante::with('participante')->where('ativo',true)->whereHas('participante.responsavel',fn(Builder $q)=>$q->where('ativo',true))->get()]; }
+    private function formData(NovoCertificado $certificado): array { return compact('certificado')+['events'=>Evento::where('ativo',true)->orderBy('nome')->get()]; }
+    private function suggestedEmissionName(int $templateId): string
+    {
+        $query = NovoCertificado::withTrashed()->where('template_id', $templateId);
+        $number = (clone $query)->count() + 1;
+        while ((clone $query)->where('nome', 'Emissão #'.$number)->exists()) $number++;
+        return 'Emissão #'.$number;
+    }
     private function authorizeEditor(Request $request): void { $p=(array)$request->session()->get('gi_context.permissoes',[]); abort_unless(in_array('emissoes.criar',$p,true)||in_array('emissoes.editar',$p,true),403); }
     private function authorizeParticipantInsertion(Request $request): bool { $p=(array)$request->session()->get('gi_context.permissoes',[]);if(in_array('emissoes.inserir_participantes',$p,true))return false;abort_unless(in_array('emissoes.inserir_participantes_proprios',$p,true),403);return true; }
     private function importSessionKey(NovoCertificado $certificado): string { return 'emissoes.'.$certificado->id.'.participant_import'; }
