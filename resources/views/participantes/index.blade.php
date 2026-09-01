@@ -9,6 +9,9 @@
 <div class="mb-4 d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div><h1 class="page-title">Participantes</h1><p class="page-description mb-0">Gerencie os participantes cadastrados.</p></div>
     <div class="d-flex flex-wrap gap-2">
+        @if(in_array('desfazerunificacao.listar', $permissions, true))
+            <a href="{{ route('desfazerunificacao.index') }}" class="btn btn-outline-secondary"><i class="bi bi-clock-history me-1"></i>Histórico de unificações</a>
+        @endif
         @if(in_array('participantes.editar', $permissions, true) && in_array('participantes.excluir_definitivamente', $permissions, true) && in_array('certificados.editar', $permissions, true))
             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#mergeParticipantsModal"><i class="bi bi-people-fill me-1"></i>Unificar participantes</button>
         @endif
@@ -40,14 +43,14 @@
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
-                    <strong>Como funciona:</strong> escolha um participante existente abaixo ou crie um novo participante para receber a unificação. Todos os certificados dos participantes selecionados terão o mesmo <code>participanteId</code> e o campo <code>nome</code> atualizado. Depois, os participantes de origem que ficarem sem certificados serão removidos definitivamente.
+                    <strong>Como funciona:</strong> escolha um participante existente abaixo ou crie um novo participante para receber a unificação. Os certificados legados e novos serão transferidos para ele. Depois, os participantes de origem que ficarem sem vínculos serão removidos definitivamente.
                 </div>
                 <div id="mergeParticipantsFeedback" class="alert d-none" role="alert"></div>
                 <div id="mergeParticipantsLoading" class="text-center py-4"><span class="spinner-border text-primary" aria-hidden="true"></span><div class="mt-2">Carregando participantes selecionados...</div></div>
                 <div id="mergeParticipantsContent" class="d-none">
                     <div class="table-responsive">
                         <table class="table table-bordered align-middle mb-0">
-                            <thead class="table-light"><tr><th class="text-center">#</th><th>ID</th><th>Nome</th><th>E-mail</th><th>CPF</th><th class="text-end">Certificados</th></tr></thead>
+                            <thead class="table-light"><tr><th class="text-center">#</th><th>ID</th><th>Nome</th><th>E-mail</th><th>CPF</th><th class="text-end">Certificados<br>legados</th><th class="text-end">Novos<br>certificados</th></tr></thead>
                             <tbody id="mergeParticipantsRows"></tbody>
                         </table>
                     </div>
@@ -93,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const csrfToken = @json(csrf_token());
     const modalElement = document.getElementById('mergeParticipantsModal');
     const mergeModal = modalElement ? bootstrap.Modal.getOrCreateInstance(modalElement) : null;
-    let mergeCertificateTotal = 0;
+    let mergeLegacyCertificateTotal = 0;
+    let mergeNewCertificateTotal = 0;
     document.getElementById('participantesTable').addEventListener('change', async event => {
         const checkbox = event.target.closest('.participante-selecao');
         if (!checkbox) return;
@@ -161,13 +165,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(@json(route('participantes.merge.data', [], false)), {credentials: 'same-origin', headers: {'Accept': 'application/json'}});
                 const payload = await response.json();
                 if (!response.ok) throw new Error(payload.message || 'Não foi possível carregar a seleção.');
-                mergeCertificateTotal = payload.total_certificados;
+                mergeLegacyCertificateTotal = payload.total_certificados_legados;
+                mergeNewCertificateTotal = payload.total_certificados_novos;
                 rows.innerHTML = payload.participantes.map((participant, index) => `<tr>
                     <td class="text-center"><input class="form-check-input merge-target" type="radio" name="merge_target" value="${participant.id}" aria-label="Unificar com ${escapeHtml(participant.nome)}"></td>
-                    <td>${participant.id}</td><td>${escapeHtml(participant.nome)}</td><td>${escapeHtml(participant.email)}</td><td>${escapeHtml(participant.cpf)}</td><td class="text-end fw-semibold">${participant.certificados}</td>
+                    <td>${participant.id}</td><td>${escapeHtml(participant.nome)}</td><td>${escapeHtml(participant.email)}</td><td>${escapeHtml(participant.cpf)}</td><td class="text-end fw-semibold">${participant.certificados_legados}</td><td class="text-end fw-semibold">${participant.certificados_novos}</td>
                 </tr>`).join('') + `<tr class="table-primary">
                     <td class="text-center"><input class="form-check-input merge-target" type="radio" name="merge_target" value="new" aria-label="Criar novo participante"></td>
-                    <td>Novo</td><td><input id="mergeNewName" class="form-control" maxlength="100" placeholder="Nome do novo participante" disabled></td><td><input id="mergeNewEmail" type="email" class="form-control" maxlength="150" placeholder="E-mail" disabled></td><td><input id="mergeNewCpf" class="form-control" maxlength="11" inputmode="numeric" placeholder="CPF (11 números)" disabled></td><td class="text-end fw-bold">${mergeCertificateTotal}</td>
+                    <td>Novo</td><td><input id="mergeNewName" class="form-control" maxlength="100" placeholder="Nome do novo participante" disabled></td><td><input id="mergeNewEmail" type="email" class="form-control" maxlength="150" placeholder="E-mail" disabled></td><td><input id="mergeNewCpf" class="form-control" maxlength="11" inputmode="numeric" placeholder="CPF (11 números)" disabled></td><td class="text-end fw-bold">${mergeLegacyCertificateTotal}</td><td class="text-end fw-bold">${mergeNewCertificateTotal}</td>
                 </tr>`;
                 if (!payload.participantes.length) showFeedback('Nenhum participante válido está selecionado.', 'warning');
                 loading.classList.add('d-none'); content.classList.remove('d-none');
@@ -207,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const payload = await response.json();
                 if (!response.ok) throw new Error(payload.message || Object.values(payload.errors || {})[0]?.[0] || 'Não foi possível unificar os participantes.');
-                showFeedback(`${payload.message} ${payload.certificados_atualizados} certificado(s) atualizado(s) e ${payload.participantes_removidos} participante(s) removido(s).`, 'success');
+                showFeedback(`${payload.message} ${payload.certificados_legados_atualizados} certificado(s) legado(s), ${payload.certificados_novos_atualizados} certificado(s) novo(s) transferido(s) e ${payload.participantes_removidos} participante(s) removido(s).`, 'success');
                 table.ajax.reload(null, false);
                 setTimeout(() => mergeModal.hide(), 1200);
             } catch (error) {

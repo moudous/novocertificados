@@ -16,6 +16,7 @@ use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\AssinaturaTemplateController;
 use App\Http\Controllers\NovoCertificadoController;
 use App\Http\Controllers\CertificadoNovoController;
+use App\Http\Controllers\DesfazerUnificacaoController;
 use App\Services\GiPessoaSynchronizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -92,6 +93,13 @@ Route::prefix('participantes')->name('participantes.')->group(function (): void 
     Route::delete('/{id}/{nome}', [ParticipanteController::class, 'destroy'])->whereNumber('id')->middleware('gi.permission:participantes.excluir')->name('destroy');
     Route::patch('/{id}/{nome}/restaurar', [ParticipanteController::class, 'restore'])->whereNumber('id')->middleware('gi.permission:participantes.restaurar')->name('restore');
     Route::delete('/{id}/{nome}/definitivo', [ParticipanteController::class, 'forceDestroy'])->whereNumber('id')->middleware('gi.permission:participantes.excluir_definitivamente')->name('force-destroy');
+});
+
+Route::prefix('desfazerunificacao')->name('desfazerunificacao.')->group(function (): void {
+    Route::get('/', [DesfazerUnificacaoController::class, 'index'])->middleware('gi.permission:desfazerunificacao.listar')->name('index');
+    Route::get('/dados', [DesfazerUnificacaoController::class, 'data'])->middleware('gi.permission:desfazerunificacao.listar')->name('data');
+    Route::get('/{unificacao}', [DesfazerUnificacaoController::class, 'show'])->whereNumber('unificacao')->middleware('gi.permission:desfazerunificacao.visualizar')->name('show');
+    Route::post('/{unificacao}/desfazer', [DesfazerUnificacaoController::class, 'undo'])->whereNumber('unificacao')->middleware('gi.permission:desfazerunificacao.desfazer')->name('undo');
 });
 
 Route::prefix('eventos')->name('eventos.')->group(function (): void {

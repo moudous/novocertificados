@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Participante;
+use App\Services\UnificationHistoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -133,11 +134,16 @@ class ParticipanteController extends Controller
         $validIds = $participants->pluck('id')->map(fn ($id): int => (int) $id)->all();
         $request->session()->put('selecao_participantes', $validIds);
 
-        $certificateCounts = DB::table('certificados')
+        $legacyCertificateCounts = DB::table('certificados')
             ->whereIn('participanteId', $validIds)
             ->selectRaw('participanteId, count(*) as total')
             ->groupBy('participanteId')
             ->pluck('total', 'participanteId');
+        $newCertificateCounts = DB::table('lista_participantes')
+            ->whereIn('participante_id', $validIds)
+            ->selectRaw('participante_id, count(*) as total')
+            ->groupBy('participante_id')
+            ->pluck('total', 'participante_id');
 
         return response()->json([
             'participantes' => $participants->map(fn (Participante $participant): array => [
@@ -145,13 +151,15 @@ class ParticipanteController extends Controller
                 'nome' => $participant->nome,
                 'email' => $participant->email,
                 'cpf' => $participant->cpf,
-                'certificados' => (int) ($certificateCounts[$participant->id] ?? 0),
+                'certificados_legados' => (int) ($legacyCertificateCounts[$participant->id] ?? 0),
+                'certificados_novos' => (int) ($newCertificateCounts[$participant->id] ?? 0),
             ]),
-            'total_certificados' => (int) $certificateCounts->sum(),
+            'total_certificados_legados' => (int) $legacyCertificateCounts->sum(),
+            'total_certificados_novos' => (int) $newCertificateCounts->sum(),
         ]);
     }
 
-    public function merge(Request $request): JsonResponse
+    public function merge(Request $request, UnificationHistoryService $history): JsonResponse
     {
         $data = $request->validate([
             'destino_tipo' => ['required', 'in:existente,novo'],
@@ -166,7 +174,7 @@ class ParticipanteController extends Controller
             throw ValidationException::withMessages(['selecao' => 'Selecione ao menos um participante.']);
         }
 
-        $result = DB::transaction(function () use ($data, $selectedIds): array {
+        $result = DB::transaction(function () use ($data, $selectedIds, $history, $request): array {
             $participants = DB::table('participantes')
                 ->whereIn('id', $selectedIds)
                 ->whereNull('excluido_em')
@@ -176,6 +184,9 @@ class ParticipanteController extends Controller
             if ($participants->count() !== count($selectedIds)) {
                 throw ValidationException::withMessages(['selecao' => 'A seleção mudou. Reabra a unificação e tente novamente.']);
             }
+
+            $before = $history->capture($selectedIds);
+            $targetCreated = $data['destino_tipo'] === 'novo';
 
             if ($data['destino_tipo'] === 'existente') {
                 $targetId = (int) ($data['destino_id'] ?? 0);
@@ -198,7 +209,9 @@ class ParticipanteController extends Controller
                 ]);
             }
 
-            $certificatesUpdated = DB::table('certificados')
+            $sourceIds = collect($selectedIds)->reject(fn (int $id): bool => $id === $targetId)->values()->all();
+            $legacyCertificatesUpdated = DB::table('certificados')->whereIn('participanteId', $sourceIds)->count();
+            DB::table('certificados')
                 ->whereIn('participanteId', $selectedIds)
                 ->update([
                     'participanteId' => $targetId,
@@ -206,15 +219,110 @@ class ParticipanteController extends Controller
                     'atualizado_em' => now(),
                 ]);
 
+            $newRows = DB::table('lista_participantes')
+                ->whereIn('participante_id', $selectedIds)
+                ->lockForUpdate()
+                ->get();
+            $newCertificatesUpdated = $newRows->whereIn('participante_id', $sourceIds)->count();
+
+            foreach ($newRows->groupBy('novo_certificado_id') as $emissionId => $rows) {
+                $generated = $rows->filter(fn (object $row): bool => collect([
+                    $row->codigo ?? null,
+                    $row->codigo_img ?? null,
+                    $row->arquivo_pdf ?? null,
+                    $row->arquivo_img ?? null,
+                ])->contains(fn ($value): bool => filled($value)));
+
+                if ($generated->count() > 1) {
+                    throw ValidationException::withMessages([
+                        'selecao' => "A emissão #{$emissionId} possui mais de um certificado PDF/IMG gerado para os participantes selecionados. A unificação foi cancelada para evitar perda de arquivos.",
+                    ]);
+                }
+
+                $keeper = $generated->first()
+                    ?? $rows->firstWhere('participante_id', $targetId)
+                    ?? $rows->first();
+                $discardIds = $rows->pluck('id')->reject(fn ($id): bool => (int) $id === (int) $keeper->id)->values();
+
+                if ($discardIds->isNotEmpty()) {
+                    DB::table('novos_certificados')
+                        ->whereIn('lista_participantes_id', $discardIds)
+                        ->update(['lista_participantes_id' => $keeper->id]);
+                    DB::table('lista_participantes')->whereIn('id', $discardIds)->delete();
+                }
+
+                if ((int) $keeper->participante_id !== $targetId) {
+                    DB::table('lista_participantes')->where('id', $keeper->id)->update([
+                        'participante_id' => $targetId,
+                        'alterado_em' => now(),
+                    ]);
+                }
+            }
+
+            DB::table('rubricas_participantes')->whereIn('participante_id', $sourceIds)->update([
+                'participante_id' => $targetId,
+                'alterado_em' => now(),
+            ]);
+            DB::table('assinaturas_template')->whereIn('participante_id', $sourceIds)->update([
+                'participante_id' => $targetId,
+                'alterado_em' => now(),
+            ]);
+
+            $testRows = DB::table('participantes_de_teste')->whereIn('participante_id', $selectedIds)->lockForUpdate()->get();
+            if ($testRows->isNotEmpty()) {
+                $testKeeper = $testRows->firstWhere('participante_id', $targetId) ?? $testRows->first();
+                DB::table('participantes_de_teste')->whereIn('id', $testRows->pluck('id')->reject(fn ($id): bool => (int) $id === (int) $testKeeper->id))->delete();
+                DB::table('participantes_de_teste')->where('id', $testKeeper->id)->update([
+                    'participante_id' => $targetId,
+                    'alterado_em' => now(),
+                ]);
+            }
+
+            $responsibleRows = DB::table('responsaveis')->whereIn('participante_id', $selectedIds)->lockForUpdate()->get();
+            if ($responsibleRows->isNotEmpty()) {
+                $responsibleKeeper = $responsibleRows->firstWhere('participante_id', $targetId) ?? $responsibleRows->first();
+                $discardResponsibleIds = $responsibleRows->pluck('id')->reject(fn ($id): bool => (int) $id === (int) $responsibleKeeper->id)->values();
+                if ($discardResponsibleIds->isNotEmpty()) {
+                    DB::table('novos_certificados')->whereIn('responsavel_id', $discardResponsibleIds)->update([
+                        'responsavel_id' => $responsibleKeeper->id,
+                        'alterado_em' => now(),
+                    ]);
+                    DB::table('responsaveis')->whereIn('id', $discardResponsibleIds)->delete();
+                }
+                DB::table('responsaveis')->where('id', $responsibleKeeper->id)->update([
+                    'participante_id' => $targetId,
+                    'alterado_em' => now(),
+                ]);
+            }
+
+            $remainingReferences = collect([
+                'certificados legados' => DB::table('certificados')->whereIn('participanteId', $sourceIds)->count(),
+                'certificados novos' => DB::table('lista_participantes')->whereIn('participante_id', $sourceIds)->count(),
+                'responsáveis' => DB::table('responsaveis')->whereIn('participante_id', $sourceIds)->count(),
+                'rubricas' => DB::table('rubricas_participantes')->whereIn('participante_id', $sourceIds)->count(),
+                'participantes de teste' => DB::table('participantes_de_teste')->whereIn('participante_id', $sourceIds)->count(),
+                'assinaturas de template' => DB::table('assinaturas_template')->whereIn('participante_id', $sourceIds)->count(),
+            ])->filter();
+
+            if ($remainingReferences->isNotEmpty()) {
+                $details = $remainingReferences->map(fn (int $count, string $label): string => "{$count} {$label}")->implode(', ');
+                throw ValidationException::withMessages([
+                    'selecao' => "A unificação não pode remover os participantes de origem porque ainda existem vínculos: {$details}. Nenhuma alteração foi realizada.",
+                ]);
+            }
+
             $removed = DB::table('participantes')
-                ->whereIn('id', $selectedIds)
-                ->where('id', '<>', $targetId)
+                ->whereIn('id', $sourceIds)
                 ->delete();
 
+            $unification = $history->record($request, $before, $targetId, $targetName, $targetCreated);
+
             return [
+                'unificacao_id' => $unification->id,
                 'participante_id' => $targetId,
                 'participante_nome' => $targetName,
-                'certificados_atualizados' => $certificatesUpdated,
+                'certificados_legados_atualizados' => $legacyCertificatesUpdated,
+                'certificados_novos_atualizados' => $newCertificatesUpdated,
                 'participantes_removidos' => $removed,
             ];
         });
