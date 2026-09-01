@@ -27,6 +27,11 @@ class TemplateLayoutRenderer
         'Times New Roman' => 'DejaVuSerif.ttf', 'Georgia' => 'DejaVuSerif.ttf', 'Garamond' => 'DejaVuSerif.ttf',
         'Courier New' => 'DejaVuSansMono.ttf',
     ];
+    private const FALLBACK_FONT_VARIANTS = [
+        'DejaVuSans.ttf' => ['bold'=>'DejaVuSans-Bold.ttf','italic'=>'DejaVuSans-Oblique.ttf','bold_italic'=>'DejaVuSans-BoldOblique.ttf'],
+        'DejaVuSerif.ttf' => ['bold'=>'DejaVuSerif-Bold.ttf','italic'=>'DejaVuSerif-Italic.ttf','bold_italic'=>'DejaVuSerif-BoldItalic.ttf'],
+        'DejaVuSansMono.ttf' => ['bold'=>'DejaVuSansMono-Bold.ttf','italic'=>'DejaVuSansMono-Oblique.ttf','bold_italic'=>'DejaVuSansMono-BoldOblique.ttf'],
+    ];
 
     public const SOURCES = [
         'participante.nome' => 'Participante · Nome', 'participante.email' => 'Participante · E-mail', 'participante.cpf' => 'Participante · CPF',
@@ -113,11 +118,21 @@ class TemplateLayoutRenderer
 
     public function fonts(): array
     {
-        $uploaded = FonteLayout::query()->get()->map(fn (FonteLayout $font): array => ['name'=>$font->nome,'data'=>$this->fileDataUri($font->path())]);
-        $fallbacks = collect(self::FALLBACK_FONTS)->map(fn (string $file, string $name): array => [
-            'name' => $name,
-            'data' => $this->fileDataUri(base_path('vendor/dompdf/dompdf/lib/fonts/'.$file)),
-        ]);
+        $uploaded = FonteLayout::query()->get()->map(function (FonteLayout $font): array {
+            $data = $this->fileDataUri($font->path());
+            return ['name'=>$font->nome,'data'=>$data,'bold_data'=>$data,'italic_data'=>$data,'bold_italic_data'=>$data];
+        });
+        $fallbacks = collect(self::FALLBACK_FONTS)->map(function (string $file, string $name): array {
+            $directory = base_path('vendor/dompdf/dompdf/lib/fonts/');
+            $variants = self::FALLBACK_FONT_VARIANTS[$file] ?? [];
+            return [
+                'name'=>$name,
+                'data'=>$this->fileDataUri($directory.$file),
+                'bold_data'=>$this->fileDataUri($directory.($variants['bold']??$file)),
+                'italic_data'=>$this->fileDataUri($directory.($variants['italic']??$file)),
+                'bold_italic_data'=>$this->fileDataUri($directory.($variants['bold_italic']??$file)),
+            ];
+        });
 
         return $uploaded->concat($fallbacks)->filter(fn(array $font)=>filled($font['data']))->unique('name')->values()->all();
     }
