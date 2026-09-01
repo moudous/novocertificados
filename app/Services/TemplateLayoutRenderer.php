@@ -90,7 +90,7 @@ class TemplateLayoutRenderer
 
     public function resolveTokens(string $content, array $context): string
     {
-        return preg_replace_callback('/\{\{\s*((?:[a-z_]+\.[a-z_]+)|link_validacao)\s*\}\}/i', function (array $match) use ($context): string {
+        return preg_replace_callback('/\{\{\s*((?:[a-z_]+\.[a-z0-9_]+)|link_validacao)\s*\}\}/i', function (array $match) use ($context): string {
             $key = strtolower($match[1]);
             $fallback = '['.(self::SOURCES[$key] ?? ($key === 'link_validacao' ? 'Link de validação' : $key)).']';
             return e((string) data_get($context, $key, $fallback));

@@ -17,14 +17,14 @@ class Template extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome', 'criado_por', 'fundo', 'biblioteca_imagem_id', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'direcao_degrade', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout'];
+    protected $fillable = ['nome', 'criado_por', 'fundo', 'biblioteca_imagem_id', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'direcao_degrade', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout', 'campos_dinamicos'];
 
     protected function casts(): array
     {
         return [
             'id' => 'integer', 'criado_por' => 'integer', 'ativo' => 'boolean', 'fundo_colorido_ativo' => 'boolean', 'certificado_a1' => 'integer', 'biblioteca_imagem_id' => 'integer',
             'largura' => 'integer', 'altura' => 'integer', 'crido_em' => 'datetime',
-            'alterado_em' => 'datetime', 'apagado_em' => 'datetime', 'elementos_layout' => 'array',
+            'alterado_em' => 'datetime', 'apagado_em' => 'datetime', 'elementos_layout' => 'array', 'campos_dinamicos' => 'array',
         ];
     }
 
@@ -39,6 +39,18 @@ class Template extends Model
     }
 
     public function imagensTemplate(): HasMany { return $this->hasMany(ImagemTemplate::class); }
+
+    public function usedTemplateFields(): array
+    {
+        $used = [];
+        foreach ($this->elementos_layout ?? [] as $element) {
+            if (($element['source_type'] ?? null) === 'dynamic' && str_starts_with((string) ($element['source_key'] ?? ''), 'template.')) $used[] = substr($element['source_key'], 9);
+            preg_match_all('/\{\{\s*template\.([a-z0-9_]+)\s*\}\}/i', (string) ($element['content'] ?? ''), $matches);
+            $used = array_merge($used, $matches[1] ?? []);
+        }
+        $used = array_flip(array_unique($used));
+        return collect($this->campos_dinamicos ?? [])->filter(fn (array $field) => isset($used[$field['nome'] ?? '']))->values()->all();
+    }
 
     public function backgroundExists(): bool
     {

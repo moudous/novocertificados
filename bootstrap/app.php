@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/health',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(AllowGiEmbedding::class);
+        $middleware->appendToGroup('web', AllowGiEmbedding::class);
         $middleware->alias([
             'gi.permission' => EnsureGiPermission::class,
         ]);

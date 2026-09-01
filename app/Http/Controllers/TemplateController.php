@@ -139,6 +139,7 @@ class TemplateController extends Controller
         ]);
         $fonts = $uploadedFonts->concat($fallbackFonts)->unique('name')->values();
         $dynamicSources = TemplateLayoutRenderer::SOURCES;
+        foreach ($template->campos_dinamicos ?? [] as $field) $dynamicSources['template.'.$field['nome']] = 'Template · '.$field['nome'];
         $libraryImages = BibliotecaImagem::query()->where('ativo', true)->orderBy('categoria')->orderBy('nome')->get();
         $templateImages = $template->imagensTemplate()->orderBy('nome')->get();
         $testParticipants = ParticipanteTeste::query()->with('participante')->orderBy('id')->get();
@@ -149,6 +150,7 @@ class TemplateController extends Controller
         $builderConfig = [
             'width'=>max((int)$template->largura,1),'height'=>max((int)$template->altura,1),'elements'=>$template->elementos_layout??[],
             'fonts'=>$fonts->values()->all(),'sources'=>$dynamicSources,
+            'dynamicFields'=>$template->campos_dinamicos??[],'dynamicFieldsUrl'=>route('templates.dynamic-fields.save',$template),
             'librarySvgs'=>$libraryImages->filter(fn(BibliotecaImagem $image):bool=>filled($image->svg))->mapWithKeys(fn(BibliotecaImagem $image):array=>[$image->id=>$image->svg])->all(),
             'templateImages'=>$templateImages->map(fn($image):array=>['id'=>$image->id,'name'=>$image->nome,'svg'=>$image->svg,'url'=>$image->dataUrl(),'library_image_id'=>$image->biblioteca_imagem_id,'element_uid'=>$image->element_uid])->values()->all(),
             'previewUrl'=>route('templates.builder.preview',$template),'previewImageUrl'=>route('templates.builder.preview-image',$template),'fontUploadUrl'=>route('templates.builder.fonts.store',$template),
@@ -157,6 +159,24 @@ class TemplateController extends Controller
             'qrPreviews'=>collect(TemplateLayoutRenderer::QR_STYLES)->mapWithKeys(fn(string $label,string $style):array=>[$style=>$renderer->validationQrDataUri(route('certificadosnovos.public.pdf','TESTE-000001'),$style)])->all(),
         ];
         return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'templateImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures', 'builderConfig'));
+    }
+
+    public function saveDynamicFields(Request $request, Template $template): JsonResponse
+    {
+        $data = $request->validate([
+            'campos' => ['present','array','max:100'],
+            'campos.*.nome' => ['required','string','max:80','regex:/^[a-z][a-z0-9_]*$/'],
+            'campos.*.tipo' => ['required',Rule::in(['data','texto','textarea','number','lista'])],
+            'campos.*.opcoes' => ['nullable','array','max:100'],
+            'campos.*.opcoes.*' => ['string','max:150'],
+        ]);
+        $fields = collect($data['campos'])->map(function (array $field): array {
+            $field['nome'] = Str::slug($field['nome'], '_');
+            $field['opcoes'] = $field['tipo'] === 'lista' ? collect($field['opcoes'] ?? [])->map(fn ($value) => trim(strip_tags((string) $value)))->filter()->unique()->values()->all() : [];
+            return $field;
+        })->unique('nome')->values()->all();
+        $template->update(['campos_dinamicos'=>$fields]);
+        return response()->json(['campos'=>$fields]);
     }
 
     public function fallbackFont(string $family): \Symfony\Component\HttpFoundation\BinaryFileResponse
@@ -179,7 +199,7 @@ class TemplateController extends Controller
             'elementos.*.type' => ['required', Rule::in(['text', 'rich_text', 'image'])],
             'elementos.*.source_type' => ['required', Rule::in(['fixed', 'dynamic', 'validation_link', 'validation_qr', 'library', 'responsible_signature', 'template_image'])],
             'elementos.*.qr_style' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::QR_STYLES))],
-            'elementos.*.source_key' => ['nullable', Rule::in(array_keys(TemplateLayoutRenderer::SOURCES))],
+            'elementos.*.source_key' => ['nullable', Rule::in(array_merge(array_keys(TemplateLayoutRenderer::SOURCES),collect($template->campos_dinamicos??[])->pluck('nome')->map(fn($name)=>'template.'.$name)->all()))],
             'elementos.*.library_image_id' => ['nullable', 'integer', Rule::exists('biblioteca_imagens', 'id')->whereNull('apagado_em')],
             'elementos.*.template_image_id' => ['nullable', 'integer', Rule::exists('imagens_template', 'id')->where(fn($query)=>$query->where('template_id',$template->id))],
             'elementos.*.rubrica_id' => ['nullable', 'integer', Rule::exists('rubricas_participantes', 'id')->where(fn ($query) => $query->where('ativo', true)->whereNull('apagado_em'))],

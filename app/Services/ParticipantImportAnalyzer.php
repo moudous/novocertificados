@@ -18,7 +18,7 @@ class ParticipantImportAnalyzer
         $seen=[];$analysis=[];
         foreach($rows as $index=>$source){
             $name=trim((string)($source['nome']??''));$email=trim((string)($source['email']??''));$nameKey=$this->name($name);$emailKey=$this->email($email);
-            $row=['index'=>$index,'line'=>$source['line']??$index+2,'nome'=>$name,'email'=>$email,'sexo'=>trim((string)($source['sexo']??'')),'cpf'=>preg_replace('/\D+/','',(string)($source['cpf']??'')),'grupo'=>trim((string)($source['grupo']??'')),'existing_id'=>null,'existing_label'=>null,'kind'=>'','status'=>'','requires_action'=>false];
+            $row=[...$source,'index'=>$index,'line'=>$source['line']??$index+2,'nome'=>$name,'email'=>$email,'sexo'=>trim((string)($source['sexo']??'')),'cpf'=>preg_replace('/\D+/','',(string)($source['cpf']??'')),'grupo'=>trim((string)($source['grupo']??'')),'existing_id'=>null,'existing_label'=>null,'kind'=>'','status'=>'','requires_action'=>false];
             $duplicateKey=$nameKey.'|'.$emailKey;
             if($nameKey!==''&&$emailKey!==''&&isset($seen[$duplicateKey])){$row['kind']='repeated';$row['status']='Repetido na planilha — não importado';$analysis[]=$row;continue;}
             if($nameKey!==''&&$emailKey!=='')$seen[$duplicateKey]=true;
