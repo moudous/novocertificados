@@ -6,7 +6,6 @@ use App\Http\Controllers\EventoController;
 use App\Http\Controllers\AtividadeController;
 use App\Http\Controllers\CertificadoController;
 use App\Http\Controllers\CertificadoA1Controller;
-use App\Http\Controllers\VariavelController;
 use App\Http\Controllers\RubricaParticipanteController;
 use App\Http\Controllers\ParticipanteTesteController;
 use App\Http\Controllers\ResponsavelController;
@@ -158,19 +157,6 @@ Route::prefix('certificados_a1')->name('certificados_a1.')->group(function (): v
     Route::put('/{certificado}', [CertificadoA1Controller::class, 'update'])->whereNumber('certificado')->middleware('gi.permission:certificados_a1.editar')->name('update');
     Route::delete('/{certificado}', [CertificadoA1Controller::class, 'destroy'])->whereNumber('certificado')->middleware('gi.permission:certificados_a1.excluir')->name('destroy');
     Route::delete('/{certificado}/definitivo', [CertificadoA1Controller::class, 'forceDestroy'])->whereNumber('certificado')->middleware('gi.permission:certificados_a1.excluir_definitivamente')->name('force-destroy');
-});
-
-Route::prefix('variaveis')->name('variaveis.')->group(function (): void {
-    Route::get('/', [VariavelController::class, 'index'])->middleware('gi.permission:variaveis.listar')->name('index');
-    Route::get('/dados', [VariavelController::class, 'data'])->middleware('gi.permission:variaveis.listar')->name('data');
-    Route::get('/criar', [VariavelController::class, 'create'])->middleware('gi.permission:variaveis.criar')->name('create');
-    Route::post('/', [VariavelController::class, 'store'])->middleware('gi.permission:variaveis.criar')->name('store');
-    Route::get('/{variavel}', [VariavelController::class, 'show'])->whereNumber('variavel')->middleware('gi.permission:variaveis.visualizar')->name('show');
-    Route::get('/{variavel}/editar', [VariavelController::class, 'edit'])->whereNumber('variavel')->middleware('gi.permission:variaveis.editar')->name('edit');
-    Route::put('/{variavel}', [VariavelController::class, 'update'])->whereNumber('variavel')->middleware('gi.permission:variaveis.editar')->name('update');
-    Route::patch('/{variavel}/status', [VariavelController::class, 'toggleStatus'])->whereNumber('variavel')->middleware('gi.permission:variaveis.editar')->name('status');
-    Route::delete('/{variavel}', [VariavelController::class, 'destroy'])->whereNumber('variavel')->middleware('gi.permission:variaveis.excluir')->name('destroy');
-    Route::delete('/{variavel}/definitivo', [VariavelController::class, 'forceDestroy'])->whereNumber('variavel')->middleware('gi.permission:variaveis.excluir_definitivamente')->name('force-destroy');
 });
 
 Route::prefix('rubricas_participantes')->name('rubricas_participantes.')->group(function (): void {

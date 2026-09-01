@@ -36,13 +36,6 @@ certificados_a1.editar
 certificados_a1.excluir
 certificados_a1.excluir_definitivamente
 
-variaveis.listar
-variaveis.visualizar
-variaveis.criar
-variaveis.editar
-variaveis.excluir
-variaveis.excluir_definitivamente
-
 rubricas_participantes.listar
 rubricas_participantes.visualizar
 rubricas_participantes.criar

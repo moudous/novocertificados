@@ -52,12 +52,6 @@
                         "certificados_a1.editar",
                         "certificados_a1.excluir",
                         "certificados_a1.excluir_definitivamente",
-                        "variaveis.listar",
-                        "variaveis.visualizar",
-                        "variaveis.criar",
-                        "variaveis.editar",
-                        "variaveis.excluir",
-                        "variaveis.excluir_definitivamente",
                         "rubricas_participantes.listar",
                         "rubricas_participantes.visualizar",
                         "rubricas_participantes.criar",
@@ -255,23 +249,6 @@
                     "permissoes_externas": [
                         "certificados_a1.listar"
                     ],
-                    "aplicacao_externa": {
-                        "id": 11,
-                        "nome": "Aplicação de Certificados",
-                        "slug": "certificados"
-                    }
-                },
-                {
-                    "id": 358,
-                    "texto": "Variáveis / Parâmetros",
-                    "icone": "fa-brands fa-tex",
-                    "tipo_link": "external_embed",
-                    "classe": null,
-                    "link": "/variaveis",
-                    "extra": null,
-                    "ativo": true,
-                    "ordem": 8,
-                    "permissoes_externas": [],
                     "aplicacao_externa": {
                         "id": 11,
                         "nome": "Aplicação de Certificados",
