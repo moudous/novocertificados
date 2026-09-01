@@ -19,8 +19,8 @@
 <tr class="filter-row">
 <th><input type="text" inputmode="numeric" pattern="[0-9]*" class="form-control form-control-sm column-filter numeric-filter" data-filter="id" aria-label="Filtrar por ID"></th>
 <th><input type="text" class="form-control form-control-sm column-filter" data-filter="nome" aria-label="Filtrar por nome"></th>
-<th><select id="participanteFilter" class="column-filter" data-filter="participanteId" aria-label="Filtrar por participante"><option value=""></option></select></th>
-<th><select id="atividadeFilter" class="column-filter" data-filter="atividadeId" aria-label="Filtrar por atividade"><option value=""></option></select></th>
+<th><select id="participanteFilter" class="column-filter select2-filter" data-filter="participanteId" aria-label="Filtrar por participante"><option value=""></option></select></th>
+<th><select id="atividadeFilter" class="column-filter select2-filter" data-filter="atividadeId" aria-label="Filtrar por atividade"><option value=""></option></select></th>
 <th><input type="text" class="form-control form-control-sm column-filter" data-filter="tipo" aria-label="Filtrar por tipo"></th>
 <th><input type="text" inputmode="numeric" pattern="[0-9]*" class="form-control form-control-sm column-filter numeric-filter" data-filter="cargaHoraria" aria-label="Filtrar por carga horária"></th>
 <th><select class="form-select form-select-sm column-filter" data-filter="status" aria-label="Filtrar por status"><option value="">Todos</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="excluido">Excluído</option></select></th>
@@ -54,17 +54,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         filter.addEventListener('click', event => event.stopPropagation());
     });
-    document.querySelectorAll('#certificadosTable select.column-filter').forEach(filter => {
+    document.querySelectorAll('#certificadosTable select.column-filter:not(.select2-filter)').forEach(filter => {
         filter.addEventListener('change', () => {
             filters[filter.dataset.filter] = filter.value;
             table.draw();
         });
         filter.addEventListener('click', event => event.stopPropagation());
     });
-    const setupSelect2 = (selector, url, placeholder) => $(selector).select2({
-        theme: 'bootstrap-5', width: '100%', placeholder, allowClear: true,
-        ajax: {url, dataType: 'json', delay: 250, data: params => ({q: params.term || '', page: params.page || 1}), processResults: response => response}
-    });
+    const setupSelect2 = (selector, url, placeholder) => {
+        const filter = $(selector);
+        filter.select2({
+            theme: 'bootstrap-5', width: '100%', placeholder, allowClear: true,
+            ajax: {url, dataType: 'json', delay: 250, data: params => ({q: params.term || '', page: params.page || 1}), processResults: response => response}
+        });
+        filter.on('change', function () {
+            filters[this.dataset.filter] = this.value || '';
+            table.draw();
+        });
+        filter.next('.select2-container').on('click', event => event.stopPropagation());
+    };
     setupSelect2('#participanteFilter', @json(route('certificados.participantes', [], false)), 'Todos');
     setupSelect2('#atividadeFilter', @json(route('certificados.atividades', [], false)), 'Todas');
 });
