@@ -58,7 +58,14 @@ class ParticipanteController extends Controller
                 'nome' => e($participante->nome),
                 'email' => e($participante->email ?: '—'),
                 'cpf' => e($participante->cpf ?: '—'),
-                'certificados' => $participante->certificados_count,
+                'certificados' => $participante->certificados_count > 0
+                    ? sprintf(
+                        '<a href="%s/?participante=%s#certificados" target="_blank" rel="noopener noreferrer" title="ver certificados">%d</a>',
+                        e(rtrim((string) config('app.site_certificados'), '/')),
+                        rawurlencode($participante->nome),
+                        $participante->certificados_count,
+                    )
+                    : $participante->certificados_count,
                 'sexo' => e($participante->sexo ?: '—'),
                 'grupo' => e($participante->grupo ?: '—'),
                 'ativo' => $participante->ativo
