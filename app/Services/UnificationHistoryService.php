@@ -104,6 +104,7 @@ class UnificationHistoryService
             $audit->update([
                 'status' => 'desfeita',
                 'desfeito_por' => $this->sessionUserId($request),
+                'desfeito_por_nome' => data_get($request->session()->get('gi_context'), 'usuario.nome'),
                 'desfeito_em' => now(),
             ]);
 

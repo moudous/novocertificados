@@ -13,7 +13,7 @@ class UnificacaoRealizada extends Model
     protected $fillable = [
         'participante_novo_id', 'participante_novo_nome', 'participantes_excluidos',
         'usuario_id', 'usuario_nome', 'dados_antes', 'dados_depois', 'status',
-        'desfeito_por', 'desfeito_em',
+        'desfeito_por', 'desfeito_por_nome', 'desfeito_em',
     ];
 
     protected function casts(): array
