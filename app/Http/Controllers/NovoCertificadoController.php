@@ -101,7 +101,7 @@ class NovoCertificadoController extends Controller
     public function participants(NovoCertificado $certificado,Request $request,ParticipantImportAnalyzer $analyzer): View
     {
         $certificado->load('template');
-        $templateFields=$certificado->template?->usedTemplateFields()??[];
+        $templateFields=$this->participantTemplateFields($certificado);
         $stored=(array)$request->session()->get($this->importSessionKey($certificado),[]);
         $importAnalysis=isset($stored['rows'])?$analyzer->analyze($certificado,(array)$stored['rows']):null;
         return view('emissoes.participantes',['certificado'=>$certificado,'items'=>$certificado->participantes()->with('participante')->orderByDesc('id')->get(),'permissions'=>(array)$request->session()->get('gi_context.permissoes',[]),'importAnalysis'=>$importAnalysis,'templateFields'=>$templateFields]);
@@ -121,7 +121,7 @@ class NovoCertificadoController extends Controller
         $this->authorizeParticipantInsertion($request);
         $data=$request->validate(['planilha'=>['required','file','max:10240','extensions:csv,xls,xlsx,ods,odt']]);
         $certificado->load('template');
-        $rows=$reader->read($data['planilha'],collect($certificado->template?->usedTemplateFields()??[])->pluck('nome')->all());
+        $rows=$reader->read($data['planilha'],collect($this->participantTemplateFields($certificado))->pluck('nome')->all());
         $request->session()->put($this->importSessionKey($certificado),['rows'=>$rows,'filename'=>$data['planilha']->getClientOriginalName()]);
         return back()->with('status','Planilha analisada. Revise as decisões antes de importar.')->with('participant_add_mode','spreadsheet');
     }
@@ -131,8 +131,8 @@ class NovoCertificadoController extends Controller
         $stored=(array)$request->session()->get($this->importSessionKey($certificado),[]);$original=(array)($stored['rows']??[]);if(!$original)return back()->withErrors(['planilha'=>'A análise expirou. Envie a planilha novamente.'])->with('participant_add_mode','spreadsheet');
         $input=(array)$request->input('rows',[]);$adjusted=[];foreach($original as $index=>$row){$row['nome']=trim((string)data_get($input,$index.'.nome',$row['nome']??''));$row['email']=trim((string)data_get($input,$index.'.email',$row['email']??''));$adjusted[]=$row;}
         $request->session()->put($this->importSessionKey($certificado),['rows'=>$adjusted,'filename'=>$stored['filename']??'planilha']);
-        $analysis=$analyzer->analyze($certificado,$adjusted);$userId=$this->sessionUserId($request);$created=0;$recovered=0;$skipped=0;$fieldNames=collect($certificado->template?->usedTemplateFields()??[])->pluck('nome')->all();
-        DB::transaction(function()use($certificado,$analysis,$input,$userId,$ownOnly,$fieldNames,&$created,&$recovered,&$skipped){foreach($analysis['rows'] as $row){$action=(string)data_get($input,$row['index'].'.action','');if(in_array($row['kind'],['linked','repeated'],true)||$action==='skip'){$skipped++;continue;}if($row['kind']==='incomplete')throw ValidationException::withMessages(['planilha'=>'Preencha nome e e-mail ou escolha “Não importar” na linha '.$row['line'].'.']);$participantId=null;if($row['kind']==='recovered'){$participantId=$row['existing_id'];$recovered++;}elseif($row['kind']==='conflict'){if(!in_array($action,['use_existing','create_new'],true))throw ValidationException::withMessages(['planilha'=>'Selecione uma ação para a linha '.$row['line'].'.']);if($action==='use_existing'){$participantId=$row['existing_id'];$recovered++;}}if($participantId&&$ownOnly&&!Participante::query()->whereKey($participantId)->where('criado_por',$userId)->exists())throw ValidationException::withMessages(['planilha'=>'Você só pode adicionar participantes criados por você.']);if(!$participantId){$participant=Participante::query()->create(['nome'=>$row['nome'],'email'=>$row['email'],'sexo'=>$this->normalizeSex($row['sexo']),'cpf'=>strlen($row['cpf'])===11?$row['cpf']:null,'grupo'=>mb_substr($row['grupo'],0,1)?:null,'ativo'=>true,'criado_por'=>$userId]);$participantId=$participant->id;$created++;}$custom=collect($fieldNames)->mapWithKeys(fn($name)=>[$name=>$row[$name]??null])->all();$certificado->participantes()->firstOrCreate(['participante_id'=>$participantId],['adicionado_por'=>$userId,'dados_personalizados'=>$custom]);}$certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]);});
+        $analysis=$analyzer->analyze($certificado,$adjusted);$userId=$this->sessionUserId($request);$created=0;$recovered=0;$skipped=0;$fieldNames=collect($this->participantTemplateFields($certificado))->pluck('nome')->all();
+        DB::transaction(function()use($certificado,$analysis,$input,$userId,$ownOnly,$fieldNames,&$created,&$recovered,&$skipped){foreach($analysis['rows'] as $row){$action=(string)data_get($input,$row['index'].'.action','');if(in_array($row['kind'],['linked','repeated'],true)||$action==='skip'){$skipped++;continue;}if($row['kind']==='incomplete')throw ValidationException::withMessages(['planilha'=>'Preencha nome e e-mail ou escolha “Não importar” na linha '.$row['line'].'.']);$participantId=null;if($row['kind']==='recovered'){$participantId=$row['existing_id'];$recovered++;}elseif($row['kind']==='conflict'){if(!in_array($action,['use_existing','create_new'],true))throw ValidationException::withMessages(['planilha'=>'Selecione uma ação para a linha '.$row['line'].'.']);if($action==='use_existing'){$participantId=$row['existing_id'];$recovered++;}}if($participantId&&$ownOnly&&!Participante::query()->whereKey($participantId)->where('criado_por',$userId)->exists())throw ValidationException::withMessages(['planilha'=>'Você só pode adicionar participantes criados por você.']);if(!$participantId){$participant=Participante::query()->create(['nome'=>$row['nome'],'email'=>$row['email'],'sexo'=>$this->normalizeSex($row['sexo']),'cpf'=>strlen($row['cpf'])===11?$row['cpf']:null,'grupo'=>mb_substr($row['grupo'],0,1)?:null,'ativo'=>true,'criado_por'=>$userId]);$participantId=$participant->id;$created++;}$custom=collect($fieldNames)->mapWithKeys(fn($name)=>[$name=>$row[$name]??null])->put('carga_horaria',$row['carga_horaria']??null)->all();$certificado->participantes()->firstOrCreate(['participante_id'=>$participantId],['adicionado_por'=>$userId,'dados_personalizados'=>$custom]);}$certificado->update(['lista_participantes_id'=>$certificado->participantes()->min('id')]);});
         $request->session()->forget($this->importSessionKey($certificado));
         return back()->with('status',"Importação concluída: {$created} novo(s), {$recovered} recuperado(s) e {$skipped} não importado(s).");
     }
@@ -145,15 +145,14 @@ class NovoCertificadoController extends Controller
     }
     public function exampleParticipantSpreadsheet(NovoCertificado $certificado): StreamedResponse
     {
-        $certificado->load('template'); $layout=$certificado->template?->elementos_layout??[]; $system=[];
-        foreach($layout as $element){if(($element['source_type']??null)==='dynamic'&&!str_starts_with((string)($element['source_key']??''),'template.'))$system[]=(string)$element['source_key'];preg_match_all('/\{\{\s*((?!template\.)[a-z_]+\.[a-z0-9_]+)\s*\}\}/i',(string)($element['content']??''),$matches);$system=array_merge($system,$matches[1]??[]);}
-        $headers=array_values(array_unique(array_merge(['nome','email'],array_map(fn($key)=>str_replace('.','_',$key),$system),collect($certificado->template?->usedTemplateFields()??[])->pluck('nome')->all())));
+        $certificado->load('template');
+        $headers=array_values(array_unique(array_merge(['nome','email','carga_horaria'],collect($this->participantTemplateFields($certificado))->pluck('nome')->all())));
         $spreadsheet=new Spreadsheet();$sheet=$spreadsheet->getActiveSheet();$sheet->fromArray($headers,null,'A1');$sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
         return response()->streamDownload(fn()=>(new Xlsx($spreadsheet))->save('php://output'),'participantes-exemplo-emissao-'.$certificado->id.'.xlsx',['Content-Type'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
     public function generate(NovoCertificado $certificado, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): RedirectResponse
     {
-        $certificado->load(['template.imagemBiblioteca','template.certificadoA1','atividade.evento','responsavel.participante','rubrica','participantes.participante']);
+        $certificado->load(['template.imagemBiblioteca','template.certificadoA1','evento','atividade','responsavel.participante','rubrica','participantes.participante']);
         abort_unless($certificado->template,422,'Selecione um template antes de gerar.');
         foreach($certificado->participantes as $item){try{$this->generateItem($certificado,$item,$renderer,$signer);}catch(\Throwable $e){report($e);$item->update(['erro_geracao'=>Str::limit($e->getMessage(),1000),'gerado_em'=>null]);}}
         return back()->with('status','Geração concluída. Consulte o resultado de cada participante.');
@@ -161,7 +160,7 @@ class NovoCertificadoController extends Controller
     public function generateParticipant(Request $request, NovoCertificado $certificado, ListaParticipante $item, TemplateLayoutRenderer $renderer, PdfDigitalSigner $signer): RedirectResponse|JsonResponse
     {
         abort_unless($item->novo_certificado_id === $certificado->id, 404);
-        $certificado->load(['template.imagemBiblioteca','template.certificadoA1','atividade.evento','responsavel.participante','rubrica']);
+        $certificado->load(['template.imagemBiblioteca','template.certificadoA1','evento','atividade','responsavel.participante','rubrica']);
         $item->load('participante');
         abort_unless($certificado->template, 422, 'Selecione um template antes de gerar.');
         try {
@@ -190,7 +189,7 @@ class NovoCertificadoController extends Controller
         $directory=public_path('certificado/emitidos'); File::ensureDirectoryExists($directory);
         $code=$item->codigo?:strtoupper(Str::random(16)); $responsavel=$certificado->responsavel;
         $rubrica=$certificado->rubrica?:$responsavel?->participante?->rubricas()->where('ativo',true)->first();
-        $context=['participante'=>['nome'=>$item->participante?->nome,'email'=>$item->participante?->email,'cpf'=>$item->participante?->cpf],'evento'=>['nome'=>$certificado->atividade?->evento?->nome,'descricao'=>$certificado->atividade?->evento?->descricao],'atividade'=>['nome'=>$certificado->atividade?->nome,'carga_horaria'=>data_get($certificado->campos_personalizados,'carga_horaria','')],'responsavel'=>['nome'=>$responsavel?->participante?->nome,'cargo'=>$responsavel?->cargo,'titulacao'=>$responsavel?->titulacao,'rubrica_path'=>$renderer->rubricaPath($rubrica)],'emissao'=>['nome'=>$certificado->nome,'data'=>($certificado->data_emissao?:now())->format('d/m/Y')],'certificado'=>['codigo'=>$code],'template'=>$item->dados_personalizados??[],'link_validacao'=>route('certificadosnovos.public.pdf',$code)];
+        $context=['participante'=>['nome'=>$item->participante?->nome,'email'=>$item->participante?->email,'cpf'=>$item->participante?->cpf],'evento'=>['nome'=>$certificado->evento?->nome,'descricao'=>$certificado->evento?->descricao],'atividade'=>['nome'=>$certificado->atividade?->nome,'carga_horaria'=>data_get($item->dados_personalizados,'carga_horaria',$certificado->carga_horaria)],'responsavel'=>['nome'=>$responsavel?->participante?->nome,'cargo'=>$responsavel?->cargo,'titulacao'=>$responsavel?->titulacao,'rubrica_path'=>$renderer->rubricaPath($rubrica)],'emissao'=>['nome'=>$certificado->nome,'data'=>($certificado->data_emissao?:now())->format('d/m/Y')],'certificado'=>['codigo'=>$code],'template'=>$item->dados_personalizados??[],'link_validacao'=>route('certificadosnovos.public.pdf',$code)];
         $elements=collect($renderer->elements($certificado->template->elementos_layout??[],$context)); $width=max($certificado->template->largura,1); $height=max($certificado->template->altura,1); $background=$renderer->background($certificado->template); $fonts=collect($renderer->fonts());
         $pdf=Pdf::loadView('templates.preview-pdf',['template'=>$certificado->template,'elements'=>$elements,'width'=>$width,'height'=>$height,'background'=>$background,'fonts'=>$fonts])->setPaper([0,0,$width*2.834645669,$height*2.834645669]);
         $name='certificado-'.$item->id.'-'.$code.'.pdf'; File::put($directory.'/'.$name,$signer->output($pdf,$certificado->template->certificadoA1,'Emissão de certificado digital'));
@@ -207,7 +206,7 @@ class NovoCertificadoController extends Controller
             'atividade_id'=>['nullable','integer',Rule::prohibitedIf($eventoId < 1),Rule::exists('atividades','id')->where(fn ($query) => $query->where('eventoId', $eventoId)->where('ativo', true)->whereNull('apagado_em'))],
             'responsavel_id'=>['nullable','integer',Rule::exists('responsaveis','id')->where(fn($q)=>$q->where('ativo',true)->whereNull('apagado_em'))],
             'rubrica_id'=>['nullable','integer',Rule::exists('rubricas_participantes','id')->where(fn($q)=>$q->where('ativo',true)->whereNull('apagado_em'))],
-            'data_emissao'=>['required','date'],'campos_personalizados'=>['nullable','array'],'ativo'=>['required','boolean'],
+            'data_emissao'=>['required','date'],'carga_horaria'=>['nullable','string','max:50'],'campos_personalizados'=>['nullable','array'],'ativo'=>['required','boolean'],
         ], [
             'evento_id.required_with' => 'Selecione um evento antes da atividade.',
             'atividade_id.prohibited' => 'Não é permitido escolher uma atividade sem evento.',
@@ -229,9 +228,14 @@ class NovoCertificadoController extends Controller
     private function normalizeSex(string $value): ?string { $value=mb_strtoupper(trim($value));return in_array($value,['M','F'],true)?$value:null; }
     private function validatedTemplateValues(Request $request, NovoCertificado $certificado): array
     {
-        $certificado->loadMissing('template');$fields=$certificado->template?->usedTemplateFields()??[];$rules=[];
+        $certificado->loadMissing('template');$fields=$this->participantTemplateFields($certificado);$rules=['campos.carga_horaria'=>['nullable','string','max:50']];
         foreach($fields as $field){$name=$field['nome'];$rule=['required'];$rule[]=$field['tipo']==='number'?'numeric':($field['tipo']==='data'?'date':'string');if($field['tipo']==='lista')$rule[]=Rule::in($field['opcoes']??[]);$rules['campos.'.$name]=$rule;}
         return (array)data_get($request->validate($rules),'campos',[]);
+    }
+    private function participantTemplateFields(NovoCertificado $certificado): array
+    {
+        $certificado->loadMissing('template');
+        return collect($certificado->template?->campos_dinamicos??[])->reject(fn(array $field):bool=>($field['nome']??'')==='carga_horaria')->values()->all();
     }
     private function oldCertificateLabel(?Certificado $c): string { return $c?"#{$c->id} - ".($c->nome?:'Sem nome').' - '.($c->atividade?->nome?:'Sem atividade'):'—'; }
     private function templateLabel(?Template $t): string { return $t?"#{$t->id} - ".($t->nome?:'Sem nome')." - (".($t->pagina?:'—').' - '.($t->layout_pagina?:'—').')':'—'; }

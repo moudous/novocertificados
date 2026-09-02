@@ -16,7 +16,7 @@ class CertificadoPdfGenerator
         $item->loadMissing([
             'participante',
             'novoCertificado.template.imagemBiblioteca','novoCertificado.template.certificadoA1',
-            'novoCertificado.atividade.evento',
+            'novoCertificado.evento','novoCertificado.atividade',
             'novoCertificado.responsavel.participante',
             'novoCertificado.rubrica',
         ]);
@@ -30,8 +30,8 @@ class CertificadoPdfGenerator
             $rubrica = $emissao->rubrica ?: $responsavel?->participante?->rubricas()->where('ativo', true)->first();
             $context = [
                 'participante' => ['nome' => $item->participante?->nome, 'email' => $item->participante?->email, 'cpf' => $item->participante?->cpf],
-                'evento' => ['nome' => $emissao->atividade?->evento?->nome, 'descricao' => $emissao->atividade?->evento?->descricao],
-                'atividade' => ['nome' => $emissao->atividade?->nome, 'carga_horaria' => data_get($emissao->campos_personalizados, 'carga_horaria', '')],
+                'evento' => ['nome' => $emissao->evento?->nome, 'descricao' => $emissao->evento?->descricao],
+                'atividade' => ['nome' => $emissao->atividade?->nome, 'carga_horaria' => data_get($item->dados_personalizados, 'carga_horaria', $emissao->carga_horaria)],
                 'responsavel' => ['nome' => $responsavel?->participante?->nome, 'cargo' => $responsavel?->cargo, 'titulacao' => $responsavel?->titulacao, 'rubrica_path' => $this->renderer->rubricaPath($rubrica)],
                 'emissao' => ['nome' => $emissao->nome, 'data' => ($emissao->data_emissao ?: now())->format('d/m/Y')],
                 'certificado' => ['codigo' => $code],

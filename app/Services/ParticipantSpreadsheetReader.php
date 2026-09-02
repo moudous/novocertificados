@@ -25,7 +25,7 @@ class ParticipantSpreadsheetReader
         if(!in_array('nome',$headers,true)||!in_array('email',$headers,true))throw ValidationException::withMessages(['planilha'=>'A primeira linha deve conter obrigatoriamente as colunas nome e email.']);
         $missing=array_values(array_diff($extraHeaders,$headers));
         if($missing)throw ValidationException::withMessages(['planilha'=>'A planilha não possui os campos dinâmicos obrigatórios: '.implode(', ',$missing).'.']);
-        $allowed=array_merge(['nome','email','sexo','cpf','grupo'],$extraHeaders);$rows=[];
+        $allowed=array_merge(['nome','email','sexo','cpf','grupo','carga_horaria'],$extraHeaders);$rows=[];
         foreach(array_slice($matrix,0,2000) as $number=>$values){$row=[];foreach($headers as $index=>$header)if(in_array($header,$allowed,true))$row[$header]=trim((string)($values[$index]??''));if(collect($row)->filter()->isNotEmpty())$rows[]=['line'=>$number+2,...$row];}
         if(!$rows)throw ValidationException::withMessages(['planilha'=>'Nenhum participante foi encontrado na planilha.']);
         return $rows;

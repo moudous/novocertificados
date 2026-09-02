@@ -1,6 +1,6 @@
 {
     "schema": "gi.perfis-menus.v1",
-    "exportado_em": "2026-08-30T21:25:01-03:00",
+    "exportado_em": "2026-09-01T22:00:57-03:00",
     "sistema": {
         "id": 17,
         "nome": "Sistema de Certificados",
@@ -52,6 +52,12 @@
                         "certificados_a1.editar",
                         "certificados_a1.excluir",
                         "certificados_a1.excluir_definitivamente",
+                        "variaveis.listar",
+                        "variaveis.visualizar",
+                        "variaveis.criar",
+                        "variaveis.editar",
+                        "variaveis.excluir",
+                        "variaveis.excluir_definitivamente",
                         "rubricas_participantes.listar",
                         "rubricas_participantes.visualizar",
                         "rubricas_participantes.criar",
@@ -69,14 +75,10 @@
                         "template.visualizar",
                         "template.criar",
                         "template.editar",
-                        "templates.duplicar",
-                        "templates._duplicar_proprio",
-                        "templates.certificado_a1.inserir",
-                        "templates.certificado_a1.editar",
-                        "templates.certificado_a1.editar_proprio",
                         "template.excluir",
                         "template.restaurar",
                         "template.excluir_definitivamente",
+                        "templates.editar_com_certificado_incluso",
                         "assinaturas.listar",
                         "assinaturas.visualizar",
                         "assinaturas.criar",
@@ -84,15 +86,6 @@
                         "assinaturas.excluir",
                         "assinaturas.restaurar",
                         "assinaturas.excluir_definitivamente",
-                        "novos_certificados.listar",
-                        "novos_certificados.participantes",
-                        "novos_certificados.inserir_participantes",
-                        "novos_certificados.excluir_participantes",
-                        "novos_certificados.visualizar",
-                        "novos_certificados.criar",
-                        "novos_certificados.editar",
-                        "novos_certificados.excluir",
-                        "novos_certificados.excluir_definitivamente",
                         "responsaveis.listar",
                         "responsaveis.visualizar",
                         "responsaveis.criar",
@@ -117,11 +110,13 @@
                         "emissoes.ativar_desativar",
                         "emissoes.participantes",
                         "emissoes.inserir_participantes",
-                        "emissoes.inserir_participantes_proprios",
                         "emissoes.excluir_participantes",
                         "emissoes.gerar_pdfs",
                         "emissoes.excluir",
-                        "emissoes.excluir_definitivamente"
+                        "emissoes.excluir_definitivamente",
+                        "desfazerunificacao.listar",
+                        "desfazerunificacao.visualizar",
+                        "desfazerunificacao.desfazer"
                     ]
                 }
             ],
@@ -264,7 +259,7 @@
                     "link": "/rubricas_participantes",
                     "extra": null,
                     "ativo": true,
-                    "ordem": 9,
+                    "ordem": 8,
                     "permissoes_externas": [
                         "rubricas_participantes.listar"
                     ],
@@ -283,7 +278,7 @@
                     "link": "/participantes_teste",
                     "extra": null,
                     "ativo": true,
-                    "ordem": 10,
+                    "ordem": 9,
                     "permissoes_externas": [],
                     "aplicacao_externa": {
                         "id": 11,
@@ -300,7 +295,7 @@
                     "link": "/templates",
                     "extra": null,
                     "ativo": true,
-                    "ordem": 11,
+                    "ordem": 10,
                     "permissoes_externas": [
                         "template.listar"
                     ],
@@ -319,7 +314,7 @@
                     "link": "/certificadosnovos",
                     "extra": null,
                     "ativo": true,
-                    "ordem": 12,
+                    "ordem": 11,
                     "permissoes_externas": [
                         "certificadosnovos.listar"
                     ],
@@ -338,7 +333,7 @@
                     "link": "/responsaveis",
                     "extra": null,
                     "ativo": true,
-                    "ordem": 13,
+                    "ordem": 12,
                     "permissoes_externas": [
                         "responsaveis.listar"
                     ],
@@ -357,7 +352,7 @@
                     "link": "/biblioteca-imagens",
                     "extra": null,
                     "ativo": true,
-                    "ordem": 14,
+                    "ordem": 13,
                     "permissoes_externas": [
                         "biblioteca_imagens.listar"
                     ],
@@ -376,9 +371,28 @@
                     "link": "/emissoes",
                     "extra": null,
                     "ativo": true,
-                    "ordem": 15,
+                    "ordem": 14,
                     "permissoes_externas": [
                         "emissoes.listar"
+                    ],
+                    "aplicacao_externa": {
+                        "id": 11,
+                        "nome": "Aplicação de Certificados",
+                        "slug": "certificados"
+                    }
+                },
+                {
+                    "id": 366,
+                    "texto": "Desfazer Unificação",
+                    "icone": "bi bi-arrow-counterclockwise",
+                    "tipo_link": "external_embed",
+                    "classe": null,
+                    "link": "/desfazerunificacao",
+                    "extra": null,
+                    "ativo": true,
+                    "ordem": 15,
+                    "permissoes_externas": [
+                        "desfazerunificacao.listar"
                     ],
                     "aplicacao_externa": {
                         "id": 11,

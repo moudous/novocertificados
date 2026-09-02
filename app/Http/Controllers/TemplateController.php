@@ -132,13 +132,15 @@ class TemplateController extends Controller
     }
     public function builder(Request $request, Template $template, TemplateLayoutRenderer $renderer): View
     {
+        $builderReadOnly = ! $this->canAlterPopulatedTemplate($request, $template);
         $uploadedFonts = FonteLayout::query()->orderBy('nome')->get()->map(fn (FonteLayout $font): array => ['name' => $font->nome, 'url' => $font->url()]);
         $fallbackFonts = collect(TemplateLayoutRenderer::FALLBACK_FONTS)->map(fn (string $file, string $name): array => [
             'name' => $name,
             'url' => route('templates.fallback-font', ['family' => $name]),
         ]);
         $fonts = $uploadedFonts->concat($fallbackFonts)->unique('name')->values();
-        $dynamicSources = TemplateLayoutRenderer::SOURCES;
+        $systemDynamicSources = collect(TemplateLayoutRenderer::SOURCES)->except(['responsavel.nome','responsavel.cargo','responsavel.titulacao'])->all();
+        $dynamicSources = $systemDynamicSources;
         foreach ($template->campos_dinamicos ?? [] as $field) $dynamicSources['template.'.$field['nome']] = 'Template · '.$field['nome'];
         $libraryImages = BibliotecaImagem::query()->where('ativo', true)->orderBy('categoria')->orderBy('nome')->get();
         $templateImages = $template->imagensTemplate()->orderBy('nome')->get();
@@ -158,18 +160,20 @@ class TemplateController extends Controller
             'validationPreviewUrl'=>route('certificadosnovos.public.pdf','TESTE-000001'),
             'qrPreviews'=>collect(TemplateLayoutRenderer::QR_STYLES)->mapWithKeys(fn(string $label,string $style):array=>[$style=>$renderer->validationQrDataUri(route('certificadosnovos.public.pdf','TESTE-000001'),$style)])->all(),
         ];
-        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'libraryImages', 'templateImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures', 'builderConfig'));
+        $builderConfig['readOnly'] = $builderReadOnly;
+        return view('templates.builder', compact('template', 'fonts', 'dynamicSources', 'systemDynamicSources', 'libraryImages', 'templateImages', 'testParticipants', 'activities', 'testSelection', 'responsibleSignatures', 'builderConfig', 'builderReadOnly'));
     }
 
     public function saveDynamicFields(Request $request, Template $template): JsonResponse
     {
+        $this->authorizePopulatedTemplateChange($request, $template);
         $data = $request->validate([
             'campos' => ['present','array','max:100'],
-            'campos.*.nome' => ['required','string','max:80','regex:/^[a-z][a-z0-9_]*$/'],
+            'campos.*.nome' => ['required','string','max:80','regex:/^[a-z][a-z0-9_]*$/',Rule::notIn(['carga_horaria'])],
             'campos.*.tipo' => ['required',Rule::in(['data','texto','textarea','number','lista'])],
             'campos.*.opcoes' => ['nullable','array','max:100'],
             'campos.*.opcoes.*' => ['string','max:150'],
-        ]);
+        ], ['campos.*.nome.not_in'=>'O nome carga_horaria é reservado pelo sistema e não pode ser usado em campos dinâmicos do template.']);
         $fields = collect($data['campos'])->map(function (array $field): array {
             $field['nome'] = Str::slug($field['nome'], '_');
             $field['opcoes'] = $field['tipo'] === 'lista' ? collect($field['opcoes'] ?? [])->map(fn ($value) => trim(strip_tags((string) $value)))->filter()->unique()->values()->all() : [];
@@ -191,6 +195,7 @@ class TemplateController extends Controller
 
     public function saveBuilder(Request $request, Template $template): RedirectResponse
     {
+        $this->authorizePopulatedTemplateChange($request, $template);
         $request->validate(['layout_json' => ['required', 'json']]);
         $request->merge(['elementos' => json_decode((string) $request->input('layout_json'), true)]);
         $validated = $request->validate([
@@ -218,27 +223,33 @@ class TemplateController extends Controller
             }
             return $element;
         }, array_values($validated['elementos']));
-        $template->update(['elementos_layout' => $elements]);
+        $rubricaIds = collect($elements)->where('source_type', 'responsible_signature')->pluck('rubrica_id')->filter()->unique();
+        $participanteIds = RubricaParticipante::query()->whereIn('id', $rubricaIds)->pluck('participante_id');
+        $responsavelIds = Responsavel::query()->whereIn('participante_id', $participanteIds)->pluck('id')->map(fn ($id): int => (int) $id)->unique()->sort()->values();
+        $template->update(['elementos_layout' => $elements, 'responsaveis' => $responsavelIds->isEmpty() ? null : $responsavelIds->implode(',')]);
         return redirect()->route('templates.builder', $template)->with('status', 'Layout salvo com sucesso.');
     }
 
     public function previewPdf(Request $request, Template $template, TemplateLayoutRenderer $renderer,PdfDigitalSigner $signer): Response
     {
         File::ensureDirectoryExists(storage_path('fonts'), 0775, true);
-        $request->validate([
+        $data = $request->validate([
             'layout_json' => ['required', 'json'],
             'participante_teste_id' => ['nullable', 'required_with:atividade_id', 'integer', Rule::exists('participantes_de_teste', 'id')->whereNull('apagado_em')],
             'atividade_id' => ['nullable', 'required_with:participante_teste_id', 'integer', Rule::exists('atividades', 'id')->where(fn ($query) => $query->where('ativo', true)->whereNull('apagado_em'))],
+            ...$this->previewFieldRules($template),
         ]);
         if ($request->has('participante_teste_id') || $request->has('atividade_id')) {
             $request->session()->put('armazem.templates.construtor.participante', [
                 'participante_teste_id' => $request->integer('participante_teste_id') ?: null,
                 'atividade_id' => $request->integer('atividade_id') ?: null,
+                'carga_horaria' => $data['carga_horaria'] ?? null,
+                'campos' => $data['campos'] ?? [],
             ]);
         }
         $test = $request->filled('participante_teste_id') ? ParticipanteTeste::with('participante')->findOrFail($request->integer('participante_teste_id')) : null;
         $activity = $request->filled('atividade_id') ? Atividade::with('evento')->findOrFail($request->integer('atividade_id')) : null;
-        $context = $this->previewContext($test?->participante, $activity, null, null);
+        $context = $this->previewContext($test?->participante, $activity, null, null, $data['carga_horaria'] ?? null, $data['campos'] ?? []);
         $elements = collect($renderer->elements(json_decode((string)$request->input('layout_json'), true) ?: [], $context));
         $width = max((int) $template->largura, 1); $height = max((int) $template->altura, 1);
         $background = $renderer->background($template);
@@ -252,14 +263,15 @@ class TemplateController extends Controller
 
     public function previewImage(Request $request, Template $template, CertificadoImageGenerator $generator): View
     {
-        $request->validate([
+        $data=$request->validate([
             'layout_json'=>['required','json'],
             'participante_teste_id'=>['nullable','integer',Rule::exists('participantes_de_teste','id')->whereNull('apagado_em')],
             'atividade_id'=>['nullable','integer',Rule::exists('atividades','id')->where(fn($query)=>$query->where('ativo',true)->whereNull('apagado_em'))],
+            ...$this->previewFieldRules($template),
         ]);
         $test=$request->filled('participante_teste_id')?ParticipanteTeste::with('participante')->findOrFail($request->integer('participante_teste_id')):null;
         $activity=$request->filled('atividade_id')?Atividade::with('evento')->findOrFail($request->integer('atividade_id')):null;
-        $context=$this->previewContext($test?->participante,$activity,null,null);
+        $context=$this->previewContext($test?->participante,$activity,null,null,$data['carga_horaria']??null,$data['campos']??[]);
         $png=$generator->render($template,json_decode((string)$request->input('layout_json'),true)?:[],$context);
         $image='data:image/png;base64,'.base64_encode($png);
         return view('templates.preview-image',[
@@ -273,6 +285,7 @@ class TemplateController extends Controller
 
     public function uploadFont(Request $request, Template $template): JsonResponse
     {
+        $this->authorizePopulatedTemplateChange($request, $template);
         $validated = $request->validate(['fonte' => ['required', 'file', 'mimes:ttf,otf,woff,woff2', 'max:10240']]);
         $file = $validated['fonte']; $extension = strtolower($file->getClientOriginalExtension());
         $original = $file->getClientOriginalName(); $name = Str::limit(preg_replace('/[^\pL\pN _-]/u', '', pathinfo($original, PATHINFO_FILENAME)) ?: 'Fonte personalizada', 100, '');
@@ -283,6 +296,7 @@ class TemplateController extends Controller
     }
     public function update(Request $request, Template $template): RedirectResponse
     {
+        $this->authorizePopulatedTemplateChange($request, $template);
         $data = $this->normalizePage($this->validated($request)); $old = $template->fundo; $oldColored = $template->fundo_colorido; $oldGradient = $template->fundo_degrade;
         if (! $this->canEditCertificate($request, $template->certificadoA1)) $data['certificado_a1'] = $template->certificado_a1;
         $newCertificateId = filled($data['certificado_a1'] ?? null) ? (int) $data['certificado_a1'] : null;
@@ -311,7 +325,7 @@ class TemplateController extends Controller
         unset($data['remover_fundo'], $data['remover_fundo_colorido'], $data['remover_fundo_degrade']); $template->update($data);
         return redirect()->route('templates.show', $template)->with('status', 'Template atualizado com sucesso.');
     }
-    public function toggleStatus(Template $template): RedirectResponse { $template->update(['ativo' => ! $template->ativo]); return redirect()->route('templates.index')->with('status', 'Status atualizado com sucesso.'); }
+    public function toggleStatus(Request $request, Template $template): RedirectResponse { $this->authorizePopulatedTemplateChange($request,$template); $template->update(['ativo'=>!$template->ativo]); return redirect()->route('templates.index')->with('status','Status atualizado com sucesso.'); }
     public function destroy(Template $template): RedirectResponse { $template->delete(); return redirect()->route('templates.index')->with('status', 'Template excluído com sucesso.'); }
     public function forceDestroy(int $template): RedirectResponse { $model = Template::withTrashed()->findOrFail($template); $this->removeBackground($model->fundo); $this->removeBackground($model->fundo_colorido); $this->removeBackground($model->fundo_degrade); $model->forceDelete(); return redirect()->route('templates.index')->with('status', 'Template excluído definitivamente.'); }
 
@@ -330,6 +344,14 @@ class TemplateController extends Controller
     private function hasPermission(Request $request, string $permission): bool
     {
         return in_array($permission, (array) $request->session()->get('gi_context.permissoes', []), true);
+    }
+    private function canAlterPopulatedTemplate(Request $request, Template $template): bool
+    {
+        return ! $template->hasParticipantCertificates() || $this->hasPermission($request, 'templates.editar_com_certificado_incluso');
+    }
+    private function authorizePopulatedTemplateChange(Request $request, Template $template): void
+    {
+        abort_unless($this->canAlterPopulatedTemplate($request, $template), 403, 'Este template possui certificados de participantes. É necessária a permissão templates.editar_com_certificado_incluso para alterá-lo.');
     }
     private function canEditCertificate(Request $request, ?CertificadoA1 $certificate): bool
     {
@@ -409,14 +431,26 @@ class TemplateController extends Controller
         return 'data:'.$mime.';base64,'.base64_encode((string) File::get($path));
     }
 
-    private function previewContext($participant, ?Atividade $activity, ?Responsavel $responsible, ?string $rubricaPath): array
+    private function previewFieldRules(Template $template): array
+    {
+        $rules = ['carga_horaria'=>['nullable','string','max:50'],'campos'=>['nullable','array']];
+        foreach ($template->campos_dinamicos ?? [] as $field) {
+            $rule = ['nullable'];
+            $rule[] = ($field['tipo'] ?? '') === 'number' ? 'numeric' : (($field['tipo'] ?? '') === 'data' ? 'date' : 'string');
+            if (($field['tipo'] ?? '') === 'lista') $rule[] = Rule::in($field['opcoes'] ?? []);
+            $rules['campos.'.$field['nome']] = $rule;
+        }
+        return $rules;
+    }
+
+    private function previewContext($participant, ?Atividade $activity, ?Responsavel $responsible, ?string $rubricaPath, ?string $hours = null, array $templateFields = []): array
     {
         return [
             'participante'=>['nome'=>$participant?->nome ?? 'Nome do participante','email'=>$participant?->email ?? 'email@exemplo.com','cpf'=>$participant?->cpf ?? '000.000.000-00'],
             'evento'=>['nome'=>$activity?->evento?->nome ?? 'Nome do evento','descricao'=>$activity?->evento?->descricao ?? ''],
-            'atividade'=>['nome'=>$activity?->nome ?? 'Nome da atividade','carga_horaria'=>'60 horas'],
+            'atividade'=>['nome'=>$activity?->nome ?? 'Nome da atividade','carga_horaria'=>$hours ?: '60 horas'],
             'responsavel'=>['nome'=>$responsible?->participante?->nome ?? 'Nome do responsável','cargo'=>$responsible?->cargo ?? 'Instrutor','titulacao'=>$responsible?->titulacao ?? '', 'rubrica_path'=>$rubricaPath],
-            'emissao'=>['nome'=>'Emissão de teste','data'=>now()->format('d/m/Y')], 'certificado'=>['codigo'=>'TESTE-000001'],
+            'emissao'=>['nome'=>'Emissão de teste','data'=>now()->format('d/m/Y')], 'certificado'=>['codigo'=>'TESTE-000001'], 'template'=>$templateFields,
             'link_validacao'=>route('certificadosnovos.public.pdf','TESTE-000001'),
         ];
     }

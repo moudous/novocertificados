@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ListaParticipante;
+use App\Models\Responsavel;
 use App\Services\CertificadoPdfGenerator;
 use App\Services\CertificadoImageGenerator;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,7 +15,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CertificadoNovoController extends Controller
 {
-    private const COLUMNS = ['id', 'id', 'id', 'participante_id', 'id', 'id', 'id', 'id', 'id', 'id', 'ativo', 'id'];
+    private const COLUMNS = ['id', 'id', 'id', 'id', 'participante_id', 'id', 'id', 'id', 'id', 'id', 'id', 'ativo', 'id'];
 
     public function index(Request $request): View
     {
@@ -41,6 +42,8 @@ class CertificadoNovoController extends Controller
         $permissions = (array) $request->session()->get('gi_context.permissoes', []);
         $items = $query->orderBy($column, $request->input('order.0.dir') === 'asc' ? 'asc' : 'desc')
             ->skip(max((int) $request->input('start', 0), 0))->take(min(max((int) $request->input('length', 10), 1), 100))->get();
+        $responsibleIds = $items->pluck('novoCertificado.template.responsaveis')->filter()->flatMap(fn (string $ids): array => array_filter(array_map('intval', explode(',', $ids))))->unique();
+        $responsibleNames = Responsavel::withTrashed()->with('participante')->whereIn('id', $responsibleIds)->get()->mapWithKeys(fn (Responsavel $responsavel): array => [$responsavel->id => $responsavel->participante?->nome])->filter();
 
         return response()->json([
             'draw' => (int) $request->input('draw'), 'recordsTotal' => $total, 'recordsFiltered' => $filtered,
@@ -48,11 +51,12 @@ class CertificadoNovoController extends Controller
                 'id' => $item->id,
                 'emissao' => e($item->novoCertificado?->nome ?: '#'.$item->novo_certificado_id),
                 'template' => e($item->novoCertificado?->template?->nome ?: '—'),
+                'responsaveis' => e(collect(explode(',', (string) $item->novoCertificado?->template?->responsaveis))->filter()->map(fn ($id) => $responsibleNames->get((int) $id))->filter()->implode(', ') ?: '—'),
                 'participante' => e($item->participante?->nome ?: '—'),
                 'evento' => e($item->novoCertificado?->evento?->nome ?: $item->novoCertificado?->atividade?->evento?->nome ?: '—'),
                 'atividade' => e($item->novoCertificado?->atividade?->nome ?: '—'),
                 'data_certificado' => $item->novoCertificado?->data_emissao?->format('d/m/Y') ?? '—',
-                'horas' => e((string) (data_get($item->snapshot_dados, 'atividade.carga_horaria') ?: data_get($item->novoCertificado?->campos_personalizados, 'carga_horaria') ?: '—')),
+                'horas' => e((string) (data_get($item->snapshot_dados, 'atividade.carga_horaria') ?: $item->novoCertificado?->carga_horaria ?: '—')),
                 'pdf' => $item->arquivoExists() && filled($item->codigo) ? '<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.pdf', $item->codigo)).'" class="btn btn-sm btn-outline-danger" title="Abrir PDF"><i class="bi bi-file-earmark-pdf"></i></a>' : (in_array('certificadosnovos.gerar_pdf',$permissions,true)?'<button type="button" class="btn btn-sm btn-link js-generate-certificate p-0" data-url="'.e(route('certificadosnovos.generate',$item)).'">Gerar</button>':'—'),
                 'img' => $item->imagemExists() && filled($item->codigo_img) ? '<a target="_blank" rel="noopener noreferrer" href="'.e(route('certificadosnovos.public.image', $item->codigo_img)).'" class="btn btn-sm btn-outline-primary" title="Abrir imagem"><i class="bi bi-image"></i></a>' : (in_array('certificadosnovos.gerar_pdf',$permissions,true)?'<button type="button" class="btn btn-sm btn-link js-generate-certificate p-0" data-url="'.e(route('certificadosnovos.generate-image',$item)).'">Gerar</button>':'—'),
                 'ativo' => $item->ativo ? '<span class="badge text-bg-success">Ativo</span>' : '<span class="badge text-bg-secondary">Inativo</span>',

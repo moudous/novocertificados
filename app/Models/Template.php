@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Template extends Model
 {
@@ -17,7 +18,7 @@ class Template extends Model
     public const UPDATED_AT = 'alterado_em';
     public const DELETED_AT = 'apagado_em';
 
-    protected $fillable = ['nome', 'criado_por', 'fundo', 'biblioteca_imagem_id', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'direcao_degrade', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout', 'campos_dinamicos'];
+    protected $fillable = ['nome', 'criado_por', 'fundo', 'biblioteca_imagem_id', 'fundo_colorido', 'cor_fundo', 'fundo_colorido_ativo', 'tipo_fundo', 'fundo_degrade', 'cor_degrade_inicio', 'cor_degrade_fim', 'direcao_degrade', 'ativo', 'certificado_a1', 'largura', 'altura', 'pagina', 'layout_pagina', 'elementos_layout', 'campos_dinamicos', 'responsaveis'];
 
     protected function casts(): array
     {
@@ -39,6 +40,14 @@ class Template extends Model
     }
 
     public function imagensTemplate(): HasMany { return $this->hasMany(ImagemTemplate::class); }
+
+    public function hasParticipantCertificates(): bool
+    {
+        return DB::table('lista_participantes as lp')
+            ->join('novos_certificados as nc', 'nc.id', '=', 'lp.novo_certificado_id')
+            ->where('nc.template_id', $this->id)
+            ->exists();
+    }
 
     public function usedTemplateFields(): array
     {
