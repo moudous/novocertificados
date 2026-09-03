@@ -35,10 +35,10 @@ class TemplateLayoutRenderer
 
     public const SOURCES = [
         'participante.nome' => 'Participante · Nome', 'participante.email' => 'Participante · E-mail', 'participante.cpf' => 'Participante · CPF',
-        'evento.nome' => 'Evento · Nome', 'evento.descricao' => 'Evento · Descrição',
-        'atividade.nome' => 'Atividade · Nome', 'atividade.carga_horaria' => 'Atividade · Carga horária',
+        'evento.nome' => 'Evento · Nome', 'eventos.periodos' => 'Evento · Períodos',
+        'atividade.nome' => 'Atividade · Nome', 'atividades.periodos' => 'Atividade · Períodos',
         'responsavel.nome' => 'Responsável · Nome', 'responsavel.cargo' => 'Responsável · Cargo', 'responsavel.titulacao' => 'Responsável · Titulação',
-        'emissao.nome' => 'Emissão · Nome', 'emissao.data' => 'Emissão · Data', 'certificado.codigo' => 'Certificado · Código',
+        'emissao.nome' => 'Emissão · Nome', 'emissao.data' => 'Emissão · Data', 'emissao.carga_horaria' => 'Emissão · Carga horária',
     ];
 
     public function elements(array $layout, array $context = []): array
@@ -151,16 +151,22 @@ class TemplateLayoutRenderer
 
     public function validationQrDataUri(string $url, string $style = 'classic'): string
     {
-        $colors = [
-            'classic' => new Color(0, 0, 0),
-            'blue' => new Color(13, 71, 161),
-            'green' => new Color(20, 105, 65),
-        ];
         $qrCode = QrCode::create($url)
             ->setSize(360)
             ->setMargin(16)
-            ->setErrorCorrectionLevel(ErrorCorrectionLevel::High)
-            ->setForegroundColor($colors[$style] ?? $colors['classic']);
+            ->setErrorCorrectionLevel(ErrorCorrectionLevel::High);
+
+        // Some deployments may temporarily have an incomplete/stale vendor
+        // directory. A black QR remains valid even when the optional color
+        // value object from endroid/qr-code is not available yet.
+        if (class_exists(Color::class)) {
+            $rgb = match ($style) {
+                'blue' => [13, 71, 161],
+                'green' => [20, 105, 65],
+                default => [0, 0, 0],
+            };
+            $qrCode = $qrCode->setForegroundColor(new Color(...$rgb));
+        }
 
         return (new PngWriter())->write($qrCode)->getDataUri();
     }

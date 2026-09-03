@@ -449,8 +449,10 @@ class TemplateController extends Controller
             'participante'=>['nome'=>$participant?->nome ?? 'Nome do participante','email'=>$participant?->email ?? 'email@exemplo.com','cpf'=>$participant?->cpf ?? '000.000.000-00'],
             'evento'=>['nome'=>$activity?->evento?->nome ?? 'Nome do evento','descricao'=>$activity?->evento?->descricao ?? ''],
             'atividade'=>['nome'=>$activity?->nome ?? 'Nome da atividade','carga_horaria'=>$hours ?: '60 horas'],
+            'eventos'=>['periodos'=>$activity?->evento?->periodos ?? 'Período do evento'],
+            'atividades'=>['periodos'=>$activity?->periodos ?? 'Período da atividade'],
             'responsavel'=>['nome'=>$responsible?->participante?->nome ?? 'Nome do responsável','cargo'=>$responsible?->cargo ?? 'Instrutor','titulacao'=>$responsible?->titulacao ?? '', 'rubrica_path'=>$rubricaPath],
-            'emissao'=>['nome'=>'Emissão de teste','data'=>now()->format('d/m/Y')], 'certificado'=>['codigo'=>'TESTE-000001'], 'template'=>$templateFields,
+            'emissao'=>['nome'=>'Emissão de teste','data'=>now()->format('d/m/Y'),'carga_horaria'=>$hours ?: '60 horas'], 'certificado'=>['codigo'=>'TESTE-000001'], 'template'=>$templateFields,
             'link_validacao'=>route('certificadosnovos.public.pdf','TESTE-000001'),
         ];
     }

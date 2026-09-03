@@ -12,7 +12,12 @@ class AllowGiEmbedding
     {
         if (! filter_var(config('gi.allow_outside_iframe'), FILTER_VALIDATE_BOOL)
             && ! $request->is('health')
-            && ! $request->routeIs('certificadosnovos.public.pdf', 'certificados.legacy')) {
+            && ! $request->routeIs(
+                'certificadosnovos.public.*',
+                'certificados.legacy',
+                'templates.builder.preview',
+                'templates.builder.preview-image',
+            )) {
             $destination = strtolower((string) $request->header('Sec-Fetch-Dest'));
 
             if (in_array($destination, ['', 'document'], true)) {
