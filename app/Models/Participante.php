@@ -18,7 +18,7 @@ class Participante extends Model
     public const UPDATED_AT = 'atualizado_em';
     public const DELETED_AT = 'excluido_em';
 
-    protected $fillable = ['nome', 'email', 'sexo', 'grupo', 'ativo', 'cpf', 'criado_por'];
+    protected $fillable = ['nome', 'email', 'email2', 'email_institucional', 'instituicao_ensino', 'sexo', 'grupo', 'ativo', 'cpf', 'criado_por'];
 
     protected $hidden = ['email_ficticio'];
 

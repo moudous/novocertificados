@@ -412,6 +412,9 @@ class ParticipanteController extends Controller
         return $request->validate([
             'nome' => ['required', 'string', 'max:100'],
             'email' => ['nullable', 'email', 'max:150'],
+            'email2' => ['nullable', 'email', 'max:150'],
+            'email_institucional' => ['nullable', 'email', 'max:150'],
+            'instituicao_ensino' => ['nullable', 'string', 'max:80'],
             'sexo' => ['nullable', 'string', 'in:M,F'],
             'grupo' => ['nullable', 'string', 'max:1'],
             'ativo' => ['required', 'boolean'],
